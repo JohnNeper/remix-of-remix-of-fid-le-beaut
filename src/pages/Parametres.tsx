@@ -20,6 +20,8 @@ import { useSalon } from '@/hooks/useSalon';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageToggle } from '@/components/layout/LanguageToggle';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
+import { getPlanColor, formatPlanPrice } from '@/lib/plans';
 
 const salonSchema = z.object({
   nom: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
