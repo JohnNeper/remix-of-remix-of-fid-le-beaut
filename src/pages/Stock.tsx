@@ -17,6 +17,8 @@ import { z } from 'zod';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
+import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
 
 const produitSchema = z.object({
   nom: z.string().min(2, 'Nom requis'),
