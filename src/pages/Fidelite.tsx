@@ -14,6 +14,8 @@ export default function Fidelite() {
   const { clients } = useClients();
   const { salon } = useSalon();
   const { t } = useLanguage();
+  const { hasLoyaltyRules, hasBirthdayBonus, getUpgradePlan, plan } = useSubscriptionPlan();
+  const { language } = useLanguage();
 
   const clientsVIP = clients.filter(c => c.statut === 'vip');
   const clientsWithProgress = clients.map(client => {
