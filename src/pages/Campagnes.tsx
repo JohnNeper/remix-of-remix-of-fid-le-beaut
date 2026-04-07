@@ -163,6 +163,34 @@ export default function Campagnes() {
         </AlertDescription>
       </Alert>
 
+      {/* Plan restrictions */}
+      {campaignLimit !== null && (
+        <LimitReachedBanner
+          current={campaignsSentThisMonth}
+          max={campaignLimit}
+          label={language === 'fr' ? 'campagnes ce mois' : 'campaigns this month'}
+          requiredPlan={getUpgradePlan()}
+        />
+      )}
+
+      {!hasScheduledCampaigns && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Planification de campagnes' : 'Campaign scheduling'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
+
+      {!hasAutomation && plan.name !== 'basic' && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Campagnes automatisées (fidélité, inactivité)' : 'Automated campaigns (loyalty, inactivity)'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3 max-w-md">
           <TabsTrigger value="compose" className="flex items-center gap-2">
