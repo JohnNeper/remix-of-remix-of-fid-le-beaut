@@ -36,6 +36,8 @@ const statusStyles: Record<ClientStatus, string> = {
 export default function Clientes() {
   const { clients, addClient, updateClient, deleteClient } = useClients();
   const { t, language } = useLanguage();
+  const { canAddCustomer, getCustomerLimit, getUpgradePlan, hasCustomerSegmentation, plan } = useSubscriptionPlan();
+  const customerLimit = getCustomerLimit();
 
   const statusLabels: Record<ClientStatus, string> = {
     nouvelle: t('clients.nouvelle'),
