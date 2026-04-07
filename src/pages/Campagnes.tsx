@@ -15,6 +15,9 @@ import { CampaignMessagePreview } from '@/components/campaigns/CampaignMessagePr
 import { MessageTemplates } from '@/components/campaigns/MessageTemplates';
 import { EmptyState } from '@/components/ui/EmptyState';
 import heroSalon from '@/assets/hero-salon.jpg';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
+import { UpgradePrompt, LimitReachedBanner } from '@/components/ui/UpgradePrompt';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Campagnes() {
   const { clients, getInactiveClients } = useClients();
