@@ -21,6 +21,8 @@ import { z } from 'zod';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
+import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
 
 const depenseSchema = z.object({
   date: z.string().min(1),
