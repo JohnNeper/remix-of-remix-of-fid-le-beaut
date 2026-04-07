@@ -89,6 +89,24 @@ export default function Fidelite() {
         </CardContent>
       </Card>
 
+      {/* Plan upgrade prompts */}
+      {!hasLoyaltyRules && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Règles de fidélité avancées (1 pt / 1000 FCFA)' : 'Advanced loyalty rules (1 pt / 1000 FCFA)'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
+      {!hasBirthdayBonus && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Bonus anniversaire automatique' : 'Automatic birthday bonus'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
+
       {/* Client progress */}
       <Card className="card-shadow">
         <CardHeader>
