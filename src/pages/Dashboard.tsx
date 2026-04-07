@@ -61,7 +61,10 @@ export default function Dashboard() {
         <img src={heroSalon} alt="Salon de beauté" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/50 to-transparent flex items-end p-4 sm:p-6">
           <div className="text-white">
-            <p className="text-white/80 text-sm mb-1">{t('dashboard.welcome')}</p>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-white/80 text-sm">{t('dashboard.welcome')}</p>
+              <Badge className={`${getPlanColor(plan.name)} text-[10px]`}>{plan.label}</Badge>
+            </div>
             <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold">{salon.nom}</h1>
             <p className="text-white/80 mt-1 text-sm hidden sm:block">{t('dashboard.subtitle')}</p>
           </div>
