@@ -60,14 +60,17 @@ export function createSalonAccount(data: Omit<SalonAccount, 'id' | 'dateCreation
     dateCreation: new Date().toISOString().split('T')[0],
   };
 
+  const selectedPlan = getPlan((data as any).plan || 'basic');
+
   const newSalon: SalonAccount = {
     ...data,
     id: salonId,
     dateCreation: new Date().toISOString().split('T')[0],
     motDePasse: hashedPwd,
     abonnementActif: true,
-    montantAbonnement: 25000,
+    montantAbonnement: selectedPlan.price,
     joursAbonnement: 30,
+    plan: selectedPlan.name,
     users: [ownerUser],
   };
   salons.push(newSalon);
