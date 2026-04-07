@@ -1,4 +1,5 @@
 // Types pour le système multi-tenant
+import type { PlanType } from '@/lib/plans';
 
 export type SalonUserRole = 'owner' | 'staff';
 
