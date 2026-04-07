@@ -24,8 +24,9 @@ export interface SalonAccount {
   dateCreation: string;
   dernierPaiement: string; // date ISO
   abonnementActif: boolean;
-  montantAbonnement: number; // 25000 FCFA
+  montantAbonnement: number; // FCFA — set from plan price
   joursAbonnement: number; // 30
+  plan: PlanType; // subscription tier
   users?: SalonUser[]; // owner + staff
 }
 
