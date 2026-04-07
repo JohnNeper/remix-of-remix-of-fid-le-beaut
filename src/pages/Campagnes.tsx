@@ -22,10 +22,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 export default function Campagnes() {
   const { clients, getInactiveClients } = useClients();
   const { salon } = useSalon();
+  const { canCreateCampaign, getCampaignLimit, getUpgradePlan, hasScheduledCampaigns, hasAutomation, plan } = useSubscriptionPlan();
+  const { language } = useLanguage();
   const [message, setMessage] = useState('');
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [sentMessages, setSentMessages] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('compose');
+  const [campaignsSentThisMonth] = useState(0); // Track campaigns per month
+  const campaignLimit = getCampaignLimit();
 
   const clientesInactives = getInactiveClients(salon.joursRappelInactivite);
   const clientesVIP = clients.filter(c => c.statut === 'vip');
