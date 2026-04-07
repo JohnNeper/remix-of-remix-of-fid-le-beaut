@@ -1,4 +1,6 @@
 import { SalonAccount, AdminUser, AuthSession, SalonUser, SalonUserRole } from '@/types/auth';
+import { getPlan } from '@/lib/plans';
+import type { PlanType } from '@/lib/plans';
 import { getStorageItem, setStorageItem } from '@/lib/storage';
 
 const ADMIN_KEY = 'beautyflow_admin';
