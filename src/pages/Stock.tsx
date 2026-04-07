@@ -17,6 +17,8 @@ import { z } from 'zod';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
+import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
 
 const produitSchema = z.object({
   nom: z.string().min(2, 'Nom requis'),
@@ -107,6 +109,8 @@ function ProduitForm({ produit, onSubmit, onCancel }: { produit?: Produit; onSub
 export default function Stock() {
   const { produits, addProduit, updateProduit, deleteProduit, adjustStock, produitsEnAlerte, categories, valeurStock } = useStock();
   const { t } = useLanguage();
+  const { hasStockHistory, getUpgradePlan, plan } = useSubscriptionPlan();
+  const { language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [catFilter, setCatFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
@@ -180,6 +184,15 @@ export default function Stock() {
           </CardContent>
         </Card>
       </div>
+
+      {!hasStockHistory && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Historique des mouvements de stock' : 'Stock movement history'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
 
       <Tabs defaultValue="all">
         <TabsList>

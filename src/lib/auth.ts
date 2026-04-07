@@ -1,4 +1,6 @@
 import { SalonAccount, AdminUser, AuthSession, SalonUser, SalonUserRole } from '@/types/auth';
+import { getPlan } from '@/lib/plans';
+import type { PlanType } from '@/lib/plans';
 import { getStorageItem, setStorageItem } from '@/lib/storage';
 
 const ADMIN_KEY = 'beautyflow_admin';
@@ -58,14 +60,17 @@ export function createSalonAccount(data: Omit<SalonAccount, 'id' | 'dateCreation
     dateCreation: new Date().toISOString().split('T')[0],
   };
 
+  const selectedPlan = getPlan((data as any).plan || 'basic');
+
   const newSalon: SalonAccount = {
     ...data,
     id: salonId,
     dateCreation: new Date().toISOString().split('T')[0],
     motDePasse: hashedPwd,
     abonnementActif: true,
-    montantAbonnement: 25000,
+    montantAbonnement: selectedPlan.price,
     joursAbonnement: 30,
+    plan: selectedPlan.name,
     users: [ownerUser],
   };
   salons.push(newSalon);

@@ -23,6 +23,9 @@ import { ClientDetail } from '@/components/clients/ClientDetail';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
+import { LimitReachedBanner } from '@/components/ui/UpgradePrompt';
+import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
 
 const statusStyles: Record<ClientStatus, string> = {
   nouvelle: 'bg-muted text-muted-foreground',
@@ -33,6 +36,8 @@ const statusStyles: Record<ClientStatus, string> = {
 export default function Clientes() {
   const { clients, addClient, updateClient, deleteClient } = useClients();
   const { t, language } = useLanguage();
+  const { canAddCustomer, getCustomerLimit, getUpgradePlan, hasCustomerSegmentation, plan } = useSubscriptionPlan();
+  const customerLimit = getCustomerLimit();
 
   const statusLabels: Record<ClientStatus, string> = {
     nouvelle: t('clients.nouvelle'),
@@ -87,13 +92,39 @@ export default function Clientes() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{t('clients.title')}</h1>
-          <p className="text-muted-foreground">{clients.length} {t('clients.registered')}</p>
+          <p className="text-muted-foreground">
+            {clients.length}{customerLimit ? `/${customerLimit}` : ''} {t('clients.registered')}
+          </p>
         </div>
-        <Button onClick={() => setShowAddDialog(true)} className="gradient-primary">
+        <Button
+          onClick={() => setShowAddDialog(true)}
+          className="gradient-primary"
+          disabled={!canAddCustomer(clients.length)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           {t('clients.new')}
         </Button>
       </div>
+
+      {/* Limit banner */}
+      {customerLimit && (
+        <LimitReachedBanner
+          current={clients.length}
+          max={customerLimit}
+          label={language === 'fr' ? 'clients' : 'clients'}
+          requiredPlan={getUpgradePlan()}
+        />
+      )}
+
+      {/* Segmentation hint for basic */}
+      {!hasCustomerSegmentation && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Segmentation clients (VIP, fréquent, inactif)' : 'Client segmentation (VIP, frequent, inactive)'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">

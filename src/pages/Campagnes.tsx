@@ -15,14 +15,21 @@ import { CampaignMessagePreview } from '@/components/campaigns/CampaignMessagePr
 import { MessageTemplates } from '@/components/campaigns/MessageTemplates';
 import { EmptyState } from '@/components/ui/EmptyState';
 import heroSalon from '@/assets/hero-salon.jpg';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
+import { UpgradePrompt, LimitReachedBanner } from '@/components/ui/UpgradePrompt';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Campagnes() {
   const { clients, getInactiveClients } = useClients();
   const { salon } = useSalon();
+  const { canCreateCampaign, getCampaignLimit, getUpgradePlan, hasScheduledCampaigns, hasAutomation, plan } = useSubscriptionPlan();
+  const { language } = useLanguage();
   const [message, setMessage] = useState('');
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [sentMessages, setSentMessages] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('compose');
+  const [campaignsSentThisMonth] = useState(0); // Track campaigns per month
+  const campaignLimit = getCampaignLimit();
 
   const clientesInactives = getInactiveClients(salon.joursRappelInactivite);
   const clientesVIP = clients.filter(c => c.statut === 'vip');
@@ -155,6 +162,34 @@ export default function Campagnes() {
           <strong>Envoi anti-spam :</strong> Les messages sont envoyés individuellement. Vous copiez le message puis ouvrez WhatsApp pour chaque cliente, évitant ainsi d'être bloqué par WhatsApp.
         </AlertDescription>
       </Alert>
+
+      {/* Plan restrictions */}
+      {campaignLimit !== null && (
+        <LimitReachedBanner
+          current={campaignsSentThisMonth}
+          max={campaignLimit}
+          label={language === 'fr' ? 'campagnes ce mois' : 'campaigns this month'}
+          requiredPlan={getUpgradePlan()}
+        />
+      )}
+
+      {!hasScheduledCampaigns && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Planification de campagnes' : 'Campaign scheduling'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
+
+      {!hasAutomation && plan.name !== 'basic' && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Campagnes automatisées (fidélité, inactivité)' : 'Automated campaigns (loyalty, inactivity)'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3 max-w-md">

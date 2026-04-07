@@ -21,6 +21,8 @@ import { z } from 'zod';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
+import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
 
 const depenseSchema = z.object({
   date: z.string().min(1),
@@ -195,6 +197,8 @@ export default function Finances() {
   const { ventes, depenses, addVente, addDepense, deleteVente, deleteDepense, stats } = useFinances();
   const { clients } = useClients();
   const { t } = useLanguage();
+  const { hasExport, hasProfitEstimation, getUpgradePlan, plan, analyticsLevel } = useSubscriptionPlan();
+  const { language } = useLanguage();
   const [showVenteForm, setShowVenteForm] = useState(false);
   const [showDepenseForm, setShowDepenseForm] = useState(false);
 
@@ -255,6 +259,24 @@ export default function Finances() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Plan upgrade prompts */}
+      {!hasExport && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Export des données (Excel / CSV)' : 'Data export (Excel / CSV)'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
+      {!hasProfitEstimation && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Estimation détaillée des bénéfices' : 'Detailed profit estimation'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
 
       {/* Revenue breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

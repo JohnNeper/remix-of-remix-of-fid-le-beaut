@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, UserPlus, Users, Trash2 } from 'lucide-react';
+import { Plus, UserPlus, Users, Trash2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { createSalonAccount, addStaffToSalon } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
+import { PLANS, PlanType, getPlanColor, formatPlanPrice } from '@/lib/plans';
 
 interface StaffEntry {
   nom: string;
@@ -29,6 +30,7 @@ export default function CreateSalonDialog({ open, onOpenChange, existingEmails, 
   const [adresse, setAdresse] = useState('');
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>('basic');
   const [staffList, setStaffList] = useState<StaffEntry[]>([]);
   const [showStaffForm, setShowStaffForm] = useState(false);
   const [staffNom, setStaffNom] = useState('');
@@ -36,14 +38,21 @@ export default function CreateSalonDialog({ open, onOpenChange, existingEmails, 
   const [staffPwd, setStaffPwd] = useState('');
   const [staffTel, setStaffTel] = useState('');
 
+  const plan = PLANS[selectedPlan];
+  const maxStaffAllowed = plan.maxStaff === -1 ? Infinity : plan.maxStaff - 1; // -1 for owner
+
   const resetForm = () => {
     setNom(''); setProprietaire(''); setTelephone(''); setAdresse(''); setEmail(''); setMotDePasse('');
-    setStaffList([]); setShowStaffForm(false);
+    setStaffList([]); setShowStaffForm(false); setSelectedPlan('basic');
     setStaffNom(''); setStaffEmail(''); setStaffPwd(''); setStaffTel('');
   };
 
   const addStaff = () => {
     if (!staffNom || !staffEmail || !staffPwd) return;
+    if (staffList.length >= maxStaffAllowed) {
+      toast({ title: `Limite staff atteinte pour le plan ${plan.label}`, variant: 'destructive' });
+      return;
+    }
     if (staffEmail === email || staffList.some(s => s.email === staffEmail) || existingEmails.includes(staffEmail)) {
       toast({ title: 'Cet email est déjà utilisé', variant: 'destructive' });
       return;
@@ -66,6 +75,7 @@ export default function CreateSalonDialog({ open, onOpenChange, existingEmails, 
     const salon = createSalonAccount({
       nom, proprietaire, telephone, adresse, email, motDePasse,
       dernierPaiement: new Date().toISOString().split('T')[0],
+      plan: selectedPlan,
     });
 
     // Add staff members
@@ -75,7 +85,7 @@ export default function CreateSalonDialog({ open, onOpenChange, existingEmails, 
       });
     }
 
-    toast({ title: 'Salon créé avec succès', description: `${nom} — ${1 + staffList.length} utilisateur(s) créé(s).` });
+    toast({ title: 'Salon créé avec succès', description: `${nom} — Plan ${plan.label} — ${1 + staffList.length} utilisateur(s).` });
     resetForm();
     onOpenChange(false);
     onCreated();
@@ -100,10 +110,50 @@ export default function CreateSalonDialog({ open, onOpenChange, existingEmails, 
             <Input value={nom} onChange={e => setNom(e.target.value)} required className="h-10 text-base sm:text-sm" />
           </div>
 
+          {/* Plan selection */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Plan d'abonnement</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.keys(PLANS) as PlanType[]).map((planKey) => {
+                const p = PLANS[planKey];
+                const isSelected = selectedPlan === planKey;
+                return (
+                  <button
+                    key={planKey}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPlan(planKey);
+                      // Trim staff if new plan has lower limit
+                      const newMax = p.maxStaff === -1 ? Infinity : p.maxStaff - 1;
+                      if (staffList.length > newMax) {
+                        setStaffList(staffList.slice(0, newMax));
+                      }
+                    }}
+                    className={`p-2.5 rounded-lg border-2 text-center transition-all ${
+                      isSelected
+                        ? 'border-primary bg-primary/10 shadow-sm'
+                        : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <Badge className={`${getPlanColor(planKey)} text-[10px] mb-1`}>{p.label}</Badge>
+                    <p className="text-xs font-bold">{p.price.toLocaleString('fr-FR')}</p>
+                    <p className="text-[10px] text-muted-foreground">FCFA/mois</p>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-2 space-y-0.5">
+              <p>👥 Max staff : <strong>{plan.maxStaff === -1 ? 'Illimité' : plan.maxStaff}</strong></p>
+              <p>📊 Clients : <strong>{plan.maxCustomers === -1 ? 'Illimité' : plan.maxCustomers}</strong></p>
+              <p>📢 Campagnes/mois : <strong>{plan.maxCampaignsPerMonth === -1 ? 'Illimité' : plan.maxCampaignsPerMonth}</strong></p>
+              <p>🤖 Automation : <strong>{plan.automationEnabled ? 'Oui' : 'Non'}</strong></p>
+            </div>
+          </div>
+
           {/* Owner section */}
           <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
             <div className="flex items-center gap-2 text-sm font-medium text-primary">
-              <Users className="h-4 w-4" />
+              <Crown className="h-4 w-4" />
               Propriétaire (Owner)
             </div>
             <div className="space-y-1">
@@ -135,9 +185,9 @@ export default function CreateSalonDialog({ open, onOpenChange, existingEmails, 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-medium text-accent-foreground">
                 <UserPlus className="h-4 w-4" />
-                Staff ({staffList.length})
+                Staff ({staffList.length}{maxStaffAllowed < Infinity ? `/${maxStaffAllowed}` : ''})
               </div>
-              {!showStaffForm && (
+              {!showStaffForm && staffList.length < maxStaffAllowed && (
                 <Button type="button" variant="outline" size="sm" onClick={() => setShowStaffForm(true)} className="text-xs h-7">
                   <Plus className="h-3 w-3 mr-1" />
                   Ajouter
@@ -172,10 +222,16 @@ export default function CreateSalonDialog({ open, onOpenChange, existingEmails, 
                 </div>
               </div>
             )}
+
+            {staffList.length >= maxStaffAllowed && maxStaffAllowed < Infinity && (
+              <p className="text-xs text-muted-foreground text-center">
+                Limite de staff atteinte pour le plan {plan.label}
+              </p>
+            )}
           </div>
 
           <div className="p-3 rounded-lg bg-muted text-xs sm:text-sm text-muted-foreground">
-            💰 Abonnement : <strong>25 000 FCFA/mois</strong> — Activé automatiquement pour 30 jours
+            💰 Abonnement : <strong>{formatPlanPrice(plan.price)}</strong> — Plan <Badge className={`${getPlanColor(selectedPlan)} text-[10px] ml-1`}>{plan.label}</Badge>
           </div>
           <Button type="submit" className="w-full gradient-primary h-11 sm:h-10">Créer le salon</Button>
         </form>
