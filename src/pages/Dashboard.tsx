@@ -15,6 +15,8 @@ import { useSalon } from '@/hooks/useSalon';
 import { useRendezVous } from '@/hooks/useRendezVous';
 import { useStock } from '@/hooks/useStock';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
+import { getPlanColor } from '@/lib/plans';
 import heroSalon from '@/assets/hero-salon.jpg';
 import serviceHair from '@/assets/service-hair.jpg';
 import serviceMakeup from '@/assets/service-makeup.jpg';
