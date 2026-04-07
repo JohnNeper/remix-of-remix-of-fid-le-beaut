@@ -185,6 +185,15 @@ export default function Stock() {
         </Card>
       </div>
 
+      {!hasStockHistory && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Historique des mouvements de stock' : 'Stock movement history'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
+
       <Tabs defaultValue="all">
         <TabsList>
           <TabsTrigger value="all">Tous les produits</TabsTrigger>
