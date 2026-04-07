@@ -32,6 +32,7 @@ export default function Dashboard() {
   const { getRendezVousAujourdhui } = useRendezVous();
   const { produitsEnAlerte } = useStock();
   const { t } = useLanguage();
+  const { plan, analyticsLevel } = useSubscriptionPlan();
 
   const clientesInactives = getInactiveClients(salon.joursRappelInactivite);
   const clientesActives = clients.length - clientesInactives.length;
