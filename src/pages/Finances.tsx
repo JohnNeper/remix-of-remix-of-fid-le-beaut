@@ -197,6 +197,8 @@ export default function Finances() {
   const { ventes, depenses, addVente, addDepense, deleteVente, deleteDepense, stats } = useFinances();
   const { clients } = useClients();
   const { t } = useLanguage();
+  const { hasExport, hasProfitEstimation, getUpgradePlan, plan, analyticsLevel } = useSubscriptionPlan();
+  const { language } = useLanguage();
   const [showVenteForm, setShowVenteForm] = useState(false);
   const [showDepenseForm, setShowDepenseForm] = useState(false);
 
