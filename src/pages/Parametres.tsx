@@ -95,6 +95,50 @@ export default function Parametres() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Plan info card */}
+        <Card className="card-shadow border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <CardTitle>{language === 'fr' ? 'Votre abonnement' : 'Your subscription'}</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Badge className={`${getPlanColor(plan.name)} text-sm px-3 py-1`}>{plan.label}</Badge>
+              <span className="font-bold text-lg">{formatPlanPrice(plan.price)}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="p-2 rounded-lg bg-background border">
+                <p className="text-muted-foreground text-xs">{language === 'fr' ? 'Max clients' : 'Max clients'}</p>
+                <p className="font-bold">{getCustomerLimit() ?? '∞'}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-background border">
+                <p className="text-muted-foreground text-xs">{language === 'fr' ? 'Max staff' : 'Max staff'}</p>
+                <p className="font-bold">{getStaffLimit() ?? '∞'}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-background border">
+                <p className="text-muted-foreground text-xs">{language === 'fr' ? 'Campagnes/mois' : 'Campaigns/mo'}</p>
+                <p className="font-bold">{getCampaignLimit() ?? '∞'}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-background border">
+                <p className="text-muted-foreground text-xs">Analytics</p>
+                <p className="font-bold capitalize">{plan.analyticsLevel}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {plan.automationEnabled && <Badge variant="secondary" className="text-[10px]">🤖 Automation</Badge>}
+              {plan.exportEnabled && <Badge variant="secondary" className="text-[10px]">📊 Export</Badge>}
+              {plan.multiBranchEnabled && <Badge variant="secondary" className="text-[10px]">🏢 Multi-branches</Badge>}
+              {plan.loyaltyRulesEnabled && <Badge variant="secondary" className="text-[10px]">⭐ Règles fidélité</Badge>}
+              {plan.prioritySupport && <Badge variant="secondary" className="text-[10px]">🎯 Support prioritaire</Badge>}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {language === 'fr' ? 'Contactez LeaderBright pour changer de plan' : 'Contact LeaderBright to change your plan'}
+            </p>
+          </CardContent>
+        </Card>
+
         {/* Salon info */}
         <Card className="card-shadow">
           <CardHeader>
