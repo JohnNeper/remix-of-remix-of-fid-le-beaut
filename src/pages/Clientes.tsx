@@ -23,6 +23,9 @@ import { ClientDetail } from '@/components/clients/ClientDetail';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
+import { LimitReachedBanner } from '@/components/ui/UpgradePrompt';
+import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
 
 const statusStyles: Record<ClientStatus, string> = {
   nouvelle: 'bg-muted text-muted-foreground',
