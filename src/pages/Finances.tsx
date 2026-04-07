@@ -260,6 +260,24 @@ export default function Finances() {
         </Card>
       </div>
 
+      {/* Plan upgrade prompts */}
+      {!hasExport && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Export des données (Excel / CSV)' : 'Data export (Excel / CSV)'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
+      {!hasProfitEstimation && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Estimation détaillée des bénéfices' : 'Detailed profit estimation'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
+
       {/* Revenue breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="card-shadow">
