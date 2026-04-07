@@ -109,6 +109,8 @@ function ProduitForm({ produit, onSubmit, onCancel }: { produit?: Produit; onSub
 export default function Stock() {
   const { produits, addProduit, updateProduit, deleteProduit, adjustStock, produitsEnAlerte, categories, valeurStock } = useStock();
   const { t } = useLanguage();
+  const { hasStockHistory, getUpgradePlan, plan } = useSubscriptionPlan();
+  const { language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [catFilter, setCatFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
