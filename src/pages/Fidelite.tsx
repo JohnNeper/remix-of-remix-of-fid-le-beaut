@@ -7,6 +7,8 @@ import { useSalon } from '@/hooks/useSalon';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
+import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
 
 export default function Fidelite() {
   const { clients } = useClients();
