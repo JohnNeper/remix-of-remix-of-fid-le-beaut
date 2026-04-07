@@ -42,7 +42,8 @@ const rappelSchema = z.object({
 
 export default function Parametres() {
   const { salon, updateSalon, updateConfigFidelite } = useSalon();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { plan, getCustomerLimit, getStaffLimit, getCampaignLimit } = useSubscriptionPlan();
 
   const salonForm = useForm({
     resolver: zodResolver(salonSchema),
