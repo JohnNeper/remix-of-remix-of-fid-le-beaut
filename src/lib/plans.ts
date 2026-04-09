@@ -9,7 +9,7 @@ export interface Plan {
   price: number; // FCFA/month
   maxCustomers: number; // -1 = unlimited
   maxStaff: number; // -1 = unlimited
-  maxCampaignsPerMonth: number; // -1 = unlimited
+  maxCampaignsPerMonth: number; // -1 = unlimited, 0 = disabled
   analyticsLevel: 'basic' | 'detailed' | 'advanced';
   automationEnabled: boolean;
   multiBranchEnabled: boolean;
@@ -21,6 +21,7 @@ export interface Plan {
   customerSegmentationEnabled: boolean;
   profitEstimationEnabled: boolean;
   prioritySupport: boolean;
+  campaignsEnabled: boolean; // whether campaigns module is accessible at all
   description: string;
   descriptionEn: string;
 }

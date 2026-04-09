@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
 import { ServicesPieChart } from '@/components/dashboard/ServicesPieChart';
+import { RevenueByServiceType } from '@/components/dashboard/RevenueByServiceType';
 import { TodayAppointments } from '@/components/dashboard/TodayAppointments';
 import { StockAlerts } from '@/components/dashboard/StockAlerts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,6 +55,23 @@ export default function Dashboard() {
     return { value: Math.abs(pct), positive: pct >= 0 };
   }, [prestations]);
 
+  // Revenue by service type
+  const revenueByServiceType = useMemo(() => {
+    const map: Record<string, { revenue: number; count: number }> = {};
+    prestations.forEach(p => {
+      const type = typesPrestations.find(t => t.id === p.typePrestationId);
+      if (type) {
+        if (!map[type.nom]) map[type.nom] = { revenue: 0, count: 0 };
+        map[type.nom].revenue += p.montant;
+        map[type.nom].count += 1;
+      }
+    });
+    return Object.entries(map)
+      .map(([nom, data]) => ({ nom, ...data }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 6);
+  }, [prestations, typesPrestations]);
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Hero Header */}
@@ -86,6 +104,9 @@ export default function Dashboard() {
         <RevenueChart prestations={prestations} />
         <ServicesPieChart data={prestationsPopulaires} />
       </div>
+
+      {/* Revenue by service type */}
+      <RevenueByServiceType data={revenueByServiceType} />
 
       {/* RDV + Stock Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
