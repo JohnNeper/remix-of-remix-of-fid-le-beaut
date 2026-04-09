@@ -64,6 +64,7 @@ export function useSubscriptionPlan() {
     hasCustomerSegmentation: plan.customerSegmentationEnabled,
     hasProfitEstimation: plan.profitEstimationEnabled,
     hasPrioritySupport: plan.prioritySupport,
+    hasCampaigns: plan.campaignsEnabled,
     isBasic: plan.name === 'basic',
     isPro: plan.name === 'pro',
     isPremium: plan.name === 'premium',

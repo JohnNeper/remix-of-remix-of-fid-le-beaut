@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Search, Package, AlertTriangle, Edit, Trash2, TrendingDown, TrendingUp, BarChart3 } from 'lucide-react';
+import { Plus, Search, Package, AlertTriangle, Edit, Trash2, TrendingDown, TrendingUp, BarChart3, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -106,10 +106,25 @@ function ProduitForm({ produit, onSubmit, onCancel }: { produit?: Produit; onSub
   );
 }
 
+function exportStockCSV(produits: Produit[]) {
+  let csv = 'Nom,Catégorie,Prix Achat,Prix Vente,Quantité,Seuil Alerte,Unité\n';
+  produits.forEach(p => {
+    csv += `"${p.nom}","${p.categorie}",${p.prixAchat},${p.prix},${p.quantite},${p.seuilAlerte},"${p.unite}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `stock-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success('Export stock CSV téléchargé');
+}
+
 export default function Stock() {
   const { produits, addProduit, updateProduit, deleteProduit, adjustStock, produitsEnAlerte, categories, valeurStock } = useStock();
   const { t } = useLanguage();
-  const { hasStockHistory, getUpgradePlan, plan } = useSubscriptionPlan();
+  const { hasStockHistory, hasExport, getUpgradePlan, plan } = useSubscriptionPlan();
   const { language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [catFilter, setCatFilter] = useState('all');
@@ -152,9 +167,16 @@ export default function Stock() {
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{t('stock.title')}</h1>
           <p className="text-muted-foreground">{produits.length} {t('stock.products')} • {t('stock.value')}: {formatFCFA(valeurStock)}</p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="gradient-primary">
-          <Plus className="h-4 w-4 mr-2" />{t('stock.newProduct')}
-        </Button>
+        <div className="flex gap-2">
+          {hasExport && (
+            <Button onClick={() => exportStockCSV(filtered)} variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />Export CSV
+            </Button>
+          )}
+          <Button onClick={() => setShowForm(true)} className="gradient-primary">
+            <Plus className="h-4 w-4 mr-2" />{t('stock.newProduct')}
+          </Button>
+        </div>
       </div>
 
       {/* Stats cards */}
@@ -188,6 +210,15 @@ export default function Stock() {
       {!hasStockHistory && (
         <UpgradePrompt
           feature={language === 'fr' ? 'Historique des mouvements de stock' : 'Stock movement history'}
+          currentPlan={plan.name}
+          requiredPlan={getUpgradePlan()}
+          type="banner"
+        />
+      )}
+
+      {!hasExport && (
+        <UpgradePrompt
+          feature={language === 'fr' ? 'Export des données de stock' : 'Stock data export'}
           currentPlan={plan.name}
           requiredPlan={getUpgradePlan()}
           type="banner"

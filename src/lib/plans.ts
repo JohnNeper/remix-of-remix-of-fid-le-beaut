@@ -9,7 +9,7 @@ export interface Plan {
   price: number; // FCFA/month
   maxCustomers: number; // -1 = unlimited
   maxStaff: number; // -1 = unlimited
-  maxCampaignsPerMonth: number; // -1 = unlimited
+  maxCampaignsPerMonth: number; // -1 = unlimited, 0 = disabled
   analyticsLevel: 'basic' | 'detailed' | 'advanced';
   automationEnabled: boolean;
   multiBranchEnabled: boolean;
@@ -21,6 +21,7 @@ export interface Plan {
   customerSegmentationEnabled: boolean;
   profitEstimationEnabled: boolean;
   prioritySupport: boolean;
+  campaignsEnabled: boolean; // whether campaigns module is accessible at all
   description: string;
   descriptionEn: string;
 }
@@ -33,7 +34,7 @@ export const PLANS: Record<PlanType, Plan> = {
     price: 5000,
     maxCustomers: 300,
     maxStaff: 2,
-    maxCampaignsPerMonth: 1,
+    maxCampaignsPerMonth: 0,
     analyticsLevel: 'basic',
     automationEnabled: false,
     multiBranchEnabled: false,
@@ -45,6 +46,7 @@ export const PLANS: Record<PlanType, Plan> = {
     customerSegmentationEnabled: false,
     profitEstimationEnabled: false,
     prioritySupport: false,
+    campaignsEnabled: false,
     description: 'Pour les petits salons (1-3 employés)',
     descriptionEn: 'For small salons (1-3 staff)',
   },
@@ -67,6 +69,7 @@ export const PLANS: Record<PlanType, Plan> = {
     customerSegmentationEnabled: true,
     profitEstimationEnabled: true,
     prioritySupport: false,
+    campaignsEnabled: true,
     description: 'Pour les salons en croissance',
     descriptionEn: 'For growing salons',
   },
@@ -89,6 +92,7 @@ export const PLANS: Record<PlanType, Plan> = {
     customerSegmentationEnabled: true,
     profitEstimationEnabled: true,
     prioritySupport: true,
+    campaignsEnabled: true,
     description: 'Pour les instituts structurés',
     descriptionEn: 'For structured beauty institutes',
   },

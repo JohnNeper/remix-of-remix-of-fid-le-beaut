@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Receipt, Wallet } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Receipt, Wallet, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
 import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
+import { CashReport } from '@/components/finances/CashReport';
 
 const depenseSchema = z.object({
   date: z.string().min(1),
@@ -111,7 +112,6 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
 
   const handleSubmit = () => {
     if (items.length === 0) { toast.error('Ajoutez au moins un article'); return; }
-    // Adjust stock for products
     items.filter(i => i.type === 'produit').forEach(i => adjustStock(i.referenceId, -i.quantite));
     onSubmit({ date: new Date().toISOString().split('T')[0], clientId: clientId || undefined, items, totalMontant: total, modePaiement });
   };
@@ -193,6 +193,61 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
   );
 }
 
+function exportFinancesCSV(ventes: Vente[], depenses: Depense[], label: string) {
+  let csv = 'Type,Date,Description,Montant\n';
+  ventes.forEach(v => {
+    csv += `Vente,${v.date},"${v.items.map(i => i.nom).join(', ')}",${v.totalMontant}\n`;
+  });
+  depenses.forEach(d => {
+    csv += `Dépense,${d.date},"${d.description}",-${d.montant}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rapport-caisse-${label.replace(/\s/g, '-')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success('Export CSV téléchargé');
+}
+
+function exportFinancesPDF(ventes: Vente[], depenses: Depense[], label: string) {
+  // Simple printable HTML export
+  const totalV = ventes.reduce((s, v) => s + v.totalMontant, 0);
+  const totalD = depenses.reduce((s, d) => s + d.montant, 0);
+  const formatFCFA = (n: number) => n.toLocaleString('fr-FR') + ' FCFA';
+  
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${label}</title>
+  <style>body{font-family:Arial,sans-serif;padding:20px;max-width:800px;margin:auto}
+  h1{font-size:18px;border-bottom:2px solid #d6336c;padding-bottom:8px}
+  table{width:100%;border-collapse:collapse;margin:16px 0}
+  th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:13px}
+  th{background:#f5f5f5}
+  .total{font-weight:bold;font-size:15px;margin:8px 0}
+  .positive{color:#16a34a}.negative{color:#dc2626}
+  </style></head><body>
+  <h1>📊 ${label}</h1>
+  <h2>Ventes</h2>
+  <table><tr><th>Date</th><th>Description</th><th>Montant</th></tr>
+  ${ventes.map(v => `<tr><td>${v.date}</td><td>${v.items.map(i => i.nom).join(', ')}</td><td class="positive">${formatFCFA(v.totalMontant)}</td></tr>`).join('')}
+  </table>
+  <p class="total positive">Total ventes: ${formatFCFA(totalV)}</p>
+  <h2>Dépenses</h2>
+  <table><tr><th>Date</th><th>Description</th><th>Montant</th></tr>
+  ${depenses.map(d => `<tr><td>${d.date}</td><td>${d.description}</td><td class="negative">${formatFCFA(d.montant)}</td></tr>`).join('')}
+  </table>
+  <p class="total negative">Total dépenses: ${formatFCFA(totalD)}</p>
+  <hr><p class="total">Solde: <span class="${totalV - totalD >= 0 ? 'positive' : 'negative'}">${formatFCFA(totalV - totalD)}</span></p>
+  </body></html>`;
+  
+  const w = window.open('', '_blank');
+  if (w) {
+    w.document.write(html);
+    w.document.close();
+    w.print();
+  }
+}
+
 export default function Finances() {
   const { ventes, depenses, addVente, addDepense, deleteVente, deleteDepense, stats } = useFinances();
   const { clients } = useClients();
@@ -217,6 +272,10 @@ export default function Finances() {
     setShowDepenseForm(false);
   };
 
+  const handleExportAllCSV = () => {
+    exportFinancesCSV(ventes, depenses, 'complet');
+  };
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -224,7 +283,12 @@ export default function Finances() {
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{t('finances.title')}</h1>
           <p className="text-muted-foreground">{t('finances.subtitle')}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {hasExport && (
+            <Button onClick={handleExportAllCSV} variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />Export CSV
+            </Button>
+          )}
           <Button onClick={() => setShowVenteForm(true)} className="gradient-primary"><ShoppingCart className="h-4 w-4 mr-2" />{t('finances.newSale')}</Button>
           <Button onClick={() => setShowDepenseForm(true)} variant="outline"><Receipt className="h-4 w-4 mr-2" />{t('finances.expense')}</Button>
         </div>
@@ -315,6 +379,7 @@ export default function Finances() {
         <TabsList>
           <TabsTrigger value="ventes">Ventes</TabsTrigger>
           <TabsTrigger value="depenses">Dépenses</TabsTrigger>
+          <TabsTrigger value="caisse">Rapport de caisse</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ventes">
@@ -367,6 +432,16 @@ export default function Finances() {
               </TableBody>
             </Table>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="caisse">
+          <CashReport
+            ventes={ventes}
+            depenses={depenses}
+            hasExport={hasExport}
+            onExportCSV={({ ventes, depenses, label }) => exportFinancesCSV(ventes, depenses, label)}
+            onExportPDF={({ ventes, depenses, label }) => exportFinancesPDF(ventes, depenses, label)}
+          />
         </TabsContent>
       </Tabs>
 
