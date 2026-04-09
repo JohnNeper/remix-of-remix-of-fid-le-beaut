@@ -102,7 +102,7 @@ export function LimitReachedBanner({ current, max, label, requiredPlan }: { curr
         </div>
         <Badge className={getPlanColor(requiredPlan.name)}>{requiredPlan.label}</Badge>
       </button>
-      <ContactUpgradeDialog open={showContact} onOpenChange={setShowContact} label={label} currentPlan="" requiredPlan={requiredPlan} />
+      <ContactUpgradeDialog open={showContact} onOpenChange={setShowContact} feature={label} currentPlan="" requiredPlan={requiredPlan} />
     </>
   );
 }
