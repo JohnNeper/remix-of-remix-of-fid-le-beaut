@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Receipt, Wallet, Download } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Receipt, Wallet, Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +23,8 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
 import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
-import { CashReport } from '@/components/finances/CashReport';
+import { GlobalCashReport } from '@/components/finances/GlobalCashReport';
+import { InvoiceGenerator } from '@/components/finances/InvoiceGenerator';
 
 const depenseSchema = z.object({
   date: z.string().min(1),
@@ -89,22 +90,18 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
 
   const addItem = () => {
     if (!selectedRef) return;
-    let nom = '';
-    let prixUnitaire = 0;
+    let nom = '', prixUnitaire = 0;
     if (itemType === 'produit') {
       const p = produits.find(p => p.id === selectedRef);
       if (!p) return;
-      nom = p.nom;
-      prixUnitaire = p.prix;
+      nom = p.nom; prixUnitaire = p.prix;
     } else {
       const t = typesPrestations.find(t => t.id === selectedRef);
       if (!t) return;
-      nom = t.nom;
-      prixUnitaire = t.prix;
+      nom = t.nom; prixUnitaire = t.prix;
     }
     setItems(prev => [...prev, { type: itemType, referenceId: selectedRef, nom, quantite: itemQty, prixUnitaire, montant: prixUnitaire * itemQty }]);
-    setSelectedRef('');
-    setItemQty(1);
+    setSelectedRef(''); setItemQty(1);
   };
 
   const removeItem = (idx: number) => setItems(prev => prev.filter((_, i) => i !== idx));
@@ -195,28 +192,20 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
 
 function exportFinancesCSV(ventes: Vente[], depenses: Depense[], label: string) {
   let csv = 'Type,Date,Description,Montant\n';
-  ventes.forEach(v => {
-    csv += `Vente,${v.date},"${v.items.map(i => i.nom).join(', ')}",${v.totalMontant}\n`;
-  });
-  depenses.forEach(d => {
-    csv += `Dépense,${d.date},"${d.description}",-${d.montant}\n`;
-  });
+  ventes.forEach(v => { csv += `Vente,${v.date},"${v.items.map(i => i.nom).join(', ')}",${v.totalMontant}\n`; });
+  depenses.forEach(d => { csv += `Dépense,${d.date},"${d.description}",-${d.montant}\n`; });
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
+  const a = document.createElement('a'); a.href = url;
   a.download = `rapport-caisse-${label.replace(/\s/g, '-')}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  a.click(); URL.revokeObjectURL(url);
   toast.success('Export CSV téléchargé');
 }
 
 function exportFinancesPDF(ventes: Vente[], depenses: Depense[], label: string) {
-  // Simple printable HTML export
   const totalV = ventes.reduce((s, v) => s + v.totalMontant, 0);
   const totalD = depenses.reduce((s, d) => s + d.montant, 0);
-  const formatFCFA = (n: number) => n.toLocaleString('fr-FR') + ' FCFA';
-  
+  const fmtFCFA = (n: number) => n.toLocaleString('fr-FR') + ' FCFA';
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${label}</title>
   <style>body{font-family:Arial,sans-serif;padding:20px;max-width:800px;margin:auto}
   h1{font-size:18px;border-bottom:2px solid #d6336c;padding-bottom:8px}
@@ -229,23 +218,16 @@ function exportFinancesPDF(ventes: Vente[], depenses: Depense[], label: string) 
   <h1>📊 ${label}</h1>
   <h2>Ventes</h2>
   <table><tr><th>Date</th><th>Description</th><th>Montant</th></tr>
-  ${ventes.map(v => `<tr><td>${v.date}</td><td>${v.items.map(i => i.nom).join(', ')}</td><td class="positive">${formatFCFA(v.totalMontant)}</td></tr>`).join('')}
-  </table>
-  <p class="total positive">Total ventes: ${formatFCFA(totalV)}</p>
+  ${ventes.map(v => `<tr><td>${v.date}</td><td>${v.items.map(i => i.nom).join(', ')}</td><td class="positive">${fmtFCFA(v.totalMontant)}</td></tr>`).join('')}
+  </table><p class="total positive">Total ventes: ${fmtFCFA(totalV)}</p>
   <h2>Dépenses</h2>
   <table><tr><th>Date</th><th>Description</th><th>Montant</th></tr>
-  ${depenses.map(d => `<tr><td>${d.date}</td><td>${d.description}</td><td class="negative">${formatFCFA(d.montant)}</td></tr>`).join('')}
-  </table>
-  <p class="total negative">Total dépenses: ${formatFCFA(totalD)}</p>
-  <hr><p class="total">Solde: <span class="${totalV - totalD >= 0 ? 'positive' : 'negative'}">${formatFCFA(totalV - totalD)}</span></p>
+  ${depenses.map(d => `<tr><td>${d.date}</td><td>${d.description}</td><td class="negative">${fmtFCFA(d.montant)}</td></tr>`).join('')}
+  </table><p class="total negative">Total dépenses: ${fmtFCFA(totalD)}</p>
+  <hr><p class="total">Solde: <span class="${totalV - totalD >= 0 ? 'positive' : 'negative'}">${fmtFCFA(totalV - totalD)}</span></p>
   </body></html>`;
-  
   const w = window.open('', '_blank');
-  if (w) {
-    w.document.write(html);
-    w.document.close();
-    w.print();
-  }
+  if (w) { w.document.write(html); w.document.close(); w.print(); }
 }
 
 export default function Finances() {
@@ -256,24 +238,23 @@ export default function Finances() {
   const { language } = useLanguage();
   const [showVenteForm, setShowVenteForm] = useState(false);
   const [showDepenseForm, setShowDepenseForm] = useState(false);
+  const [invoiceVente, setInvoiceVente] = useState<Vente | null>(null);
 
   const formatFCFA = (n: number) => n.toLocaleString('fr-FR') + ' FCFA';
   const getClientName = (id?: string) => id ? clients.find(c => c.id === id)?.nom || 'Client inconnu' : 'Sans client';
 
   const handleAddVente = (vente: Omit<Vente, 'id'>) => {
-    addVente(vente);
+    const newVente = addVente(vente);
     toast.success('Vente enregistrée !');
     setShowVenteForm(false);
+    // Auto-show invoice
+    setInvoiceVente(newVente);
   };
 
   const handleAddDepense = (data: z.infer<typeof depenseSchema>) => {
     addDepense({ date: data.date, categorie: data.categorie, description: data.description, montant: data.montant });
     toast.success('Dépense enregistrée !');
     setShowDepenseForm(false);
-  };
-
-  const handleExportAllCSV = () => {
-    exportFinancesCSV(ventes, depenses, 'complet');
   };
 
   return (
@@ -285,7 +266,7 @@ export default function Finances() {
         </div>
         <div className="flex gap-2 flex-wrap">
           {hasExport && (
-            <Button onClick={handleExportAllCSV} variant="outline" size="sm">
+            <Button onClick={() => exportFinancesCSV(ventes, depenses, 'complet')} variant="outline" size="sm">
               <Download className="h-4 w-4 mr-2" />Export CSV
             </Button>
           )}
@@ -324,22 +305,11 @@ export default function Finances() {
         </Card>
       </div>
 
-      {/* Plan upgrade prompts */}
       {!hasExport && (
-        <UpgradePrompt
-          feature={language === 'fr' ? 'Export des données (Excel / CSV)' : 'Data export (Excel / CSV)'}
-          currentPlan={plan.name}
-          requiredPlan={getUpgradePlan()}
-          type="banner"
-        />
+        <UpgradePrompt feature={language === 'fr' ? 'Export des données (Excel / CSV)' : 'Data export (Excel / CSV)'} currentPlan={plan.name} requiredPlan={getUpgradePlan()} type="banner" />
       )}
       {!hasProfitEstimation && (
-        <UpgradePrompt
-          feature={language === 'fr' ? 'Estimation détaillée des bénéfices' : 'Detailed profit estimation'}
-          currentPlan={plan.name}
-          requiredPlan={getUpgradePlan()}
-          type="banner"
-        />
+        <UpgradePrompt feature={language === 'fr' ? 'Estimation détaillée des bénéfices' : 'Detailed profit estimation'} currentPlan={plan.name} requiredPlan={getUpgradePlan()} type="banner" />
       )}
 
       {/* Revenue breakdown */}
@@ -347,15 +317,11 @@ export default function Finances() {
         <Card className="card-shadow">
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Répartition revenus</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Prestations</span><span className="font-semibold">{formatFCFA(stats.revenusPrestations)}</span>
-            </div>
+            <div className="flex justify-between items-center"><span className="text-sm">Prestations</span><span className="font-semibold">{formatFCFA(stats.revenusPrestations)}</span></div>
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
               <div className="h-full bg-primary rounded-full" style={{ width: `${stats.totalRevenus ? (stats.revenusPrestations / stats.totalRevenus * 100) : 0}%` }} />
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Produits</span><span className="font-semibold">{formatFCFA(stats.revenusProduits)}</span>
-            </div>
+            <div className="flex justify-between items-center"><span className="text-sm">Produits</span><span className="font-semibold">{formatFCFA(stats.revenusProduits)}</span></div>
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
               <div className="h-full bg-accent rounded-full" style={{ width: `${stats.totalRevenus ? (stats.revenusProduits / stats.totalRevenus * 100) : 0}%` }} />
             </div>
@@ -379,7 +345,7 @@ export default function Finances() {
         <TabsList>
           <TabsTrigger value="ventes">Ventes</TabsTrigger>
           <TabsTrigger value="depenses">Dépenses</TabsTrigger>
-          <TabsTrigger value="caisse">Rapport de caisse</TabsTrigger>
+          <TabsTrigger value="caisse">📊 Rapport de caisse</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ventes">
@@ -392,6 +358,7 @@ export default function Finances() {
                   <TableHead className="hidden md:table-cell">Articles</TableHead>
                   <TableHead>Paiement</TableHead>
                   <TableHead className="text-right">Montant</TableHead>
+                  <TableHead className="text-right">Facture</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -402,6 +369,11 @@ export default function Finances() {
                     <TableCell className="hidden md:table-cell text-muted-foreground text-sm">{v.items.map(i => i.nom).join(', ')}</TableCell>
                     <TableCell><Badge variant="secondary">{modePaiementLabels[v.modePaiement]}</Badge></TableCell>
                     <TableCell className="text-right font-semibold">{formatFCFA(v.totalMontant)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setInvoiceVente(v)}>
+                        <FileText className="h-4 w-4 text-primary" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -435,7 +407,7 @@ export default function Finances() {
         </TabsContent>
 
         <TabsContent value="caisse">
-          <CashReport
+          <GlobalCashReport
             ventes={ventes}
             depenses={depenses}
             hasExport={hasExport}
@@ -458,6 +430,15 @@ export default function Finances() {
           <DepenseForm onSubmit={handleAddDepense} onCancel={() => setShowDepenseForm(false)} />
         </DialogContent>
       </Dialog>
+
+      {/* Invoice dialog */}
+      {invoiceVente && (
+        <InvoiceGenerator
+          vente={invoiceVente}
+          isOpen={!!invoiceVente}
+          onClose={() => setInvoiceVente(null)}
+        />
+      )}
     </div>
   );
 }

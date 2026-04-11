@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,6 +15,8 @@ import { usePrestations } from '@/hooks/usePrestations';
 import { useClients } from '@/hooks/useClients';
 import { useFinances } from '@/hooks/useFinances';
 import { toast } from '@/hooks/use-toast';
+import { InvoiceGenerator } from '@/components/finances/InvoiceGenerator';
+import { Vente } from '@/types';
 
 const prestationSchema = z.object({
   clientId: z.string().min(1, 'Veuillez sélectionner une cliente'),
@@ -41,16 +43,11 @@ export function NouvellePrestation({ onClose }: NouvellePrestationProps) {
   const { typesPrestations, addPrestation, getTypePrestation } = usePrestations();
   const { clients, updateClientStats } = useClients();
   const { addVente } = useFinances();
+  const [invoiceVente, setInvoiceVente] = useState<Vente | null>(null);
 
   const form = useForm<PrestationFormData>({
     resolver: zodResolver(prestationSchema),
-    defaultValues: {
-      clientId: '',
-      typePrestationId: '',
-      employe: '',
-      notes: '',
-      modePaiement: 'especes',
-    },
+    defaultValues: { clientId: '', typePrestationId: '', employe: '', notes: '', modePaiement: 'especes' },
   });
 
   const selectedType = getTypePrestation(form.watch('typePrestationId'));
@@ -59,41 +56,32 @@ export function NouvellePrestation({ onClose }: NouvellePrestationProps) {
     const type = getTypePrestation(data.typePrestationId);
     if (!type) return;
 
-    // 1. Add prestation
-    addPrestation({
-      clientId: data.clientId,
-      typePrestationId: data.typePrestationId,
-      employe: data.employe,
-      notes: data.notes,
-      montant: type.prix,
-    });
-
-    // 2. Update client stats
+    addPrestation({ clientId: data.clientId, typePrestationId: data.typePrestationId, employe: data.employe, notes: data.notes, montant: type.prix });
     updateClientStats(data.clientId, type.prix);
 
-    // 3. Auto-add to finances as a sale
-    addVente({
+    const newVente = addVente({
       date: new Date().toISOString().split('T')[0],
       clientId: data.clientId,
-      items: [{
-        type: 'prestation',
-        referenceId: type.id,
-        nom: type.nom,
-        quantite: 1,
-        prixUnitaire: type.prix,
-        montant: type.prix,
-      }],
+      items: [{ type: 'prestation', referenceId: type.id, nom: type.nom, quantite: 1, prixUnitaire: type.prix, montant: type.prix }],
       totalMontant: type.prix,
       modePaiement: data.modePaiement,
     });
 
-    toast({
-      title: 'Prestation enregistrée',
-      description: `${type.nom} — ${type.prix.toLocaleString()} FCFA ajouté aux finances`,
-    });
+    toast({ title: 'Prestation enregistrée', description: `${type.nom} — ${type.prix.toLocaleString()} FCFA ajouté aux finances` });
 
-    onClose();
+    // Show invoice
+    setInvoiceVente(newVente);
   };
+
+  if (invoiceVente) {
+    return (
+      <InvoiceGenerator
+        vente={invoiceVente}
+        isOpen={true}
+        onClose={() => { setInvoiceVente(null); onClose(); }}
+      />
+    );
+  }
 
   return (
     <Form {...form}>
@@ -167,7 +155,7 @@ export function NouvellePrestation({ onClose }: NouvellePrestationProps) {
 
         <div className="flex gap-3 pt-4">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">Annuler</Button>
-          <Button type="submit" className="flex-1 gradient-primary">Enregistrer</Button>
+          <Button type="submit" className="flex-1 gradient-primary">Enregistrer & Facturer</Button>
         </div>
       </form>
     </Form>
