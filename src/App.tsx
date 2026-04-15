@@ -22,6 +22,7 @@ import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 import SubscriptionExpired from "@/pages/SubscriptionExpired";
 import NotFound from "./pages/NotFound";
+import { PWAInstallPrompt } from "@/components/layout/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <PWAInstallPrompt />
       <BrowserRouter>
         <LanguageProvider>
           <AuthProvider>
