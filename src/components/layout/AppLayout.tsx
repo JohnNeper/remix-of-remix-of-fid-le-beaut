@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -134,50 +135,82 @@ function Sidebar({ className, onItemClick }: { className?: string; onItemClick?:
 
 export default function AppLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:block w-64 border-r border-border fixed inset-y-0 left-0 z-30">
-        <Sidebar />
-      </div>
-
-      {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-card border-b border-border">
-        <div className="flex items-center justify-between p-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <span className="font-bold text-foreground">BeautyFlow</span>
-          </Link>
-
-          <div className="flex items-center gap-1">
-            <LanguageToggle />
-            <NotificationCenter />
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-0">
-                <Sidebar onItemClick={() => setMobileMenuOpen(false)} />
-              </SheetContent>
-            </Sheet>
-          </div>
+      {/* Desktop Sidebar - hidden on mobile devices */}
+      {!isMobile && (
+        <div className="hidden lg:block w-64 border-r border-border fixed inset-y-0 left-0 z-30">
+          <Sidebar />
         </div>
-      </header>
+      )}
 
-      {/* Desktop top bar with language toggle + notifications */}
-      <div className="hidden lg:flex fixed top-0 left-64 right-0 z-20 h-14 bg-card border-b border-border items-center justify-end px-6 gap-2">
-        <LanguageToggle />
-        <NotificationCenter />
-      </div>
+      {/* Mobile Header - shown on mobile devices even in desktop mode */}
+      {isMobile ? (
+        <header className="fixed top-0 left-0 right-0 z-40 bg-card border-b border-border">
+          <div className="flex items-center justify-between p-4">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <span className="font-bold text-foreground">BeautyFlow</span>
+            </Link>
+
+            <div className="flex items-center gap-1">
+              <LanguageToggle />
+              <NotificationCenter />
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-72 p-0">
+                  <Sidebar onItemClick={() => setMobileMenuOpen(false)} />
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+        </header>
+      ) : (
+        <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-card border-b border-border">
+          <div className="flex items-center justify-between p-4">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <span className="font-bold text-foreground">BeautyFlow</span>
+            </Link>
+            <div className="flex items-center gap-1">
+              <LanguageToggle />
+              <NotificationCenter />
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-72 p-0">
+                  <Sidebar onItemClick={() => setMobileMenuOpen(false)} />
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+        </header>
+      )}
+
+      {/* Desktop top bar */}
+      {!isMobile && (
+        <div className="hidden lg:flex fixed top-0 left-64 right-0 z-20 h-14 bg-card border-b border-border items-center justify-end px-6 gap-2">
+          <LanguageToggle />
+          <NotificationCenter />
+        </div>
+      )}
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64">
-        <div className="pt-16 lg:pt-14 min-h-screen">
+      <main className={isMobile ? "flex-1" : "flex-1 lg:ml-64"}>
+        <div className={isMobile ? "pt-16 min-h-screen" : "pt-16 lg:pt-14 min-h-screen"}>
           <Outlet />
         </div>
       </main>
