@@ -22,6 +22,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageToggle } from '@/components/layout/LanguageToggle';
 import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
 import { getPlanColor, formatPlanPrice } from '@/lib/plans';
+import { BookingSettingsCard } from '@/components/settings/BookingSettingsCard';
 
 const salonSchema = z.object({
   nom: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -95,6 +96,9 @@ export default function Parametres() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Public booking page (full width) */}
+        <BookingSettingsCard />
+
         {/* Plan info card */}
         <Card className="card-shadow border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
           <CardHeader>
