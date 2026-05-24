@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { updateSalonAccount, slugify, getSalonBySlug } from '@/lib/auth';
+import { updateSalonAccount, slugify, getSalonBySlug, getSalonAccounts } from '@/lib/auth';
 import { getBookingPublicUrl } from '@/lib/booking';
 
 const PALETTES = [
@@ -21,8 +21,13 @@ const PALETTES = [
 ];
 
 export function BookingSettingsCard() {
-  const { currentSalon } = useAuth();
-  const [, force] = useState(0);
+  const { session } = useAuth();
+  const [tick, force] = useState(0);
+  const currentSalon = session?.salonId
+    ? getSalonAccounts().find(s => s.id === session.salonId)
+    : null;
+  // re-read on tick changes
+  void tick;
   if (!currentSalon) return null;
 
   const branding = currentSalon.branding || {};
