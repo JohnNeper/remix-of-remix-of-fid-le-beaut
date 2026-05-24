@@ -29,6 +29,30 @@ export interface SalonAccount {
   joursAbonnement: number; // 30
   plan: PlanType; // subscription tier
   users?: SalonUser[]; // owner + staff
+  // ===== Public booking (multi-tenant white-label) =====
+  slug?: string; // unique URL identifier e.g. "neyohair"
+  branding?: SalonBranding;
+  bookingSettings?: SalonBookingSettings;
+}
+
+export interface SalonBranding {
+  logoUrl?: string;
+  bannerUrl?: string;
+  primaryColor?: string;  // HSL string e.g. "350 80% 55%"
+  secondaryColor?: string; // HSL string
+  description?: string;
+  location?: string;
+  hours?: string;
+  instagram?: string;
+}
+
+export interface SalonBookingSettings {
+  autoConfirm: boolean;
+  allowGuest: boolean;
+  slotDurationMin: number; // default 30
+  openingHour: number; // 0-23, default 9
+  closingHour: number; // 0-23, default 19
+  closedDays?: number[]; // 0=Sunday, 6=Saturday
 }
 
 export interface AdminUser {

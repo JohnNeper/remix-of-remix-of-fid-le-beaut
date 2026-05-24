@@ -36,11 +36,80 @@ export function verifyAdmin(email: string, password: string): boolean {
 
 // ===== Salons =====
 export function getSalonAccounts(): SalonAccount[] {
-  return getStorageItem(SALONS_KEY, []);
+  const salons = getStorageItem<SalonAccount[]>(SALONS_KEY, []);
+  // Backfill slug + branding + bookingSettings for legacy accounts
+  let mutated = false;
+  const usedSlugs = new Set<string>();
+  for (const s of salons) {
+    if (!s.slug) {
+      const root = slugify(s.nom);
+      let candidate = root;
+      let n = 1;
+      while (usedSlugs.has(candidate)) { n += 1; candidate = `${root}-${n}`; }
+      s.slug = candidate;
+      mutated = true;
+    }
+    usedSlugs.add(s.slug);
+    if (!s.branding) {
+      s.branding = { description: '', location: s.adresse || '', hours: '' };
+      mutated = true;
+    }
+    if (!s.bookingSettings) {
+      s.bookingSettings = {
+        autoConfirm: false, allowGuest: true, slotDurationMin: 30,
+        openingHour: 9, closingHour: 19, closedDays: [0],
+      };
+      mutated = true;
+    }
+  }
+  if (mutated) setStorageItem(SALONS_KEY, salons);
+  return salons;
 }
 
 export function saveSalonAccounts(salons: SalonAccount[]): void {
   setStorageItem(SALONS_KEY, salons);
+}
+
+// ===== Slug helpers (public booking) =====
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 30) || 'salon';
+}
+
+export function generateUniqueSlug(base: string, excludeId?: string): string {
+  const salons = getSalonAccounts();
+  const root = slugify(base);
+  let candidate = root;
+  let n = 1;
+  while (salons.some(s => s.slug === candidate && s.id !== excludeId)) {
+    n += 1;
+    candidate = `${root}-${n}`;
+  }
+  return candidate;
+}
+
+export function getSalonBySlug(slug: string): SalonAccount | null {
+  if (!slug) return null;
+  const target = slug.toLowerCase();
+  return getSalonAccounts().find(s => (s.slug || '').toLowerCase() === target) || null;
+}
+
+export function updateSalonAccount(salonId: string, updates: Partial<SalonAccount>): SalonAccount | null {
+  const salons = getSalonAccounts();
+  const i = salons.findIndex(s => s.id === salonId);
+  if (i < 0) return null;
+  // Enforce slug uniqueness if changed
+  if (updates.slug && updates.slug !== salons[i].slug) {
+    updates.slug = generateUniqueSlug(updates.slug, salonId);
+  }
+  salons[i] = { ...salons[i], ...updates };
+  saveSalonAccounts(salons);
+  return salons[i];
 }
 
 export function createSalonAccount(data: Omit<SalonAccount, 'id' | 'dateCreation' | 'abonnementActif' | 'montantAbonnement' | 'joursAbonnement' | 'users'>): SalonAccount {
@@ -72,6 +141,20 @@ export function createSalonAccount(data: Omit<SalonAccount, 'id' | 'dateCreation
     joursAbonnement: 30,
     plan: selectedPlan.name,
     users: [ownerUser],
+    slug: generateUniqueSlug(data.nom),
+    branding: {
+      description: '',
+      location: data.adresse || '',
+      hours: '',
+    },
+    bookingSettings: {
+      autoConfirm: false,
+      allowGuest: true,
+      slotDurationMin: 30,
+      openingHour: 9,
+      closingHour: 19,
+      closedDays: [0],
+    },
   };
   salons.push(newSalon);
   saveSalonAccounts(salons);
