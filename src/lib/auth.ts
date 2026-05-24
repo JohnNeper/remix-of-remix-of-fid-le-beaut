@@ -36,7 +36,34 @@ export function verifyAdmin(email: string, password: string): boolean {
 
 // ===== Salons =====
 export function getSalonAccounts(): SalonAccount[] {
-  return getStorageItem(SALONS_KEY, []);
+  const salons = getStorageItem<SalonAccount[]>(SALONS_KEY, []);
+  // Backfill slug + branding + bookingSettings for legacy accounts
+  let mutated = false;
+  const usedSlugs = new Set<string>();
+  for (const s of salons) {
+    if (!s.slug) {
+      const root = slugify(s.nom);
+      let candidate = root;
+      let n = 1;
+      while (usedSlugs.has(candidate)) { n += 1; candidate = `${root}-${n}`; }
+      s.slug = candidate;
+      mutated = true;
+    }
+    usedSlugs.add(s.slug);
+    if (!s.branding) {
+      s.branding = { description: '', location: s.adresse || '', hours: '' };
+      mutated = true;
+    }
+    if (!s.bookingSettings) {
+      s.bookingSettings = {
+        autoConfirm: false, allowGuest: true, slotDurationMin: 30,
+        openingHour: 9, closingHour: 19, closedDays: [0],
+      };
+      mutated = true;
+    }
+  }
+  if (mutated) setStorageItem(SALONS_KEY, salons);
+  return salons;
 }
 
 export function saveSalonAccounts(salons: SalonAccount[]): void {
