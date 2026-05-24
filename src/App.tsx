@@ -23,6 +23,10 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import SubscriptionExpired from "@/pages/SubscriptionExpired";
 import NotFound from "./pages/NotFound";
 import { PWAInstallPrompt } from "@/components/layout/PWAInstallPrompt";
+import PublicBookingLanding from "@/pages/PublicBookingLanding";
+import PublicBookingFlow from "@/pages/PublicBookingFlow";
+import PublicBookingConfirmation from "@/pages/PublicBookingConfirmation";
+import PublicBookingNotFound from "@/pages/PublicBookingNotFound";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +57,12 @@ function AppRoutes() {
       {/* Auth */}
       <Route path="/login" element={<Login />} />
       <Route path="/admin/login" element={<AdminLogin />} />
+
+      {/* Public booking (no auth, multi-tenant by slug) */}
+      <Route path="/booking/not-found" element={<PublicBookingNotFound />} />
+      <Route path="/booking/:slug" element={<PublicBookingLanding />} />
+      <Route path="/booking/:slug/book" element={<PublicBookingFlow />} />
+      <Route path="/booking/:slug/confirmation/:ref" element={<PublicBookingConfirmation />} />
 
       {/* Admin */}
       <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
