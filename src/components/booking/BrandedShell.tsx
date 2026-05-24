@@ -32,11 +32,10 @@ export function BrandedShell({ salon, children }: Props) {
     <div
       className="min-h-screen bg-background text-foreground"
       style={{
-        // @ts-expect-error CSS vars
-        '--primary': primary,
-        '--accent': secondary,
-        '--ring': primary,
-      } as React.CSSProperties}
+        ['--primary' as any]: primary,
+        ['--accent' as any]: secondary,
+        ['--ring' as any]: primary,
+      }}
     >
       {children}
     </div>
