@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { seedDemoData } from "./lib/demo-seed";
 
 // PWA: Guard against iframe/preview contexts
 const isInIframe = (() => {
@@ -20,5 +21,8 @@ if (isPreviewHost || isInIframe) {
     registrations.forEach((r) => r.unregister());
   });
 }
+
+// Seed a demo salon + sample data on first launch (idempotent)
+seedDemoData();
 
 createRoot(document.getElementById("root")!).render(<App />);

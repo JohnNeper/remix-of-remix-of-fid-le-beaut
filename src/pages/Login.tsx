@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, LogIn, Shield, Eye, EyeOff, Crown, User } from 'lucide-react';
+import { Sparkles, LogIn, Shield, Eye, EyeOff, Crown, User, Calendar, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -124,6 +124,41 @@ export default function Login() {
             {t('login.admin')}
           </Button>
         </div>
+
+        {/* Customer entry — direct booking */}
+        <Card className="bg-card/70 backdrop-blur-xl border-primary-foreground/10">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Calendar className="h-4 w-4 text-primary" />
+              Vous êtes cliente ? Réservez en ligne
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const data = new FormData(e.currentTarget);
+                const slug = String(data.get('slug') || '').trim().toLowerCase();
+                if (slug) navigate(`/booking/${slug}`);
+              }}
+              className="flex gap-2"
+            >
+              <div className="flex-1 flex items-center gap-1 rounded-lg border bg-background/60 px-3 h-10 text-sm">
+                <span className="text-muted-foreground text-xs">/booking/</span>
+                <input
+                  name="slug"
+                  defaultValue="demo"
+                  placeholder="nom-du-salon"
+                  className="flex-1 bg-transparent outline-none font-mono text-sm"
+                />
+              </div>
+              <Button type="submit" size="sm" className="gradient-primary">
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </form>
+            <p className="text-[11px] text-muted-foreground">
+              Essai démo : <button type="button" onClick={() => navigate('/booking/demo')} className="text-primary underline underline-offset-2">/booking/demo</button>
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
