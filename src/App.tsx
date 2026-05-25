@@ -27,12 +27,13 @@ import PublicBookingLanding from "@/pages/PublicBookingLanding";
 import PublicBookingFlow from "@/pages/PublicBookingFlow";
 import PublicBookingConfirmation from "@/pages/PublicBookingConfirmation";
 import PublicBookingNotFound from "@/pages/PublicBookingNotFound";
+import PublicExplorer from "@/pages/PublicExplorer";
 
 const queryClient = new QueryClient();
 
 function SalonGuard({ children }: { children: React.ReactNode }) {
   const { session, isSubscriptionValid } = useAuth();
-  if (!session || session.type !== 'salon') return <Navigate to="/login" replace />;
+  if (!session || session.type !== 'salon') return <Navigate to="/explorer" replace />;
   if (!isSubscriptionValid) return <SubscriptionExpired />;
   return <>{children}</>;
 }
@@ -59,6 +60,7 @@ function AppRoutes() {
       <Route path="/admin/login" element={<AdminLogin />} />
 
       {/* Public booking (no auth, multi-tenant by slug) */}
+      <Route path="/explorer" element={<PublicExplorer />} />
       <Route path="/booking/not-found" element={<PublicBookingNotFound />} />
       <Route path="/booking/:slug" element={<PublicBookingLanding />} />
       <Route path="/booking/:slug/book" element={<PublicBookingFlow />} />
