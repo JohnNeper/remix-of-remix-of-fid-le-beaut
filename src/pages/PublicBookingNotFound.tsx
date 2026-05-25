@@ -15,7 +15,7 @@ export default function PublicBookingNotFound() {
           Le lien de réservation que vous avez utilisé n'existe pas ou n'est plus actif.
         </p>
         <Button asChild className="mt-6">
-          <Link to="/">Retour à l'accueil</Link>
+          <Link to="/explorer">Voir tous les salons</Link>
         </Button>
       </div>
     </div>
