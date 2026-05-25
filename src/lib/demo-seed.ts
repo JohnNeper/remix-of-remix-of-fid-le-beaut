@@ -5,9 +5,7 @@ import type { SalonAccount, SalonUser } from '@/types/auth';
 import type { RendezVous } from '@/types/rendez-vous';
 import type { Produit, Vente, Depense } from '@/types';
 
-const DEMO_FLAG = 'beautyflow_demo_seeded_v1';
-const DEMO_SLUG = 'demo';
-const DEMO_EMAIL = 'demo@beautyflow.com';
+const DEMO_FLAG = 'beautyflow_demo_seeded_v2';
 const DEMO_PASSWORD = 'demo2025';
 
 function simpleHash(str: string): string {
@@ -36,81 +34,117 @@ export function seedDemoData(): void {
   if (localStorage.getItem(DEMO_FLAG)) return;
 
   const existing = getSalonAccounts();
-  // If a salon with this slug already exists, just mark seeded and bail
-  if (existing.some(s => s.slug === DEMO_SLUG)) {
-    localStorage.setItem(DEMO_FLAG, '1');
-    return;
-  }
-
-  const salonId = crypto.randomUUID();
-  const ownerId = crypto.randomUUID();
   const today = new Date().toISOString().split('T')[0];
   const hashedPwd = simpleHash(DEMO_PASSWORD);
 
-  const owner: SalonUser = {
-    id: ownerId,
-    salonId,
-    nom: 'Sophie Demo',
-    email: DEMO_EMAIL,
-    motDePasse: hashedPwd,
-    role: 'owner',
-    telephone: '+237 690 000 000',
-    dateCreation: today,
-  };
-
-  const demoSalon: SalonAccount = {
-    id: salonId,
-    nom: 'Salon Élégance Demo',
-    proprietaire: 'Sophie Demo',
-    telephone: '+237 690 000 000',
-    adresse: 'Bonapriso, Douala',
-    email: DEMO_EMAIL,
-    motDePasse: hashedPwd,
-    dateCreation: today,
-    dernierPaiement: today,
-    abonnementActif: true,
-    montantAbonnement: 15000,
-    joursAbonnement: 30,
-    plan: 'pro',
-    users: [owner],
-    slug: DEMO_SLUG,
-    branding: {
-      primaryColor: '350 75% 55%',
-      secondaryColor: '25 95% 60%',
-      description:
-        "Salon premium expert en tresses, soins capillaires, maquillage et bien-être. Une expérience luxueuse pensée pour vous.",
-      location: 'Bonapriso, Douala — face pharmacie centrale',
-      hours: 'Lun-Sam 9h-19h • Dimanche fermé',
-      instagram: '@salon.elegance.demo',
+  const demoSalonsSpecs = [
+    {
+      slug: 'elegance',
+      nom: 'Salon Élégance',
+      proprietaire: 'Sophie Mboma',
+      email: 'elegance@beautyflow.com',
+      telephone: '+237 690 000 001',
+      adresse: 'Bonapriso, Douala',
+      branding: {
+        primaryColor: '350 75% 55%',
+        secondaryColor: '25 95% 60%',
+        description:
+          "Salon premium expert en tresses, soins capillaires, maquillage et bien-être. Une expérience luxueuse pensée pour vous.",
+        location: 'Bonapriso, Douala — face pharmacie centrale',
+        hours: 'Lun-Sam 9h-19h • Dimanche fermé',
+        instagram: '@salon.elegance',
+      },
     },
-    bookingSettings: {
-      autoConfirm: false,
-      allowGuest: true,
-      slotDurationMin: 30,
-      openingHour: 9,
-      closingHour: 19,
-      closedDays: [0],
+    {
+      slug: 'glow-studio',
+      nom: 'Glow Studio',
+      proprietaire: 'Aïcha Ngono',
+      email: 'glow@beautyflow.com',
+      telephone: '+237 690 000 002',
+      adresse: 'Akwa, Douala',
+      branding: {
+        primaryColor: '280 70% 55%',
+        secondaryColor: '180 65% 50%',
+        description:
+          "Studio moderne dédié à la beauté du visage, des ongles et au maquillage professionnel pour tous vos événements.",
+        location: 'Akwa, Douala — Rue Joss',
+        hours: 'Mar-Dim 10h-20h • Lundi fermé',
+        instagram: '@glow.studio',
+      },
     },
-  };
+    {
+      slug: 'royal-beauty',
+      nom: 'Royal Beauty Lounge',
+      proprietaire: 'Mireille Etoundi',
+      email: 'royal@beautyflow.com',
+      telephone: '+237 690 000 003',
+      adresse: 'Bastos, Yaoundé',
+      branding: {
+        primaryColor: '40 90% 50%',
+        secondaryColor: '15 80% 45%',
+        description:
+          "Lounge haut de gamme spécialisé en extensions, perruques sur-mesure, soins du corps et massages relaxants.",
+        location: 'Bastos, Yaoundé — face ambassade',
+        hours: 'Tous les jours 9h-21h',
+        instagram: '@royal.beauty.lounge',
+      },
+    },
+  ];
 
-  saveSalonAccounts([...existing, demoSalon]);
+  const createdSalons: SalonAccount[] = [];
 
-  // ===== Tenant data =====
-  const k = (key: string) => tenantStorageKey(salonId, key);
+  for (const spec of demoSalonsSpecs) {
+    if (existing.some(s => s.slug === spec.slug)) continue;
+    const salonId = crypto.randomUUID();
+    const owner: SalonUser = {
+      id: crypto.randomUUID(),
+      salonId,
+      nom: spec.proprietaire,
+      email: spec.email,
+      motDePasse: hashedPwd,
+      role: 'owner',
+      telephone: spec.telephone,
+      dateCreation: today,
+    };
+    createdSalons.push({
+      id: salonId,
+      nom: spec.nom,
+      proprietaire: spec.proprietaire,
+      telephone: spec.telephone,
+      adresse: spec.adresse,
+      email: spec.email,
+      motDePasse: hashedPwd,
+      dateCreation: today,
+      dernierPaiement: today,
+      abonnementActif: true,
+      montantAbonnement: 15000,
+      joursAbonnement: 30,
+      plan: 'pro',
+      users: [owner],
+      slug: spec.slug,
+      branding: spec.branding,
+      bookingSettings: {
+        autoConfirm: false,
+        allowGuest: true,
+        slotDurationMin: 30,
+        openingHour: 9,
+        closingHour: 19,
+        closedDays: [0],
+      },
+    });
+  }
 
-  // Services catalogue
-  setStorageItem(k(STORAGE_KEYS.TYPES_PRESTATIONS), defaultTypesPrestations);
+  saveSalonAccounts([...existing, ...createdSalons]);
 
-  // Clients (with referral chain)
-  const clients = mockClients.map(c => ({ ...c }));
-  if (clients[1] && clients[0]) clients[1].parrainId = clients[0].id;
-  setStorageItem(k(STORAGE_KEYS.CLIENTS), clients);
-
-  // Past prestations
-  setStorageItem(k(STORAGE_KEYS.PRESTATIONS), mockPrestations);
-
-  // Upcoming appointments (mix of confirmed + a pending public booking)
-  const rdvs: RendezVous[] = [
+  // Seed tenant data for each new demo salon
+  for (const salon of createdSalons) {
+    const k = (key: string) => tenantStorageKey(salon.id, key);
+    setStorageItem(k(STORAGE_KEYS.TYPES_PRESTATIONS), defaultTypesPrestations);
+    const clients = mockClients.map(c => ({ ...c }));
+    if (clients[1] && clients[0]) clients[1].parrainId = clients[0].id;
+    setStorageItem(k(STORAGE_KEYS.CLIENTS), clients);
+    setStorageItem(k(STORAGE_KEYS.PRESTATIONS), mockPrestations);
+    const rdvs: RendezVous[] = [
     {
       id: crypto.randomUUID(),
       clientId: clients[0].id,
@@ -118,7 +152,7 @@ export function seedDemoData(): void {
       date: isoDaysFromNow(0),
       heure: '10:00',
       duree: 90,
-      employe: 'Sophie',
+      employe: salon.proprietaire.split(' ')[0],
       statut: 'confirme',
       source: 'salon',
     },
@@ -140,7 +174,7 @@ export function seedDemoData(): void {
       date: isoDaysFromNow(1),
       heure: '11:00',
       duree: 60,
-      employe: 'Sophie',
+      employe: salon.proprietaire.split(' ')[0],
       statut: 'confirme',
       source: 'salon',
     },
@@ -156,23 +190,19 @@ export function seedDemoData(): void {
       customerName: 'Cliente en ligne (démo)',
       customerPhone: '+237 699 555 111',
       customerEmail: 'cliente@example.com',
-      reference: 'BF-DEMO1',
+      reference: 'BF-' + salon.slug!.slice(0, 4).toUpperCase(),
       createdAt: new Date().toISOString(),
     },
-  ];
-  setStorageItem(k(STORAGE_KEYS.RENDEZ_VOUS), rdvs);
-
-  // Stock
-  const produits: Produit[] = [
+    ];
+    setStorageItem(k(STORAGE_KEYS.RENDEZ_VOUS), rdvs);
+    const produits: Produit[] = [
     { id: crypto.randomUUID(), nom: 'Shampoing professionnel', categorie: 'Capillaire', prix: 7500, prixAchat: 4500, quantite: 12, seuilAlerte: 5, unite: 'flacon' },
     { id: crypto.randomUUID(), nom: 'Huile de ricin', categorie: 'Capillaire', prix: 3500, prixAchat: 2000, quantite: 3, seuilAlerte: 5, unite: 'flacon' },
     { id: crypto.randomUUID(), nom: 'Vernis à ongles', categorie: 'Ongles', prix: 2500, prixAchat: 1200, quantite: 25, seuilAlerte: 10, unite: 'unité' },
     { id: crypto.randomUUID(), nom: 'Masque visage hydratant', categorie: 'Soins', prix: 4000, prixAchat: 2500, quantite: 8, seuilAlerte: 5, unite: 'sachet' },
-  ];
-  setStorageItem(k(STORAGE_KEYS.PRODUITS), produits);
-
-  // Ventes (this month) — sample
-  const ventes: Vente[] = [
+    ];
+    setStorageItem(k(STORAGE_KEYS.PRODUITS), produits);
+    const ventes: Vente[] = [
     {
       id: crypto.randomUUID(),
       date: today,
@@ -194,21 +224,19 @@ export function seedDemoData(): void {
       totalMontant: 3000,
       modePaiement: 'especes',
     },
-  ];
-  setStorageItem(k(STORAGE_KEYS.VENTES), ventes);
-
-  // Dépenses
-  const depenses: Depense[] = [
+    ];
+    setStorageItem(k(STORAGE_KEYS.VENTES), ventes);
+    const depenses: Depense[] = [
     { id: crypto.randomUUID(), date: isoDaysFromNow(-5), categorie: 'Achats produits', description: 'Réassort shampoing', montant: 45000 },
     { id: crypto.randomUUID(), date: isoDaysFromNow(-10), categorie: 'Loyer', description: 'Loyer mensuel', montant: 80000 },
-  ];
-  setStorageItem(k(STORAGE_KEYS.DEPENSES), depenses);
+    ];
+    setStorageItem(k(STORAGE_KEYS.DEPENSES), depenses);
+  }
 
   localStorage.setItem(DEMO_FLAG, '1');
 }
 
 export const DEMO_INFO = {
-  slug: DEMO_SLUG,
-  email: DEMO_EMAIL,
+  slugs: ['elegance', 'glow-studio', 'royal-beauty'],
   password: DEMO_PASSWORD,
 };
