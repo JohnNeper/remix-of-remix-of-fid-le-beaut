@@ -12,12 +12,13 @@ export default function PublicBookingLanding() {
   const salon = slug ? readPublicSalon(slug) : null;
   if (!salon) return <Navigate to="/booking/not-found" replace />;
 
-  const services = readServices(salon.id).slice(0, 6);
+  const allServices = readServices(salon.id);
+  const services = allServices.slice(0, 6);
   const banner = salon.branding?.bannerUrl;
   const logo = salon.branding?.logoUrl;
 
   return (
-    <BrandedShell salon={salon}>
+    <BrandedShell salon={salon} showHeader={false}>
       <div className="max-w-2xl mx-auto pb-24">
         {/* Banner */}
         <div className="relative h-48 sm:h-64 w-full overflow-hidden bg-gradient-to-br from-primary/30 via-accent/20 to-primary/10">
