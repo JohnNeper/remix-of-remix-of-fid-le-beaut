@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { z } from 'zod';
-import { ArrowLeft, Check, ChevronRight, Clock, Sun, Sunset, Moon, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, Clock, Sun, Sunset, Moon, CalendarDays, Users, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,13 +12,15 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { BrandedShell } from '@/components/booking/BrandedShell';
+import { useClientAuth } from '@/contexts/ClientAuthContext';
 import {
   readPublicSalon, readServices, readRendezVous,
   addPublicRendezVous, makeReference, buildTimeSlots, isSlotTaken,
 } from '@/lib/booking';
 import type { TypePrestation } from '@/types';
+import type { SalonStaff } from '@/types/auth';
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 const customerSchema = z.object({
   fullName: z.string().trim().min(2, 'Nom requis').max(80),
@@ -31,10 +33,12 @@ export default function PublicBookingFlow() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const salon = slug ? readPublicSalon(slug) : null;
+  const { client } = useClientAuth();
   if (!salon) return <Navigate to="/booking/not-found" replace />;
 
   const services = readServices(salon.id);
   const settings = salon.bookingSettings!;
+  const staffList: SalonStaff[] = salon.branding?.staff || [];
   const slots = useMemo(
     () => buildTimeSlots(settings.openingHour, settings.closingHour, settings.slotDurationMin),
     [settings],
@@ -42,16 +46,36 @@ export default function PublicBookingFlow() {
 
   const [step, setStep] = useState<Step>(1);
   const [service, setService] = useState<TypePrestation | null>(null);
+  const [staff, setStaff] = useState<SalonStaff | null>(null);
+  const [noPref, setNoPref] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string | null>(null);
   const [form, setForm] = useState({ fullName: '', phone: '', email: '', notes: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Prefill from logged-in client account
+  useEffect(() => {
+    if (client) {
+      setForm(f => ({
+        ...f,
+        fullName: f.fullName || client.nom,
+        email: f.email || client.email,
+        phone: f.phone || client.telephone || '',
+      }));
+    }
+  }, [client]);
+
   const dateStr = date ? format(date, 'yyyy-MM-dd') : '';
   const existing = readRendezVous(salon.id);
 
-  const next = () => setStep(s => Math.min(4, (s + 1)) as Step);
+  const totalSteps = staffList.length > 0 ? 5 : 4;
+  const next = () => setStep(s => Math.min(totalSteps, (s + 1)) as Step);
   const back = () => (step === 1 ? navigate(`/booking/${slug}`) : setStep(s => (s - 1) as Step));
+
+  // Skip staff step if no staff configured
+  useEffect(() => {
+    if (step === 2 && staffList.length === 0) setStep(3);
+  }, [step, staffList.length]);
 
   const handleSubmit = () => {
     const parsed = customerSchema.safeParse(form);
@@ -71,6 +95,7 @@ export default function PublicBookingFlow() {
       duree: settings.slotDurationMin,
       statut: settings.autoConfirm ? 'confirme' : 'en_attente',
       source: 'public',
+      employe: staff?.nom,
       customerName: parsed.data.fullName,
       customerPhone: parsed.data.phone,
       customerEmail: parsed.data.email || undefined,
@@ -79,11 +104,16 @@ export default function PublicBookingFlow() {
       createdAt: new Date().toISOString(),
     });
     navigate(`/booking/${slug}/confirmation/${reference}`, {
-      state: { service: service.nom, date: dateStr, time, salon: salon.nom },
+      state: { service: service.nom, date: dateStr, time, salon: salon.nom, staff: staff?.nom },
     });
   };
 
-  const stepTitle = ['Prestation', 'Date & heure', 'Vos informations', 'Confirmation'][step - 1];
+  const stepTitles = staffList.length > 0
+    ? ['Prestation', 'Intervenant·e', 'Date & heure', 'Vos informations', 'Confirmation']
+    : ['Prestation', 'Date & heure', 'Vos informations', 'Confirmation'];
+  // Map current step (1..5) to label index when no staff
+  const labelIndex = staffList.length > 0 ? step - 1 : (step === 1 ? 0 : step - 2);
+  const stepTitle = stepTitles[Math.max(0, Math.min(stepTitles.length - 1, labelIndex))];
 
   // Group services by category for easier scanning
   const servicesByCategory = useMemo(() => {
@@ -122,7 +152,7 @@ export default function PublicBookingFlow() {
           </Button>
           <div className="flex-1">
             <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-              Étape {step} sur 4
+              Étape {labelIndex + 1} sur {stepTitles.length}
             </div>
             <h1 className="text-xl font-bold leading-tight">{stepTitle}</h1>
           </div>
@@ -130,11 +160,11 @@ export default function PublicBookingFlow() {
 
         {/* Progress */}
         <div className="flex gap-1.5 mb-5">
-          {[1, 2, 3, 4].map(n => (
+          {Array.from({ length: stepTitles.length }).map((_, idx) => (
             <div
-              key={n}
+              key={idx}
               className={`h-1.5 flex-1 rounded-full transition-all ${
-                n <= step ? 'bg-primary' : 'bg-muted'
+                idx <= labelIndex ? 'bg-primary' : 'bg-muted'
               }`}
             />
           ))}
@@ -158,9 +188,24 @@ export default function PublicBookingFlow() {
             <span className="text-xs text-primary font-medium">Modifier</span>
           </button>
         )}
-        {step > 2 && date && time && (
+        {staffList.length > 0 && step > 2 && (staff || noPref) && (
           <button
             onClick={() => setStep(2)}
+            className="w-full mb-4 p-3 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-3 text-left hover:bg-primary/10 transition-colors animate-fade-in"
+          >
+            <div className="h-9 w-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0 overflow-hidden">
+              {staff?.photoUrl ? <img src={staff.photoUrl} alt="" className="w-full h-full object-cover" /> : <Users className="h-4 w-4 text-primary" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">{staff ? staff.nom : 'Sans préférence'}</div>
+              {staff?.role && <div className="text-xs text-muted-foreground truncate">{staff.role}</div>}
+            </div>
+            <span className="text-xs text-primary font-medium">Modifier</span>
+          </button>
+        )}
+        {step > (staffList.length > 0 ? 3 : 2) && date && time && (
+          <button
+            onClick={() => setStep((staffList.length > 0 ? 3 : 2) as Step)}
             className="w-full mb-4 p-3 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-3 text-left hover:bg-primary/10 transition-colors"
           >
             <div className="h-9 w-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
@@ -188,7 +233,7 @@ export default function PublicBookingFlow() {
                   {items.map(s => (
                     <button
                       key={s.id}
-                      onClick={() => { setService(s); next(); }}
+                      onClick={() => { setService(s); setStep((staffList.length > 0 ? 2 : 3) as Step); }}
                       className={`w-full text-left p-4 rounded-2xl border-2 transition-all bg-card active:scale-[0.98] hover:border-primary hover:shadow-md ${
                         service?.id === s.id ? 'border-primary shadow-md' : 'border-border'
                       }`}
@@ -220,8 +265,58 @@ export default function PublicBookingFlow() {
           </div>
         )}
 
-        {/* Step 2: Date & time */}
-        {step === 2 && (
+        {/* Step 2: Staff */}
+        {step === 2 && staffList.length > 0 && (
+          <div className="space-y-3 animate-fade-in">
+            <p className="text-sm text-muted-foreground">Avec qui souhaitez-vous prendre rendez-vous ?</p>
+            <button
+              onClick={() => { setStaff(null); setNoPref(true); setStep(3); }}
+              className={`w-full text-left p-4 rounded-2xl border-2 bg-card hover:border-primary transition-all active:scale-[0.99] ${
+                noPref ? 'border-primary shadow-md' : 'border-border'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <div className="font-semibold">Sans préférence</div>
+                  <div className="text-xs text-muted-foreground">Le salon vous attribuera la personne disponible</div>
+                </div>
+              </div>
+            </button>
+            {staffList.map((m, i) => (
+              <button
+                key={m.id}
+                onClick={() => { setStaff(m); setNoPref(false); setStep(3); }}
+                className={`w-full text-left p-4 rounded-2xl border-2 bg-card hover:border-primary transition-all active:scale-[0.99] animate-fade-in ${
+                  staff?.id === m.id ? 'border-primary shadow-md' : 'border-border'
+                }`}
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-14 w-14 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0">
+                    {m.photoUrl ? <img src={m.photoUrl} alt={m.nom} className="w-full h-full object-cover" /> : <Users className="h-5 w-5 text-primary" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold">{m.nom}</div>
+                    {m.role && <div className="text-xs text-muted-foreground truncate">{m.role}</div>}
+                    {m.specialties && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {m.specialties.slice(0, 3).map(s => (
+                          <span key={s} className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{s}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Step 3: Date & time */}
+        {step === 3 && (
           <div className="space-y-5">
             <Card className="p-2 flex justify-center rounded-2xl">
               <Calendar
@@ -283,9 +378,20 @@ export default function PublicBookingFlow() {
           </div>
         )}
 
-        {/* Step 3: Customer info */}
-        {step === 3 && (
+        {/* Step 4: Customer info */}
+        {step === 4 && (
           <div className="space-y-5">
+            {client && (
+              <Card className="p-3 bg-primary/5 border-primary/20 flex items-center gap-3 animate-fade-in">
+                <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
+                  {client.nom.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0 text-xs">
+                  <div className="font-medium">Connecté en tant que <span className="text-primary">{client.nom}</span></div>
+                  <div className="text-muted-foreground truncate">Vos infos sont pré-remplies</div>
+                </div>
+              </Card>
+            )}
             <div>
               <Label className="text-sm font-medium">Nom complet *</Label>
               <Input
@@ -330,15 +436,21 @@ export default function PublicBookingFlow() {
                 placeholder="Demandes particulières..."
               />
             </div>
+            {!client && (
+              <p className="text-[11px] text-center text-muted-foreground">
+                Astuce : <button onClick={() => navigate(`/explorer/login?redirect=/booking/${slug}/book`)} className="text-primary underline">créez un compte</button> pour retrouver vos rendez-vous et vos favoris.
+              </p>
+            )}
           </div>
         )}
 
-        {/* Step 4: Confirm */}
-        {step === 4 && service && date && time && (
+        {/* Step 5: Confirm */}
+        {step === 5 && service && date && time && (
           <div className="space-y-4">
             <Card className="p-5 space-y-3 rounded-2xl">
               <Row label="Salon" value={salon.nom} />
               <Row label="Prestation" value={service.nom} />
+              {staffList.length > 0 && <Row label="Avec" value={staff?.nom || 'Sans préférence'} />}
               <Row label="Date" value={format(date, 'EEEE dd MMMM yyyy', { locale: fr })} />
               <Row label="Heure" value={time} />
               <Row label="Durée" value={`${settings.slotDurationMin} min`} />
@@ -370,17 +482,17 @@ export default function PublicBookingFlow() {
                 </div>
               </div>
             )}
-            {step === 2 && (
+            {step === 3 && (
               <Button className="flex-[2] h-12 rounded-xl gradient-primary shadow-md" disabled={!date || !time} onClick={next}>
                 Continuer <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             )}
-            {step === 3 && (
+            {step === 4 && (
               <Button className="flex-[2] h-12 rounded-xl gradient-primary shadow-md" onClick={next} disabled={!form.fullName || !form.phone}>
                 Vérifier <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             )}
-            {step === 4 && (
+            {step === 5 && (
               <Button className="flex-[2] h-12 rounded-xl gradient-primary shadow-md" onClick={handleSubmit}>
                 <Check className="h-4 w-4 mr-2" />
                 Confirmer
