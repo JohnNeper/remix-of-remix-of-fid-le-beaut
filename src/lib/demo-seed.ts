@@ -140,8 +140,28 @@ export function seedDemoData(): void {
 
   const createdSalons: SalonAccount[] = [];
 
+  // Update existing demo salons in place (so users who already seeded v2 get the new branding/staff)
+  const allSalons = [...existing];
+  let mutatedExisting = false;
+
   for (const spec of demoSalonsSpecs) {
-    if (existing.some(s => s.slug === spec.slug)) continue;
+    const staff = spec.staffNames.map(s => ({
+      id: crypto.randomUUID(),
+      nom: s.nom,
+      role: s.role,
+      bio: s.bio,
+      specialties: s.specialties,
+      photoUrl: `https://i.pravatar.cc/200?img=${s.img}`,
+    }));
+    const existingIdx = allSalons.findIndex(s => s.slug === spec.slug);
+    if (existingIdx >= 0) {
+      allSalons[existingIdx] = {
+        ...allSalons[existingIdx],
+        branding: { ...allSalons[existingIdx].branding, ...spec.branding, staff },
+      };
+      mutatedExisting = true;
+      continue;
+    }
     const salonId = crypto.randomUUID();
     const owner: SalonUser = {
       id: crypto.randomUUID(),
@@ -153,14 +173,6 @@ export function seedDemoData(): void {
       telephone: spec.telephone,
       dateCreation: today,
     };
-    const staff = spec.staffNames.map(s => ({
-      id: crypto.randomUUID(),
-      nom: s.nom,
-      role: s.role,
-      bio: s.bio,
-      specialties: s.specialties,
-      photoUrl: `https://i.pravatar.cc/200?img=${s.img}`,
-    }));
     createdSalons.push({
       id: salonId,
       nom: spec.nom,
@@ -189,7 +201,7 @@ export function seedDemoData(): void {
     });
   }
 
-  saveSalonAccounts([...existing, ...createdSalons]);
+  saveSalonAccounts([...allSalons, ...createdSalons]);
 
   // Seed tenant data for each new demo salon
   for (const salon of createdSalons) {
