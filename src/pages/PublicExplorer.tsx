@@ -69,7 +69,7 @@ export default function PublicExplorer() {
               placeholder="Rechercher un salon, une ville, un service…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="pl-10 h-13 py-3 rounded-full bg-card shadow-lg border-border/60 focus-visible:ring-primary"
+              className="pl-10 h-12 py-3 rounded-full bg-card shadow-lg border-border/60 focus-visible:ring-primary"
             />
           </div>
         </div>

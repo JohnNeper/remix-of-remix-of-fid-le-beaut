@@ -236,7 +236,7 @@ export default function PublicBookingLanding() {
           <div className="max-w-2xl mx-auto">
             <Button
               size="lg"
-              className="w-full h-13 text-base gradient-primary shadow-lg hover:shadow-xl transition-shadow"
+              className="w-full h-12 text-base gradient-primary shadow-lg hover:shadow-xl transition-shadow"
               onClick={() => navigate(`/booking/${slug}/book`)}
             >
               <Calendar className="h-5 w-5 mr-2" />
