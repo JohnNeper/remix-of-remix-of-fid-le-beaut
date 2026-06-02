@@ -28,6 +28,9 @@ import PublicBookingFlow from "@/pages/PublicBookingFlow";
 import PublicBookingConfirmation from "@/pages/PublicBookingConfirmation";
 import PublicBookingNotFound from "@/pages/PublicBookingNotFound";
 import PublicExplorer from "@/pages/PublicExplorer";
+import ClientLogin from "@/pages/ClientLogin";
+import ClientAccount from "@/pages/ClientAccount";
+import { ClientAuthProvider } from "@/contexts/ClientAuthContext";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +64,8 @@ function AppRoutes() {
 
       {/* Public booking (no auth, multi-tenant by slug) */}
       <Route path="/explorer" element={<PublicExplorer />} />
+      <Route path="/explorer/login" element={<ClientLogin />} />
+      <Route path="/explorer/account" element={<ClientAccount />} />
       <Route path="/booking/not-found" element={<PublicBookingNotFound />} />
       <Route path="/booking/:slug" element={<PublicBookingLanding />} />
       <Route path="/booking/:slug/book" element={<PublicBookingFlow />} />
@@ -97,7 +102,9 @@ const App = () => (
       <BrowserRouter>
         <LanguageProvider>
           <AuthProvider>
-            <AppRoutes />
+            <ClientAuthProvider>
+              <AppRoutes />
+            </ClientAuthProvider>
           </AuthProvider>
         </LanguageProvider>
       </BrowserRouter>
