@@ -44,6 +44,40 @@ export interface SalonBranding {
   location?: string;
   hours?: string;
   instagram?: string;
+  gallery?: string[];
+  rating?: number;        // 0-5
+  reviewCount?: number;
+  category?: string;      // e.g. "Coiffure", "Onglerie", "Spa"
+  staff?: SalonStaff[];
+}
+
+export interface SalonStaff {
+  id: string;
+  nom: string;
+  role?: string;      // e.g. "Coiffeuse senior"
+  photoUrl?: string;
+  bio?: string;
+  specialties?: string[];
+}
+
+// ===== Client (public booking portal) accounts =====
+export interface ClientVisit {
+  salonId: string;
+  salonSlug: string;
+  salonNom: string;
+  visitedAt: string; // ISO
+}
+
+export interface ClientAccount {
+  id: string;
+  nom: string;
+  email: string;
+  motDePasse: string; // simple hash
+  telephone?: string;
+  dateCreation: string;
+  favorites: string[]; // salon ids
+  visits: ClientVisit[];
+  avatarUrl?: string;
 }
 
 export interface SalonBookingSettings {
