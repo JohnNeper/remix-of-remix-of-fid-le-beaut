@@ -25,13 +25,13 @@ export function ClientAuthProvider({ children }: { children: React.ReactNode }) 
   const signup: Ctx['signup'] = useCallback((i) => {
     const r = register(i);
     if (r.ok) { setClient(r.client); return { ok: true }; }
-    return { ok: false, reason: r.reason };
+    return { ok: false, reason: (r as { ok: false; reason: string }).reason };
   }, []);
 
   const signin: Ctx['signin'] = useCallback((e, p) => {
     const r = login(e, p);
     if (r.ok) { setClient(r.client); return { ok: true }; }
-    return { ok: false, reason: r.reason };
+    return { ok: false, reason: (r as { ok: false; reason: string }).reason };
   }, []);
 
   const signout = useCallback(() => { logoutClient(); setClient(null); }, []);
