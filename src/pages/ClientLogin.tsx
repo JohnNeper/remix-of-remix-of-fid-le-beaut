@@ -24,7 +24,7 @@ export default function ClientLogin() {
     setError('');
     const r = signin(login.email, login.password);
     if (r.ok) { toast({ title: 'Bienvenue !' }); navigate(redirect); }
-    else setError(r.reason);
+    else setError((r as { reason: string }).reason);
   };
 
   const handleRegister = (e: React.FormEvent) => {
@@ -32,7 +32,7 @@ export default function ClientLogin() {
     setError('');
     const r = signup({ nom: reg.nom, email: reg.email, password: reg.password, telephone: reg.telephone });
     if (r.ok) { toast({ title: 'Compte créé ✨', description: 'Bienvenue dans BeautyFlow !' }); navigate(redirect); }
-    else setError(r.reason);
+    else setError((r as { reason: string }).reason);
   };
 
   return (
