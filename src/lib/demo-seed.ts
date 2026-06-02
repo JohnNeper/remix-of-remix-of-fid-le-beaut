@@ -5,7 +5,7 @@ import type { SalonAccount, SalonUser } from '@/types/auth';
 import type { RendezVous } from '@/types/rendez-vous';
 import type { Produit, Vente, Depense } from '@/types';
 
-const DEMO_FLAG = 'beautyflow_demo_seeded_v2';
+const DEMO_FLAG = 'beautyflow_demo_seeded_v3';
 const DEMO_PASSWORD = 'demo2025';
 
 function simpleHash(str: string): string {
@@ -37,7 +37,12 @@ export function seedDemoData(): void {
   const today = new Date().toISOString().split('T')[0];
   const hashedPwd = simpleHash(DEMO_PASSWORD);
 
-  const demoSalonsSpecs = [
+  const demoSalonsSpecs: Array<{
+    slug: string; nom: string; proprietaire: string; email: string;
+    telephone: string; adresse: string;
+    branding: any;
+    staffNames: Array<{ nom: string; role: string; bio?: string; specialties?: string[]; img: number }>;
+  }> = [
     {
       slug: 'elegance',
       nom: 'Salon Élégance',
@@ -53,7 +58,21 @@ export function seedDemoData(): void {
         location: 'Bonapriso, Douala — face pharmacie centrale',
         hours: 'Lun-Sam 9h-19h • Dimanche fermé',
         instagram: '@salon.elegance',
+        category: 'Coiffure & Tresses',
+        rating: 4.8, reviewCount: 142,
+        bannerUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80',
+        gallery: [
+          'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&q=80',
+          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&q=80',
+          'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=600&q=80',
+          'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=600&q=80',
+        ],
       },
+      staffNames: [
+        { nom: 'Sophie M.', role: 'Fondatrice — Tresses & coloration', bio: '15 ans d\'expérience, formée à Paris.', specialties: ['Tresses', 'Coloration'], img: 47 },
+        { nom: 'Cindy', role: 'Coiffeuse senior', specialties: ['Tissage', 'Locs'], img: 32 },
+        { nom: 'Marlène', role: 'Maquilleuse pro', specialties: ['Maquillage', 'Soins'], img: 26 },
+      ],
     },
     {
       slug: 'glow-studio',
@@ -70,7 +89,21 @@ export function seedDemoData(): void {
         location: 'Akwa, Douala — Rue Joss',
         hours: 'Mar-Dim 10h-20h • Lundi fermé',
         instagram: '@glow.studio',
+        category: 'Onglerie & Maquillage',
+        rating: 4.9, reviewCount: 89,
+        bannerUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=1200&q=80',
+        gallery: [
+          'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&q=80',
+          'https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=600&q=80',
+          'https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=600&q=80',
+          'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=600&q=80',
+        ],
       },
+      staffNames: [
+        { nom: 'Aïcha N.', role: 'Nail artist principale', specialties: ['Gel UV', 'Nail art'], img: 45 },
+        { nom: 'Jade', role: 'Maquilleuse événementiel', specialties: ['Maquillage mariée'], img: 9 },
+        { nom: 'Lina', role: 'Esthéticienne', specialties: ['Soins du visage'], img: 16 },
+      ],
     },
     {
       slug: 'royal-beauty',
@@ -87,7 +120,21 @@ export function seedDemoData(): void {
         location: 'Bastos, Yaoundé — face ambassade',
         hours: 'Tous les jours 9h-21h',
         instagram: '@royal.beauty.lounge',
+        category: 'Spa & Bien-être',
+        rating: 4.7, reviewCount: 213,
+        bannerUrl: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80',
+        gallery: [
+          'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80',
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80',
+          'https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=600&q=80',
+          'https://images.unsplash.com/photo-1591343395082-e120087004b4?w=600&q=80',
+        ],
       },
+      staffNames: [
+        { nom: 'Mireille E.', role: 'Directrice — Spa', specialties: ['Massage', 'Hamam'], img: 49 },
+        { nom: 'Patricia', role: 'Masseuse certifiée', specialties: ['Massage pierres chaudes'], img: 23 },
+        { nom: 'Rachelle', role: 'Spécialiste extensions', specialties: ['Perruques', 'Extensions'], img: 38 },
+      ],
     },
   ];
 
@@ -106,6 +153,14 @@ export function seedDemoData(): void {
       telephone: spec.telephone,
       dateCreation: today,
     };
+    const staff = spec.staffNames.map(s => ({
+      id: crypto.randomUUID(),
+      nom: s.nom,
+      role: s.role,
+      bio: s.bio,
+      specialties: s.specialties,
+      photoUrl: `https://i.pravatar.cc/200?img=${s.img}`,
+    }));
     createdSalons.push({
       id: salonId,
       nom: spec.nom,
@@ -122,7 +177,7 @@ export function seedDemoData(): void {
       plan: 'pro',
       users: [owner],
       slug: spec.slug,
-      branding: spec.branding,
+      branding: { ...spec.branding, staff },
       bookingSettings: {
         autoConfirm: false,
         allowGuest: true,
