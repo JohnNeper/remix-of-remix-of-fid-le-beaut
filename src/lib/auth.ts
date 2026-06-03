@@ -56,7 +56,7 @@ export function getSalonAccounts(): SalonAccount[] {
     }
     if (!s.bookingSettings) {
       s.bookingSettings = {
-        autoConfirm: false, allowGuest: true, slotDurationMin: 30,
+        autoConfirm: true, allowGuest: true, slotDurationMin: 30,
         openingHour: 9, closingHour: 19, closedDays: [0],
       };
       mutated = true;
@@ -148,7 +148,7 @@ export function createSalonAccount(data: Omit<SalonAccount, 'id' | 'dateCreation
       hours: '',
     },
     bookingSettings: {
-      autoConfirm: false,
+      autoConfirm: true,
       allowGuest: true,
       slotDurationMin: 30,
       openingHour: 9,

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import {
   MapPin, Clock, Star, Sparkles, Calendar, Heart, Share2,
-  Instagram, Users, Camera, Award,
+  Instagram, Users, Camera, Award, Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -37,6 +37,7 @@ export default function PublicBookingLanding() {
   const rating = salon.branding?.rating ?? 4.8;
   const reviewCount = salon.branding?.reviewCount ?? 0;
   const fav = isFavorite(salon.id);
+  const instant = salon.bookingSettings?.autoConfirm ?? true;
 
   const servicesByCat = useMemo(() => {
     const m = new Map<string, typeof allServices>();
@@ -120,6 +121,18 @@ export default function PublicBookingLanding() {
               </div>
             </div>
           </div>
+
+          {instant && (
+            <div className="mt-4 flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 animate-fade-in">
+              <div className="h-7 w-7 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+                <Zap className="h-3.5 w-3.5 text-white" />
+              </div>
+              <div className="text-xs">
+                <span className="font-semibold text-emerald-700 dark:text-emerald-400">Confirmation instantanée</span>
+                <span className="text-muted-foreground"> · Votre créneau est bloqué immédiatement</span>
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           {salon.branding?.description && (
