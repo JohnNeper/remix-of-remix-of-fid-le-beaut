@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Search, ArrowRight, Star, Calendar, Heart, Sparkles, Scissors, Hand, Flower2, Brush } from 'lucide-react';
+import { Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { getSalonAccounts } from '@/lib/auth';
 import { ExplorerHeader } from '@/components/explorer/ExplorerHeader';
 import { useClientAuth } from '@/contexts/ClientAuthContext';
+import { getBookingPublicUrl } from '@/lib/booking';
+import { getCategoryImage } from '@/lib/category-images';
+import { toast } from '@/hooks/use-toast';
 
 const CATEGORIES = [
   { id: 'all', label: 'Tout', icon: Sparkles },
@@ -129,9 +133,13 @@ export default function PublicExplorer() {
                   onClick={() => navigate(`/booking/${s.slug}`)}
                 >
                   <div className="h-40 relative overflow-hidden" style={{ background: `linear-gradient(135deg, hsl(${primary}), hsl(${accent}))` }}>
-                    {s.branding?.bannerUrl && (
-                      <img src={s.branding.bannerUrl} alt={s.nom} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                    )}
+                    <img
+                      src={s.branding?.bannerUrl || getCategoryImage(s.branding?.category?.split(' ')[0])}
+                      alt={s.nom}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = getCategoryImage(); }}
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
                     {/* Top badges */}
@@ -141,18 +149,49 @@ export default function PublicExplorer() {
                           {s.branding.category}
                         </span>
                       )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!client) { navigate('/explorer/login'); return; }
-                          toggleFavorite(s.id);
-                        }}
-                        className={`h-8 w-8 rounded-full backdrop-blur flex items-center justify-center shadow transition-all active:scale-90 ${
-                          fav ? 'bg-primary text-primary-foreground' : 'bg-background/95 text-foreground hover:bg-background'
-                        }`}
-                      >
-                        <Heart className={`h-4 w-4 ${fav ? 'fill-current' : ''}`} />
-                      </button>
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          aria-label="Partager le lien"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const url = getBookingPublicUrl(s.slug!);
+                            const shareData = { title: s.nom, text: `Réservez chez ${s.nom}`, url };
+                            try {
+                              if (navigator.share) {
+                                await navigator.share(shareData);
+                              } else {
+                                await navigator.clipboard.writeText(url);
+                                toast({ title: 'Lien copié', description: url });
+                              }
+                            } catch {
+                              try {
+                                await navigator.clipboard.writeText(url);
+                                toast({ title: 'Lien copié', description: url });
+                              } catch {
+                                toast({ title: 'Impossible de partager', description: url, variant: 'destructive' });
+                              }
+                            }
+                          }}
+                          className="h-8 w-8 rounded-full backdrop-blur flex items-center justify-center shadow transition-all active:scale-90 bg-background/95 text-foreground hover:bg-background"
+                        >
+                          <Share2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Ajouter aux favoris"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!client) { navigate('/explorer/login'); return; }
+                            toggleFavorite(s.id);
+                          }}
+                          className={`h-8 w-8 rounded-full backdrop-blur flex items-center justify-center shadow transition-all active:scale-90 ${
+                            fav ? 'bg-primary text-primary-foreground' : 'bg-background/95 text-foreground hover:bg-background'
+                          }`}
+                        >
+                          <Heart className={`h-4 w-4 ${fav ? 'fill-current' : ''}`} />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Rating bottom-left */}
