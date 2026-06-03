@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, LogIn, Shield, Eye, EyeOff, Crown, User, Calendar } from 'lucide-react';
+import { LogIn, Shield, Eye, EyeOff, Crown, User, Calendar } from 'lucide-react';
+import { BeautyFlowLogo } from '@/components/branding/BeautyFlowLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -55,10 +56,10 @@ export default function Login() {
 
         {/* Logo */}
         <div className="text-center">
-          <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 shadow-2xl ring-4 ring-primary-foreground/20">
-            <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-primary-foreground drop-shadow-lg">LeaderBright</h1>
+          <BeautyFlowLogo className="h-20 w-20 sm:h-24 sm:w-24 rounded-3xl mx-auto mb-4 shadow-2xl ring-4 ring-primary-foreground/20" />
+          <h1 className="text-3xl sm:text-4xl font-bold text-primary-foreground drop-shadow-lg">
+            Beauty<span className="text-white/90">Flow</span>
+          </h1>
           <p className="text-sm sm:text-base text-primary-foreground/80 mt-1">{t('login.salonSpace')}</p>
         </div>
 
