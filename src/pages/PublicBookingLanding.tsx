@@ -12,6 +12,7 @@ import { BrandedShell } from '@/components/booking/BrandedShell';
 import { readPublicSalon, readServices } from '@/lib/booking';
 import { useClientAuth } from '@/contexts/ClientAuthContext';
 import { toast } from '@/hooks/use-toast';
+import { getCategoryImage } from '@/lib/category-images';
 
 export default function PublicBookingLanding() {
   const { slug } = useParams<{ slug: string }>();
@@ -30,7 +31,7 @@ export default function PublicBookingLanding() {
   if (!salon) return <Navigate to="/booking/not-found" replace />;
 
   const allServices = readServices(salon.id);
-  const banner = salon.branding?.bannerUrl;
+  const banner = salon.branding?.bannerUrl || getCategoryImage(salon.branding?.category?.split(' ')[0]);
   const logo = salon.branding?.logoUrl;
   const gallery = salon.branding?.gallery || [];
   const staff = salon.branding?.staff || [];
@@ -70,9 +71,12 @@ export default function PublicBookingLanding() {
       <div className="max-w-2xl mx-auto pb-28">
         {/* Hero banner */}
         <div className="relative h-56 sm:h-72 w-full overflow-hidden bg-gradient-to-br from-primary/40 via-accent/30 to-primary/20">
-          {banner && (
-            <img src={banner} alt={salon.nom} className="absolute inset-0 w-full h-full object-cover animate-fade-in" />
-          )}
+          <img
+            src={banner}
+            alt={salon.nom}
+            className="absolute inset-0 w-full h-full object-cover animate-fade-in"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).src = getCategoryImage(); }}
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
 
           {/* Top actions */}
