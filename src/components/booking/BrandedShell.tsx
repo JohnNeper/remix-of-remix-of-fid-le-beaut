@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import type { SalonAccount } from '@/types/auth';
+import { BeautyFlowLogo } from '@/components/branding/BeautyFlowLogo';
 
 interface Props {
   salon: SalonAccount;
@@ -66,10 +67,14 @@ export function BrandedShell({ salon, children, showHeader = true }: Props) {
 
       <main className="flex-1">{children}</main>
 
-      <footer className="mt-auto py-4 text-center text-[11px] text-muted-foreground border-t border-border/40">
-        Propulsé par{' '}
-        <Link to="/explorer" className="font-semibold text-foreground/80 hover:text-primary transition-colors">
-          BeautyFlow
+      <footer className="mt-auto py-4 border-t border-border/40">
+        <Link
+          to="/explorer"
+          className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+        >
+          <span>Propulsé par</span>
+          <BeautyFlowLogo className="h-4 w-4 rounded" />
+          <span className="font-semibold text-foreground/80">BeautyFlow</span>
         </Link>
       </footer>
     </div>
