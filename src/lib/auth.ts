@@ -148,7 +148,7 @@ export function createSalonAccount(data: Omit<SalonAccount, 'id' | 'dateCreation
       hours: '',
     },
     bookingSettings: {
-      autoConfirm: false,
+      autoConfirm: true,
       allowGuest: true,
       slotDurationMin: 30,
       openingHour: 9,

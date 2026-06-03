@@ -5,7 +5,7 @@ import type { SalonAccount, SalonUser } from '@/types/auth';
 import type { RendezVous } from '@/types/rendez-vous';
 import type { Produit, Vente, Depense } from '@/types';
 
-const DEMO_FLAG = 'beautyflow_demo_seeded_v3';
+const DEMO_FLAG = 'beautyflow_demo_seeded_v4';
 const DEMO_PASSWORD = 'demo2025';
 
 function simpleHash(str: string): string {
@@ -191,7 +191,7 @@ export function seedDemoData(): void {
       slug: spec.slug,
       branding: { ...spec.branding, staff },
       bookingSettings: {
-        autoConfirm: false,
+        autoConfirm: true,
         allowGuest: true,
         slotDurationMin: 30,
         openingHour: 9,
