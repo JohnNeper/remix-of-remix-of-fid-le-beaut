@@ -48,8 +48,6 @@ export interface SalonBranding {
   rating?: number;        // 0-5
   reviewCount?: number;
   category?: string;      // e.g. "Coiffure", "Onglerie", "Spa"
-  city?: string;          // e.g. "Douala", "Yaoundé"
-  coords?: { lat: number; lng: number };
   staff?: SalonStaff[];
 }
 

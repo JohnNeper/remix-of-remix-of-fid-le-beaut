@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { BrandedShell } from '@/components/booking/BrandedShell';
+import { useClientAuth } from '@/contexts/ClientAuthContext';
 import {
   readPublicSalon, readServices, readRendezVous,
   addPublicRendezVous, makeReference, buildTimeSlots, isSlotTaken,
@@ -32,6 +33,7 @@ export default function PublicBookingFlow() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const salon = slug ? readPublicSalon(slug) : null;
+  const { client } = useClientAuth();
   if (!salon) return <Navigate to="/booking/not-found" replace />;
 
   const services = readServices(salon.id);
@@ -50,6 +52,18 @@ export default function PublicBookingFlow() {
   const [time, setTime] = useState<string | null>(null);
   const [form, setForm] = useState({ fullName: '', phone: '', email: '', notes: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Prefill from logged-in client account
+  useEffect(() => {
+    if (client) {
+      setForm(f => ({
+        ...f,
+        fullName: f.fullName || client.nom,
+        email: f.email || client.email,
+        phone: f.phone || client.telephone || '',
+      }));
+    }
+  }, [client]);
 
   const dateStr = date ? format(date, 'yyyy-MM-dd') : '';
   const existing = readRendezVous(salon.id);
@@ -367,6 +381,17 @@ export default function PublicBookingFlow() {
         {/* Step 4: Customer info */}
         {step === 4 && (
           <div className="space-y-5">
+            {client && (
+              <Card className="p-3 bg-primary/5 border-primary/20 flex items-center gap-3 animate-fade-in">
+                <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
+                  {client.nom.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0 text-xs">
+                  <div className="font-medium">Connecté en tant que <span className="text-primary">{client.nom}</span></div>
+                  <div className="text-muted-foreground truncate">Vos infos sont pré-remplies</div>
+                </div>
+              </Card>
+            )}
             <div>
               <Label className="text-sm font-medium">Nom complet *</Label>
               <Input
@@ -411,6 +436,11 @@ export default function PublicBookingFlow() {
                 placeholder="Demandes particulières..."
               />
             </div>
+            {!client && (
+              <p className="text-[11px] text-center text-muted-foreground">
+                Astuce : <button onClick={() => navigate(`/explorer/login?redirect=/booking/${slug}/book`)} className="text-primary underline">créez un compte</button> pour retrouver vos rendez-vous et vos favoris.
+              </p>
+            )}
           </div>
         )}
 

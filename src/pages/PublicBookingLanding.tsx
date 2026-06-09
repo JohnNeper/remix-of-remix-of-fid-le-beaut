@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import {
-  MapPin, Clock, Star, Sparkles, Calendar, Share2,
+  MapPin, Clock, Star, Sparkles, Calendar, Heart, Share2,
   Instagram, Users, Camera, Award, Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BrandedShell } from '@/components/booking/BrandedShell';
 import { readPublicSalon, readServices } from '@/lib/booking';
+import { useClientAuth } from '@/contexts/ClientAuthContext';
 import { toast } from '@/hooks/use-toast';
 import { getCategoryImage } from '@/lib/category-images';
 
@@ -17,7 +18,15 @@ export default function PublicBookingLanding() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const salon = slug ? readPublicSalon(slug) : null;
+  const { client, isFavorite, toggleFavorite, logVisit } = useClientAuth();
   const [lightbox, setLightbox] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (salon && client) {
+      logVisit({ salonId: salon.id, salonSlug: salon.slug!, salonNom: salon.nom });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [salon?.id, client?.id]);
 
   if (!salon) return <Navigate to="/booking/not-found" replace />;
 
@@ -28,6 +37,7 @@ export default function PublicBookingLanding() {
   const staff = salon.branding?.staff || [];
   const rating = salon.branding?.rating ?? 4.8;
   const reviewCount = salon.branding?.reviewCount ?? 0;
+  const fav = isFavorite(salon.id);
   const instant = salon.bookingSettings?.autoConfirm ?? true;
 
   const servicesByCat = useMemo(() => {
@@ -39,6 +49,12 @@ export default function PublicBookingLanding() {
     }
     return Array.from(m.entries());
   }, [allServices]);
+
+  const handleFav = () => {
+    if (!client) { navigate(`/explorer/login?redirect=/booking/${slug}`); return; }
+    toggleFavorite(salon.id);
+    toast({ title: fav ? 'Retiré des favoris' : '♥ Ajouté à vos favoris' });
+  };
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -71,6 +87,13 @@ export default function PublicBookingLanding() {
             <div className="flex gap-2">
               <Button variant="secondary" size="icon" className="h-9 w-9 rounded-full bg-background/90 backdrop-blur shadow" onClick={handleShare}>
                 <Share2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="secondary" size="icon"
+                className={`h-9 w-9 rounded-full backdrop-blur shadow transition-all ${fav ? 'bg-primary text-primary-foreground hover:bg-primary' : 'bg-background/90'}`}
+                onClick={handleFav}
+              >
+                <Heart className={`h-4 w-4 ${fav ? 'fill-current' : ''}`} />
               </Button>
             </div>
           </div>
