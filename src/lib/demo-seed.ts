@@ -5,7 +5,7 @@ import type { SalonAccount, SalonUser } from '@/types/auth';
 import type { RendezVous } from '@/types/rendez-vous';
 import type { Produit, Vente, Depense } from '@/types';
 
-const DEMO_FLAG = 'beautyflow_demo_seeded_v4';
+const DEMO_FLAG = 'beautyflow_demo_seeded_v5';
 const DEMO_PASSWORD = 'demo2025';
 
 function simpleHash(str: string): string {
@@ -60,6 +60,8 @@ export function seedDemoData(): void {
         instagram: '@salon.elegance',
         category: 'Coiffure & Tresses',
         rating: 4.8, reviewCount: 142,
+        city: 'Douala',
+        coords: { lat: 4.0460, lng: 9.6940 },
         bannerUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80',
         gallery: [
           'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&q=80',
@@ -91,6 +93,8 @@ export function seedDemoData(): void {
         instagram: '@glow.studio',
         category: 'Onglerie & Maquillage',
         rating: 4.9, reviewCount: 89,
+        city: 'Douala',
+        coords: { lat: 4.0520, lng: 9.7060 },
         bannerUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=1200&q=80',
         gallery: [
           'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&q=80',
@@ -122,6 +126,8 @@ export function seedDemoData(): void {
         instagram: '@royal.beauty.lounge',
         category: 'Spa & Bien-être',
         rating: 4.7, reviewCount: 213,
+        city: 'Yaoundé',
+        coords: { lat: 3.8920, lng: 11.5150 },
         bannerUrl: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80',
         gallery: [
           'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80',
