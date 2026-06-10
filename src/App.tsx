@@ -58,12 +58,9 @@ function SalonProviders({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Auth */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/admin/login" element={<AdminLogin />} />
-
-      {/* Public booking (no auth, multi-tenant by slug) */}
-      <Route path="/explorer" element={<PublicExplorer />} />
+      {/* Client-only experience: discovery + booking */}
+      <Route path="/" element={<PublicExplorer />} />
+      <Route path="/explorer" element={<Navigate to="/" replace />} />
       <Route path="/explorer/login" element={<ClientLogin />} />
       <Route path="/explorer/account" element={<ClientAccount />} />
       <Route path="/booking/not-found" element={<PublicBookingNotFound />} />
@@ -71,24 +68,7 @@ function AppRoutes() {
       <Route path="/booking/:slug/book" element={<PublicBookingFlow />} />
       <Route path="/booking/:slug/confirmation/:ref" element={<PublicBookingConfirmation />} />
 
-      {/* Admin */}
-      <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
-
-      {/* Salon (protected) */}
-      <Route element={<SalonGuard><SalonProviders><AppLayout /></SalonProviders></SalonGuard>}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/clientes" element={<Clientes />} />
-        <Route path="/prestations" element={<Prestations />} />
-        <Route path="/rendez-vous" element={<RendezVousPage />} />
-        <Route path="/fidelite" element={<Fidelite />} />
-        <Route path="/rappels" element={<Rappels />} />
-        <Route path="/campagnes" element={<Campagnes />} />
-        <Route path="/stock" element={<Stock />} />
-        <Route path="/finances" element={<Finances />} />
-        <Route path="/parametres" element={<Parametres />} />
-      </Route>
-
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
