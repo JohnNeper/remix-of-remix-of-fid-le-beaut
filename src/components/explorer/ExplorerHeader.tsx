@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, LogIn, Building2 } from 'lucide-react';
+import { Heart, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useClientAuth } from '@/contexts/ClientAuthContext';
 import { BeautyFlowLogo } from '@/components/branding/BeautyFlowLogo';
@@ -11,7 +11,7 @@ export function ExplorerHeader() {
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/75 border-b border-border/60">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-        <Link to="/explorer" className="flex items-center gap-2.5 group">
+        <Link to="/" className="flex items-center gap-2.5 group">
           <BeautyFlowLogo className="h-10 w-10 rounded-2xl shadow-md group-hover:scale-105 transition-transform" />
           <div className="leading-tight">
             <div className="font-bold tracking-tight text-sm sm:text-base">
@@ -45,10 +45,6 @@ export function ExplorerHeader() {
               <span className="hidden sm:inline">Se connecter</span>
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="text-[11px] text-muted-foreground hidden md:inline-flex">
-            <Building2 className="h-3.5 w-3.5 mr-1" />
-            Espace pro
-          </Button>
         </div>
       </div>
     </header>
