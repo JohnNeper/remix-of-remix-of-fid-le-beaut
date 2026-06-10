@@ -1,11 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Search, ArrowRight, Star, Calendar, Heart, Sparkles, Scissors, Hand, Flower2, Brush } from 'lucide-react';
+import { MapPin, Search, ArrowRight, Star, Calendar, Heart, Sparkles, Scissors, Hand, Flower2, Brush, SlidersHorizontal, Navigation, Clock, Zap, X, Loader2 } from 'lucide-react';
 import { Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { getSalonAccounts } from '@/lib/auth';
 import { ExplorerHeader } from '@/components/explorer/ExplorerHeader';
 import { useClientAuth } from '@/contexts/ClientAuthContext';
@@ -21,19 +25,57 @@ const CATEGORIES = [
   { id: 'Maquillage', label: 'Maquillage', icon: Brush },
 ];
 
+function extractCity(loc?: string): string | null {
+  if (!loc) return null;
+  // Use the last comma-separated chunk (typical "Quartier, Ville" format),
+  // fallback to trimmed string.
+  const parts = loc.split(',').map(p => p.trim()).filter(Boolean);
+  const city = parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  return city || null;
+}
+
+function isSalonOpenNow(s: ReturnType<typeof getSalonAccounts>[number]): boolean {
+  const bs = s.bookingSettings;
+  if (!bs) return true;
+  const now = new Date();
+  const day = now.getDay();
+  if (bs.closedDays?.includes(day)) return false;
+  const h = now.getHours() + now.getMinutes() / 60;
+  return h >= (bs.openingHour ?? 9) && h < (bs.closingHour ?? 19);
+}
+
 export default function PublicExplorer() {
   const navigate = useNavigate();
   const { client, isFavorite, toggleFavorite } = useClientAuth();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
+  const [cityFilter, setCityFilter] = useState<string>('all');
+  const [openNow, setOpenNow] = useState(false);
+  const [instantOnly, setInstantOnly] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   const salons = useMemo(() => getSalonAccounts().filter(s => !!s.slug), []);
+
+  const cities = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of salons) {
+      const c = extractCity(s.branding?.location || s.adresse);
+      if (c) set.add(c);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [salons]);
 
   const filtered = salons.filter(s => {
     if (category !== 'all') {
       const cat = (s.branding?.category || '').toLowerCase();
       if (!cat.includes(category.toLowerCase())) return false;
     }
+    if (cityFilter !== 'all') {
+      const c = extractCity(s.branding?.location || s.adresse);
+      if (!c || c.toLowerCase() !== cityFilter.toLowerCase()) return false;
+    }
+    if (openNow && !isSalonOpenNow(s)) return false;
+    if (instantOnly && !s.bookingSettings?.autoConfirm) return false;
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
@@ -43,6 +85,63 @@ export default function PublicExplorer() {
       (s.branding?.category || '').toLowerCase().includes(q)
     );
   });
+
+  const activeFiltersCount =
+    (category !== 'all' ? 1 : 0) +
+    (cityFilter !== 'all' ? 1 : 0) +
+    (openNow ? 1 : 0) +
+    (instantOnly ? 1 : 0);
+
+  const resetFilters = () => {
+    setCategory('all');
+    setCityFilter('all');
+    setOpenNow(false);
+    setInstantOnly(false);
+    setQuery('');
+  };
+
+  const detectMyCity = () => {
+    if (!('geolocation' in navigator)) {
+      toast({ title: 'Géolocalisation indisponible', description: 'Votre navigateur ne supporte pas cette fonctionnalité.', variant: 'destructive' });
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=fr`
+          );
+          const data = await res.json();
+          const detected: string | undefined = data.city || data.locality || data.principalSubdivision;
+          if (detected) {
+            const match = cities.find(c => c.toLowerCase() === detected.toLowerCase())
+              || cities.find(c => detected.toLowerCase().includes(c.toLowerCase()))
+              || cities.find(c => c.toLowerCase().includes(detected.toLowerCase()));
+            if (match) {
+              setCityFilter(match);
+              toast({ title: `Position détectée : ${detected}`, description: `Salons à ${match} affichés.` });
+            } else {
+              setQuery(detected);
+              toast({ title: `Position détectée : ${detected}`, description: 'Aucun salon enregistré dans cette ville — recherche élargie.' });
+            }
+          } else {
+            toast({ title: 'Position non identifiée', description: 'Impossible de déterminer votre ville.', variant: 'destructive' });
+          }
+        } catch {
+          toast({ title: 'Erreur de géolocalisation', description: 'Réessayez dans un instant.', variant: 'destructive' });
+        } finally {
+          setLocating(false);
+        }
+      },
+      () => {
+        setLocating(false);
+        toast({ title: 'Accès refusé', description: 'Autorisez la localisation pour utiliser cette option.', variant: 'destructive' });
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60_000 }
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
@@ -67,14 +166,157 @@ export default function PublicExplorer() {
             {client ? `Bienvenue ${client.nom.split(' ')[0]} ✨ Trouvez votre prochain rendez-vous` : 'Découvrez les meilleurs salons près de chez vous et réservez en quelques secondes.'}
           </p>
 
-          <div className="mt-6 max-w-md mx-auto relative animate-scale-in" style={{ animationDelay: '0.2s' }}>
-            <Search className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher un salon, une ville, un service…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="pl-10 h-12 py-3 rounded-full bg-card shadow-lg border-border/60 focus-visible:ring-primary"
-            />
+          {/* Smart search bar */}
+          <div className="mt-6 max-w-2xl mx-auto animate-scale-in" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center gap-2 bg-card rounded-full shadow-xl border border-border/60 p-1.5 pl-4 focus-within:ring-2 focus-within:ring-primary/40 transition-all">
+              <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Input
+                placeholder="Salon, ville, service…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="border-0 shadow-none bg-transparent h-10 px-1 focus-visible:ring-0 text-sm sm:text-base"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  aria-label="Effacer"
+                  className="h-7 w-7 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={detectMyCity}
+                disabled={locating}
+                className="rounded-full h-10 px-3 gap-1.5 text-xs hidden sm:inline-flex hover:bg-primary/10 hover:text-primary"
+              >
+                {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
+                Près de moi
+              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button type="button" size="sm" className="rounded-full h-10 gap-1.5 px-4 gradient-primary shadow-md">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    <span className="hidden sm:inline">Filtres</span>
+                    {activeFiltersCount > 0 && (
+                      <span className="ml-0.5 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-background text-primary text-[10px] font-bold">
+                        {activeFiltersCount}
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-80 p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-sm">Filtres</h3>
+                    {activeFiltersCount > 0 && (
+                      <button onClick={resetFilters} className="text-xs text-primary hover:underline">
+                        Tout réinitialiser
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5" /> Ville
+                    </Label>
+                    <Select value={cityFilter} onValueChange={setCityFilter}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Toutes les villes" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        <SelectItem value="all">Toutes les villes</SelectItem>
+                        {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5" /> Type de soin
+                    </Label>
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        {CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="border-t pt-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="f-open" className="text-sm flex items-center gap-2 cursor-pointer">
+                        <Clock className="h-4 w-4 text-primary" />
+                        Ouvert maintenant
+                      </Label>
+                      <Switch id="f-open" checked={openNow} onCheckedChange={setOpenNow} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="f-instant" className="text-sm flex items-center gap-2 cursor-pointer">
+                        <Zap className="h-4 w-4 text-accent" />
+                        Confirmation instantanée
+                      </Label>
+                      <Switch id="f-instant" checked={instantOnly} onCheckedChange={setInstantOnly} />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={detectMyCity}
+                    disabled={locating}
+                    className="w-full gap-2 sm:hidden"
+                  >
+                    {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
+                    Utiliser ma position
+                  </Button>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Active filter chips */}
+            {activeFiltersCount > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-3 animate-fade-in">
+                {cityFilter !== 'all' && (
+                  <Badge variant="secondary" className="gap-1 pl-2 pr-1 h-7">
+                    <MapPin className="h-3 w-3" /> {cityFilter}
+                    <button onClick={() => setCityFilter('all')} className="ml-0.5 rounded-full hover:bg-background/50 p-0.5">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                {category !== 'all' && (
+                  <Badge variant="secondary" className="gap-1 pl-2 pr-1 h-7">
+                    {CATEGORIES.find(c => c.id === category)?.label}
+                    <button onClick={() => setCategory('all')} className="ml-0.5 rounded-full hover:bg-background/50 p-0.5">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                {openNow && (
+                  <Badge variant="secondary" className="gap-1 pl-2 pr-1 h-7">
+                    <Clock className="h-3 w-3" /> Ouvert
+                    <button onClick={() => setOpenNow(false)} className="ml-0.5 rounded-full hover:bg-background/50 p-0.5">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                {instantOnly && (
+                  <Badge variant="secondary" className="gap-1 pl-2 pr-1 h-7">
+                    <Zap className="h-3 w-3" /> Instantané
+                    <button onClick={() => setInstantOnly(false)} className="ml-0.5 rounded-full hover:bg-background/50 p-0.5">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
