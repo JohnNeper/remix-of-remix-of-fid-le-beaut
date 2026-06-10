@@ -231,10 +231,7 @@ export default function PublicExplorer() {
       </section>
 
       <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        Propulsé par <span className="font-semibold text-foreground">BeautyFlow</span> •
-        <button onClick={() => navigate('/login')} className="ml-1 underline underline-offset-2 hover:text-foreground">
-          Vous êtes un salon ? Connexion pro
-        </button>
+        Propulsé par <span className="font-semibold text-foreground">BeautyFlow</span>
       </footer>
     </div>
   );
