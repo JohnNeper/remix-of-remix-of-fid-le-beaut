@@ -87,7 +87,7 @@ export default function ClientLogin() {
                 <form onSubmit={handleRegister} className="space-y-3">
                   <Field icon={User} label="Nom complet" value={reg.nom} onChange={v => setReg({ ...reg, nom: v })} placeholder="Marie Nguema" />
                   <Field icon={Mail} label="Email" type="email" value={reg.email} onChange={v => setReg({ ...reg, email: v })} placeholder="vous@email.com" />
-                  <Field icon={Phone} label="Téléphone (optionnel)" type="tel" value={reg.telephone} onChange={v => setReg({ ...reg, telephone: v })} placeholder="+237 6XX XXX XXX" />
+                  <Field icon={Phone} label="Numéro WhatsApp (optionnel)" type="tel" value={reg.telephone} onChange={v => setReg({ ...reg, telephone: v })} placeholder="+237 6XX XXX XXX" />
                   <Field icon={Lock} label="Mot de passe" type="password" value={reg.password} onChange={v => setReg({ ...reg, password: v })} placeholder="Min 4 caractères" />
                   {error && <p className="text-xs text-destructive">{error}</p>}
                   <Button type="submit" className="w-full h-11 gradient-primary">Créer mon compte</Button>
