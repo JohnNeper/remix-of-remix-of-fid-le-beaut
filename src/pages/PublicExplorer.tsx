@@ -150,25 +150,30 @@ export default function PublicExplorer() {
       {/* Hero */}
       <section className="relative overflow-hidden">
         {/* Decorative blobs */}
-        <div className="absolute -top-24 -left-24 h-72 w-72 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -top-10 right-0 h-64 w-64 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute -top-32 -left-24 h-80 w-80 bg-primary/30 rounded-full blur-3xl animate-blob" />
+        <div className="absolute top-10 right-0 h-72 w-72 bg-accent/25 rounded-full blur-3xl animate-blob" style={{ animationDelay: '4s' }} />
+        <div className="absolute top-40 left-1/3 h-56 w-56 bg-fuchsia-400/20 rounded-full blur-3xl animate-blob" style={{ animationDelay: '8s' }} />
+        {/* Sparkle dots */}
+        <div className="absolute top-16 right-12 h-2 w-2 rounded-full bg-primary animate-float" />
+        <div className="absolute top-32 left-10 h-1.5 w-1.5 rounded-full bg-accent animate-float-slow" />
+        <div className="absolute top-52 right-1/3 h-1 w-1 rounded-full bg-foreground/40 animate-float" style={{ animationDelay: '2s' }} />
 
-        <div className="relative max-w-5xl mx-auto px-4 pt-10 pb-8 text-center">
-          <Badge variant="secondary" className="mb-4 animate-fade-in">
-            <Sparkles className="h-3 w-3 mr-1" />
+        <div className="relative max-w-5xl mx-auto px-4 pt-12 pb-10 text-center">
+          <Badge variant="secondary" className="mb-5 animate-fade-in border border-primary/20 bg-card/70 backdrop-blur px-3 py-1.5 shadow-sm">
+            <Sparkles className="h-3 w-3 mr-1 text-primary" />
             {salons.length} salons partenaires • Réservation 24h/24
           </Badge>
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight animate-fade-in">
-            Votre <span className="text-gradient">moment beauté</span><br />
-            commence ici.
+          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.05] animate-fade-in">
+            Votre <span className="text-aurora">moment beauté</span><br />
+            commence <span className="italic font-serif">ici.</span>
           </h1>
-          <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
             {client ? `Bienvenue ${client.nom.split(' ')[0]} ✨ Trouvez votre prochain rendez-vous` : 'Découvrez les meilleurs salons près de chez vous et réservez en quelques secondes.'}
           </p>
 
           {/* Smart search bar */}
           <div className="mt-6 max-w-2xl mx-auto animate-scale-in" style={{ animationDelay: '0.2s' }}>
-            <div className="flex items-center gap-2 bg-card rounded-full shadow-xl border border-border/60 p-1.5 pl-4 focus-within:ring-2 focus-within:ring-primary/40 transition-all">
+            <div className="flex items-center gap-2 bg-card/90 backdrop-blur-xl rounded-full shadow-2xl border border-border/60 p-1.5 pl-4 focus-within:ring-2 focus-within:ring-primary/40 hover:shadow-primary/10 transition-all">
               <Search className="h-4 w-4 text-muted-foreground shrink-0" />
               <Input
                 placeholder="Salon, ville, service…"
@@ -199,7 +204,7 @@ export default function PublicExplorer() {
               </Button>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button type="button" size="sm" className="rounded-full h-10 gap-1.5 px-4 gradient-primary shadow-md">
+                  <Button type="button" size="sm" className="rounded-full h-10 gap-1.5 px-4 gradient-primary shadow-lg glow-primary text-white">
                     <SlidersHorizontal className="h-4 w-4" />
                     <span className="hidden sm:inline">Filtres</span>
                     {activeFiltersCount > 0 && (
@@ -348,8 +353,9 @@ export default function PublicExplorer() {
 
       {/* Salon grid */}
       <section className="max-w-5xl mx-auto px-4 pb-16">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-2">
+            <span className="h-px w-6 bg-gradient-to-r from-transparent to-primary/60" />
             {filtered.length} salon{filtered.length > 1 ? 's' : ''} trouvé{filtered.length > 1 ? 's' : ''}
           </h2>
         </div>
@@ -367,14 +373,15 @@ export default function PublicExplorer() {
               const fav = isFavorite(s.id);
               const rating = s.branding?.rating ?? 4.8;
               const reviewCount = s.branding?.reviewCount ?? 0;
+              const open = isSalonOpenNow(s);
               return (
                 <Card
                   key={s.id}
-                  className="overflow-hidden group cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 border-border/60 animate-fade-in"
+                  className="overflow-hidden group cursor-pointer hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500 border-border/60 hover:border-primary/30 animate-fade-in relative"
                   style={{ animationDelay: `${i * 80}ms` }}
                   onClick={() => navigate(`/booking/${s.slug}`)}
                 >
-                  <div className="h-40 relative overflow-hidden" style={{ background: `linear-gradient(135deg, hsl(${primary}), hsl(${accent}))` }}>
+                  <div className="h-44 relative overflow-hidden" style={{ background: `linear-gradient(135deg, hsl(${primary}), hsl(${accent}))` }}>
                     <img
                       src={s.branding?.bannerUrl || getCategoryImage(s.branding?.category?.split(' ')[0])}
                       alt={s.nom}
@@ -382,15 +389,24 @@ export default function PublicExplorer() {
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).src = getCategoryImage(); }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/20 via-transparent to-accent/20" />
 
                     {/* Top badges */}
                     <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2">
-                      {s.branding?.category && (
-                        <span className="bg-background/95 backdrop-blur rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm">
-                          {s.branding.category}
-                        </span>
-                      )}
+                      <div className="flex flex-col gap-1.5 items-start">
+                        {s.branding?.category && (
+                          <span className="bg-background/95 backdrop-blur rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm">
+                            {s.branding.category}
+                          </span>
+                        )}
+                        {open && (
+                          <span className="bg-emerald-500/95 text-white backdrop-blur rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                            Ouvert
+                          </span>
+                        )}
+                      </div>
                       <div className="flex gap-1.5">
                         <button
                           type="button"
@@ -427,7 +443,7 @@ export default function PublicExplorer() {
                             if (!client) { navigate('/explorer/login'); return; }
                             toggleFavorite(s.id);
                           }}
-                          className={`h-8 w-8 rounded-full backdrop-blur flex items-center justify-center shadow transition-all active:scale-90 ${
+                          className={`h-8 w-8 rounded-full backdrop-blur flex items-center justify-center shadow transition-all active:scale-90 hover:scale-110 ${
                             fav ? 'bg-primary text-primary-foreground' : 'bg-background/95 text-foreground hover:bg-background'
                           }`}
                         >
@@ -436,16 +452,24 @@ export default function PublicExplorer() {
                       </div>
                     </div>
 
-                    {/* Rating bottom-left */}
-                    <div className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-background/95 backdrop-blur rounded-full px-2.5 py-1 text-xs font-semibold shadow">
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      {rating.toFixed(1)}
-                      <span className="text-muted-foreground font-normal">({reviewCount})</span>
+                    {/* Bottom row: rating + instant */}
+                    <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2">
+                      <div className="flex items-center gap-1.5 bg-background/95 backdrop-blur rounded-full px-2.5 py-1 text-xs font-semibold shadow">
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        {rating.toFixed(1)}
+                        <span className="text-muted-foreground font-normal">({reviewCount})</span>
+                      </div>
+                      {s.bookingSettings?.autoConfirm && (
+                        <div className="flex items-center gap-1 bg-accent/95 text-accent-foreground backdrop-blur rounded-full px-2 py-1 text-[10px] font-bold shadow">
+                          <Zap className="h-3 w-3" />
+                          Instantané
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   <div className="p-4">
-                    <h3 className="font-bold text-base leading-tight truncate">{s.nom}</h3>
+                    <h3 className="font-bold text-base leading-tight truncate group-hover:text-primary transition-colors">{s.nom}</h3>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                       <MapPin className="h-3 w-3 shrink-0" />
                       <span className="truncate">{s.branding?.location || s.adresse || 'Cameroun'}</span>
@@ -457,7 +481,7 @@ export default function PublicExplorer() {
                     )}
                     <Button
                       size="sm"
-                      className="w-full mt-3 group-hover:shadow-md transition-all rounded-lg"
+                      className="w-full mt-3 group-hover:shadow-lg transition-all rounded-lg font-semibold"
                       style={{ background: `linear-gradient(135deg, hsl(${primary}), hsl(${accent}))`, color: 'white' }}
                     >
                       <Calendar className="h-4 w-4 mr-1.5" />
@@ -472,8 +496,11 @@ export default function PublicExplorer() {
         )}
       </section>
 
-      <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        Propulsé par <span className="font-semibold text-foreground">BeautyFlow</span>
+      <footer className="border-t py-8 text-center text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-1.5">
+          <Sparkles className="h-3 w-3 text-primary" />
+          Propulsé par <span className="font-bold text-gradient">BeautyFlow</span>
+        </div>
       </footer>
     </div>
   );
