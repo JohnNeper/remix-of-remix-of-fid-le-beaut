@@ -1,9 +1,13 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, LogIn } from 'lucide-react';
+import { Heart, LogIn, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useClientAuth } from '@/contexts/ClientAuthContext';
 import { BeautyFlowLogo } from '@/components/branding/BeautyFlowLogo';
+
+const BUSINESS_SIGNUP_URL =
+  'https://wa.me/237600000000?text=' +
+  encodeURIComponent("Bonjour BeautyFlow, je souhaite référencer mon salon et m'abonner.");
 
 export function ExplorerHeader() {
   const navigate = useNavigate();
@@ -21,6 +25,24 @@ export function ExplorerHeader() {
           </div>
         </Link>
         <div className="flex items-center gap-1">
+          <a
+            href={BUSINESS_SIGNUP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden md:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full text-xs font-semibold border border-foreground/15 hover:border-foreground/40 hover:bg-foreground/5 transition-all press"
+          >
+            <Store className="h-3.5 w-3.5" />
+            Référencer mon salon
+          </a>
+          <a
+            href={BUSINESS_SIGNUP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Référencer mon salon"
+            className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-full border border-foreground/15 hover:bg-foreground/5 transition-all press"
+          >
+            <Store className="h-4 w-4" />
+          </a>
           {client ? (
             <>
               <Button variant="ghost" size="sm" onClick={() => navigate('/explorer/account?tab=favorites')} className="gap-1.5">
