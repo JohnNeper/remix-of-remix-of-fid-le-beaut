@@ -326,7 +326,7 @@ export default function PublicExplorer() {
         </div>
 
         {/* Categories */}
-        <div className="max-w-5xl mx-auto px-4 pb-4 overflow-x-auto">
+        <div className="max-w-5xl mx-auto px-4 pb-2 overflow-x-auto snap-x-pad scrollbar-none">
           <div className="flex gap-2 min-w-max pb-1">
             {CATEGORIES.map((c, i) => {
               const Icon = c.icon;
@@ -335,18 +335,39 @@ export default function PublicExplorer() {
                 <button
                   key={c.id}
                   onClick={() => setCategory(c.id)}
-                  className={`flex items-center gap-1.5 px-4 h-10 rounded-full border-2 text-sm font-medium transition-all active:scale-95 animate-fade-in ${
+                  className={`press flex items-center gap-1.5 px-4 h-10 rounded-full border-2 text-sm font-medium transition-all animate-fade-in ${
                     active
-                      ? 'bg-primary text-primary-foreground border-primary shadow-md'
-                      : 'bg-card border-border hover:border-primary/40'
+                      ? 'bg-foreground text-background border-foreground shadow-lg scale-[1.03]'
+                      : 'bg-card border-border hover:border-foreground/40 hover:-translate-y-0.5'
                   }`}
                   style={{ animationDelay: `${i * 50}ms` }}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className={`h-3.5 w-3.5 ${active ? '' : 'text-primary'}`} />
                   {c.label}
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* Trending marquee — Fresha-style */}
+        <div className="relative max-w-5xl mx-auto px-4 pb-6 overflow-hidden">
+          <div className="relative flex overflow-hidden mask-fade">
+            <div className="flex gap-2 animate-marquee whitespace-nowrap pr-2">
+              {[...Array(2)].flatMap((_, k) => [
+                '✨ Tendance : Balayage caramel',
+                '💅 Pose en gel express 30 min',
+                '💆 Spa visage hydratant',
+                '💇 Brushing brillance',
+                '💄 Maquillage soirée',
+                '🌸 Soin signature rose gold',
+                '⚡ Manucure semi-permanente',
+              ].map((t, i) => (
+                <span key={`${k}-${i}`} className="inline-flex items-center text-xs font-medium text-muted-foreground bg-card/70 border border-border/60 backdrop-blur rounded-full px-3 py-1.5 mx-1">
+                  {t}
+                </span>
+              )))}
+            </div>
           </div>
         </div>
       </section>
@@ -386,7 +407,7 @@ export default function PublicExplorer() {
                       src={s.branding?.bannerUrl || getCategoryImage(s.branding?.category?.split(' ')[0])}
                       alt={s.nom}
                       loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      className="absolute inset-0 w-full h-full object-cover animate-ken-burns group-hover:scale-110 transition-transform duration-700"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).src = getCategoryImage(); }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
