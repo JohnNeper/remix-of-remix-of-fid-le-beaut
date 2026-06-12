@@ -233,6 +233,14 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+.mask-fade {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+          mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { scrollbar-width: none; }
+
 /* Calendar RDV dots */
 .rdv-dot::after {
   content: '';
