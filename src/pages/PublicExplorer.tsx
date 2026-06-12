@@ -163,12 +163,15 @@ export default function PublicExplorer() {
             <Sparkles className="h-3 w-3 mr-1 text-primary" />
             {salons.length} salons partenaires • Réservation 24h/24
           </Badge>
-          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.05] animate-fade-in">
-            Votre <span className="text-aurora">moment beauté</span><br />
-            commence <span className="italic font-serif">ici.</span>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.08] animate-fade-in max-w-4xl mx-auto">
+            Réservez des prestations de{' '}
+            <span className="text-aurora">beauté</span> et de{' '}
+            <span className="italic font-serif">bien-être</span> près de chez vous
           </h1>
-          <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            {client ? `Bienvenue ${client.nom.split(' ')[0]} ✨ Trouvez votre prochain rendez-vous` : 'Découvrez les meilleurs salons près de chez vous et réservez en quelques secondes.'}
+          <p className="mt-5 text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-in leading-relaxed" style={{ animationDelay: '0.1s' }}>
+            {client
+              ? `Bienvenue ${client.nom.split(' ')[0]} ✨ Découvrez les salons, barbiers, spas et experts beauté les mieux notés près de vous.`
+              : 'Découvrez les salons, barbiers, spas médicaux, studios de bien-être et experts en beauté les mieux notés, approuvés par des milliers de personnes au Cameroun.'}
           </p>
 
           {/* Smart search bar */}
