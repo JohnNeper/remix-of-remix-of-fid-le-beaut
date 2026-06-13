@@ -10,6 +10,7 @@ import PublicBookingFlow from "@/pages/PublicBookingFlow";
 import PublicBookingConfirmation from "@/pages/PublicBookingConfirmation";
 import PublicBookingNotFound from "@/pages/PublicBookingNotFound";
 import PublicExplorer from "@/pages/PublicExplorer";
+import BusinessSignup from "@/pages/BusinessSignup";
 import ClientLogin from "@/pages/ClientLogin";
 import ClientAccount from "@/pages/ClientAccount";
 import { ClientAuthProvider } from "@/contexts/ClientAuthContext";
@@ -22,6 +23,8 @@ function AppRoutes() {
       {/* Client-only experience: discovery + booking */}
       <Route path="/" element={<PublicExplorer />} />
       <Route path="/explorer" element={<Navigate to="/" replace />} />
+      <Route path="/pro" element={<BusinessSignup />} />
+      <Route path="/business" element={<Navigate to="/pro" replace />} />
       <Route path="/explorer/login" element={<ClientLogin />} />
       <Route path="/explorer/account" element={<ClientAccount />} />
       <Route path="/booking/not-found" element={<PublicBookingNotFound />} />
