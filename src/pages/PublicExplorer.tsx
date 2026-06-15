@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Search, ArrowRight, Star, Calendar, Heart, Sparkles, Scissors, Hand, Flower2, Brush, SlidersHorizontal, Navigation, Clock, Zap, X, Loader2 } from 'lucide-react';
+import { MapPin, Search, ArrowRight, Star, Calendar, Heart, Sparkles, Scissors, Hand, Flower2, Brush, SlidersHorizontal, Navigation, Clock, Zap, X, Loader2, Store, MessageCircle, TrendingUp, Bell, BarChart3, Shield, CheckCircle2, Smartphone, Users } from 'lucide-react';
 import { Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -518,6 +518,112 @@ export default function PublicExplorer() {
             })}
           </div>
         )}
+      </section>
+
+      {/* ============ FOR SALONS — BeautyFlow App pitch ============ */}
+      <section className="relative overflow-hidden border-t border-border/60 mt-8">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute -top-20 -left-10 w-80 h-80 rounded-full bg-primary/20 blur-3xl animate-blob" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-accent/20 blur-3xl animate-blob" style={{ animationDelay: '2s' }} />
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 py-16 sm:py-24">
+          <div className="text-center max-w-3xl mx-auto">
+            <span className="inline-flex items-center gap-2 px-3 h-7 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-5 animate-fade-in">
+              <Store className="h-3.5 w-3.5" /> Vous êtes propriétaire de salon ?
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight">
+              <span className="text-aurora">BeautyFlow</span>, l'app qui transforme votre salon en{' '}
+              <span className="italic font-serif">machine à croissance</span>
+            </h2>
+            <p className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed">
+              Plus de clientes, moins de no-shows, plus de revenus. La plateforme n°1 pensée pour les salons africains —
+              compatible WhatsApp, en FCFA, sans compétence technique requise.
+            </p>
+          </div>
+
+          {/* Stats */}
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
+            {[
+              { v: '-70%', l: 'de no-shows', icon: Bell },
+              { v: '+45%', l: 'de rétention', icon: Heart },
+              { v: '+30%', l: 'de revenus', icon: TrendingUp },
+              { v: '5 min', l: 'pour démarrer', icon: Zap },
+            ].map(({ v, l, icon: Icon }) => (
+              <div key={l} className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur p-5 text-center hover:border-primary/40 hover:-translate-y-1 transition-all">
+                <Icon className="h-5 w-5 mx-auto text-primary mb-2" />
+                <div className="text-2xl sm:text-3xl font-bold text-aurora">{v}</div>
+                <div className="text-[11px] sm:text-xs text-muted-foreground mt-1">{l}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Features grid */}
+          <div className="mt-14 grid md:grid-cols-3 gap-4">
+            {[
+              { icon: MessageCircle, title: 'WhatsApp automatique', desc: 'Rappels, confirmations et promotions envoyés directement sur le téléphone de vos clientes.' },
+              { icon: Calendar, title: 'Agenda intelligent', desc: 'Calendrier interactif, zéro double réservation, vue jour/semaine/mois.' },
+              { icon: Users, title: 'Fidélité & parrainage', desc: 'Points automatiques, programme de parrainage et historique client complet.' },
+              { icon: BarChart3, title: 'Finances & stock', desc: 'Tableau de bord revenus, alertes stock en temps réel, exports détaillés.' },
+              { icon: Smartphone, title: 'App installable (PWA)', desc: 'Fonctionne hors-ligne, sur mobile comme sur desktop — comme une vraie app.' },
+              { icon: Shield, title: 'Données sécurisées', desc: 'Vos données clientes restent privées, sauvegardées et protégées.' },
+            ].map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={f.title}
+                  className="group p-6 rounded-2xl border border-border/60 bg-card hover:border-primary/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-fade-in"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
+                  <div className="h-12 w-12 rounded-2xl gradient-primary flex items-center justify-center text-primary-foreground shadow-md group-hover:scale-110 transition-transform">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 font-semibold text-base">{f.title}</h3>
+                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Big CTA */}
+          <div className="mt-14 relative overflow-hidden rounded-3xl gradient-primary p-8 sm:p-12 text-center shadow-2xl">
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white/30 blur-3xl" />
+            </div>
+            <div className="relative text-primary-foreground">
+              <Sparkles className="h-8 w-8 mx-auto mb-3" />
+              <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight max-w-2xl mx-auto">
+                Essayez BeautyFlow gratuitement pendant 14 jours
+              </h3>
+              <p className="mt-3 text-primary-foreground/90 max-w-xl mx-auto text-sm sm:text-base">
+                Aucune carte bancaire requise. Configuration assistée. Support en français.
+                Voyez des résultats concrets dès le premier mois.
+              </p>
+              <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Button
+                  size="lg"
+                  onClick={() => navigate('/pro')}
+                  className="h-12 px-7 rounded-full bg-white text-primary hover:bg-white/90 font-semibold shadow-lg press"
+                >
+                  <Store className="h-4 w-4 mr-1.5" />
+                  Référencer mon salon
+                  <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Button>
+                <button
+                  onClick={() => navigate('/pro#pricing')}
+                  className="h-12 px-6 rounded-full border-2 border-white/40 text-primary-foreground hover:bg-white/10 font-semibold text-sm transition-all press"
+                >
+                  Voir les tarifs
+                </button>
+              </div>
+              <div className="mt-6 flex items-center justify-center gap-5 text-xs text-primary-foreground/80 flex-wrap">
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> 14 jours offerts</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Sans engagement</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Activé en 24h</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <footer className="border-t py-8 text-center text-xs text-muted-foreground">
