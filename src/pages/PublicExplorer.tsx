@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Search, ArrowRight, Star, Calendar, Heart, Sparkles, Scissors, Hand, Flower2, Brush, SlidersHorizontal, Navigation, Clock, Zap, X, Loader2 } from 'lucide-react';
+import { MapPin, Search, ArrowRight, Star, Calendar, Heart, Sparkles, Scissors, Hand, Flower2, Brush, SlidersHorizontal, Navigation, Clock, Zap, X, Loader2, Store, MessageCircle, TrendingUp, Bell, BarChart3, Shield, CheckCircle2, Smartphone, Users } from 'lucide-react';
 import { Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
