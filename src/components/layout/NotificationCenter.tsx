@@ -12,14 +12,14 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 
-const typeIcons = {
+const typeIcons: Record<string, React.ElementType> = {
   stock: Package,
   rdv: Calendar,
   inactive: Users,
   info: Bell,
 };
 
-const typeColors = {
+const typeColors: Record<string, string> = {
   stock: 'text-destructive bg-destructive/10',
   rdv: 'text-info bg-info/10',
   inactive: 'text-warning bg-warning/10',
@@ -31,25 +31,39 @@ export function NotificationCenter() {
   const { t } = useLanguage();
 
   const getNotifDisplay = (notif: typeof notifications[0]) => {
-    switch (notif.type) {
-      case 'stock':
-        return {
-          title: t('notifications.stockAlert'),
-          desc: t('notifications.stockAlertDesc', { name: notif.title, qty: notif.description.split('/')[0], threshold: notif.description.split('/')[1] }),
-        };
-      case 'rdv':
-        return {
-          title: t('notifications.todayRdv'),
-          desc: t('notifications.todayRdvDesc', { count: notif.title }),
-        };
-      case 'inactive':
-        return {
-          title: t('notifications.inactiveAlert'),
-          desc: t('notifications.inactiveAlertDesc', { count: notif.title, days: notif.description }),
-        };
-      default:
-        return { title: notif.title, desc: notif.description };
+    if (!notif) return { title: '', desc: '' };
+
+    const isLocalStock = typeof notif.id === 'string' && notif.id.startsWith('stock-');
+    const isLocalRdv = notif.id === 'rdv-today';
+    const isLocalInactive = notif.id === 'inactive-clients';
+
+    if (notif.type === 'stock' && isLocalStock) {
+      const parts = (notif.description || '').split('/');
+      return {
+        title: t('notifications.stockAlert'),
+        desc: t('notifications.stockAlertDesc', {
+          name: notif.title || '',
+          qty: parts[0] || '0',
+          threshold: parts[1] || '0',
+        }),
+      };
     }
+
+    if (notif.type === 'rdv' && isLocalRdv) {
+      return {
+        title: t('notifications.todayRdv'),
+        desc: t('notifications.todayRdvDesc', { count: notif.title || '0' }),
+      };
+    }
+
+    if (notif.type === 'inactive' && isLocalInactive) {
+      return {
+        title: t('notifications.inactiveAlert'),
+        desc: t('notifications.inactiveAlertDesc', { count: notif.title || '0', days: notif.description || '0' }),
+      };
+    }
+
+    return { title: notif.title || '', desc: notif.description || '' };
   };
 
   return (
@@ -83,7 +97,8 @@ export function NotificationCenter() {
           ) : (
             <div className="divide-y divide-border">
               {notifications.map(notif => {
-                const Icon = typeIcons[notif.type];
+                const Icon = (notif?.type && typeIcons[notif.type]) || Bell;
+                const colorClass = (notif?.type && typeColors[notif.type]) || 'text-muted-foreground bg-muted';
                 const display = getNotifDisplay(notif);
                 return (
                   <div
@@ -94,7 +109,7 @@ export function NotificationCenter() {
                     )}
                     onClick={() => markAsRead(notif.id)}
                   >
-                    <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center shrink-0', typeColors[notif.type])}>
+                    <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center shrink-0', colorClass)}>
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="flex-1 min-w-0">

@@ -8,14 +8,14 @@ import { getBookingPublicUrl } from '@/lib/booking';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Link2, Copy, ExternalLink, MessageCircle, Zap } from 'lucide-react';
+import { Link2, Copy, ExternalLink, MessageCircle, Zap, CalendarCheck } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export default function RendezVousPage() {
   const { t } = useLanguage();
   const { session } = useAuth();
   const salon = session?.salonId
-    ? getSalonAccounts().find(s => s.id === session.salonId)
+    ? getSalonAccounts().find((s) => s.id === session.salonId)
     : null;
   const slug = salon?.slug;
   const publicUrl = slug ? getBookingPublicUrl(slug) : '';
@@ -31,50 +31,90 @@ export default function RendezVousPage() {
   };
 
   return (
-    <div className="p-4 lg:p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{t('appointments.title')}</h1>
-        <p className="text-muted-foreground">{t('appointments.subtitle')}</p>
+    <div className="p-3 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-[1600px] mx-auto font-sans">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20 shadow-sm">
+              <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                {t('appointments.title') || 'Gestion des Rendez-vous'}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                {t('appointments.subtitle') || 'Gérez vos créneaux, réservations en ligne et le planning de votre salon.'}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* Public Booking Link Card */}
       {slug && (
-        <Card className="p-4 border-primary/20 bg-gradient-to-br from-primary/5 via-card to-accent/5">
-          <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shrink-0">
-              <Link2 className="h-5 w-5 text-primary-foreground" />
+        <Card className="p-4 sm:p-6 rounded-3xl border-rose-500/20 bg-gradient-to-r from-rose-500/10 via-purple-500/5 to-slate-900/5 dark:from-rose-500/15 dark:via-purple-900/10 dark:to-slate-950/80 shadow-lg backdrop-blur-md relative overflow-hidden">
+          <div className="absolute top-0 right-0 h-40 w-40 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-2xl bg-gradient-to-br from-rose-600 to-purple-700 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-600/20">
+                <Link2 className="h-5 w-5 sm:h-6 sm:w-6" />
+              </div>
+              <div className="space-y-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                    Lien de réservation en ligne
+                  </h3>
+                  {instant && (
+                    <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 font-extrabold text-[11px] h-6 px-2.5 rounded-full">
+                      <Zap className="h-3 w-3 mr-1 text-emerald-500 fill-emerald-500" /> Auto-confirmation
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                  Partagez ce lien à vos clientes pour leur permettre de réserver 24/7 en toute autonomie.
+                </p>
+                <div className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white/80 dark:bg-slate-900/80 px-3.5 py-1.5 text-xs font-mono font-bold text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-800 max-w-full overflow-x-auto shadow-2xs">
+                  {publicUrl}
+                </div>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-semibold text-sm">Votre lien de réservation</h3>
-                {instant && (
-                  <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 text-[10px] h-5">
-                    <Zap className="h-3 w-3 mr-0.5" /> Confirmation auto
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">Partagez-le à vos clientes pour qu'elles réservent en ligne.</p>
-              <div className="mt-2 flex items-center gap-1 rounded-lg bg-muted px-3 py-2 text-xs font-mono overflow-x-auto">
-                {publicUrl}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={copy}>
-                  <Copy className="h-3.5 w-3.5 mr-1.5" /> Copier
-                </Button>
-                <Button size="sm" variant="outline" onClick={shareWa} className="text-emerald-600 border-emerald-200 hover:bg-emerald-50">
-                  <MessageCircle className="h-3.5 w-3.5 mr-1.5" /> WhatsApp
-                </Button>
-                <Button size="sm" asChild className="gradient-primary">
-                  <a href={publicUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> Aperçu
-                  </a>
-                </Button>
-              </div>
+
+            <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 md:pt-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={copy}
+                className="rounded-xl h-9 px-3.5 text-xs font-extrabold border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <Copy className="h-3.5 w-3.5 mr-1.5 text-rose-500" /> Copier le lien
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={shareWa}
+                className="rounded-xl h-9 px-3.5 text-xs font-extrabold border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10"
+              >
+                <MessageCircle className="h-3.5 w-3.5 mr-1.5 text-emerald-500" /> WhatsApp
+              </Button>
+              <Button
+                size="sm"
+                asChild
+                className="rounded-xl h-9 px-4 text-xs font-extrabold bg-gradient-to-r from-rose-600 to-purple-600 text-white hover:from-rose-700 hover:to-purple-700 shadow-md shadow-rose-600/20"
+              >
+                <a href={publicUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> Aperçu client
+                </a>
+              </Button>
             </div>
           </div>
         </Card>
       )}
 
+      {/* Pending Public Bookings Notification Banner */}
       <PendingPublicBookings />
+
+      {/* Main Interactive Calendar */}
       <CalendrierRendezVous />
     </div>
   );

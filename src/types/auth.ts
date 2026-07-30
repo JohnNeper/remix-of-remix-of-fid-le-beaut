@@ -29,6 +29,9 @@ export interface SalonAccount {
   joursAbonnement: number; // 30
   plan: PlanType; // subscription tier
   users?: SalonUser[]; // owner + staff
+  joursRappelInactivite?: number;
+  joursRappelSuivi?: number;
+  configFidelite?: any;
   // ===== Public booking (multi-tenant white-label) =====
   slug?: string; // unique URL identifier e.g. "neyohair"
   branding?: SalonBranding;
@@ -102,4 +105,49 @@ export interface AuthSession {
   userName?: string;
   email: string;
   timestamp: number;
+  token?: string; // added to support the token
+}
+
+export interface LoginPayload {
+  email: string;
+  password?: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: any;
+  salon?: any;
+}
+
+export interface AbonnementData {
+  statut: string;
+  montant: number;
+  dureeJours?: number;
+  dateDebut: string;
+  dateFin: string;
+  dernierPaiement?: string;
+  renouvellementAuto?: boolean;
+}
+
+export function buildSession(user: any, salon: any | null, token: string): AuthSession {
+  if (!salon) {
+    return {
+      type: 'admin',
+      userId: user.id || user._id,
+      userName: user.nom || user.name,
+      email: user.email,
+      timestamp: Date.now(),
+      token,
+    };
+  }
+  return {
+    type: 'salon',
+    salonId: salon.id || salon._id,
+    userId: user.id || user._id,
+    userRole: user.role,
+    userName: user.nom || user.name,
+    email: user.email,
+    timestamp: Date.now(),
+    token,
+  };
 }

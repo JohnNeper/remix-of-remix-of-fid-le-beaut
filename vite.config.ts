@@ -17,41 +17,94 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
+      // Mise à jour automatique du SW en arrière-plan
       registerType: "autoUpdate",
+
+      // Activer le SW en dev pour tester le prompt d'installation
       devOptions: {
-        enabled: false,
+        enabled: true,
+        type: "module",
+        navigateFallback: "index.html",
       },
+
+      // Utiliser notre fichier manifest.webmanifest custom dans /public
+      manifest: false,
+      manifestFilename: "manifest.webmanifest",
+      injectManifest: undefined,
+
+      // Assets à mettre en cache lors du pre-caching
+      includeAssets: [
+        "favicon.ico",
+        "pwa-icon-192.png",
+        "pwa-icon-512.png",
+        "robots.txt",
+      ],
+
       workbox: {
-        navigateFallbackDenylist: [/^\/~oauth/],
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}"],
-      },
-      includeAssets: ["pwa-icon-192.png", "pwa-icon-512.png"],
-      manifest: {
-        name: "BeautyFlow - Gestion Salon de Beauté",
-        short_name: "BeautyFlow",
-        description: "Application de gestion complète pour salons de beauté",
-        theme_color: "#d6336c",
-        background_color: "#faf5f0",
-        display: "standalone",
-        orientation: "portrait",
-        scope: "/",
-        start_url: "/",
-        icons: [
+        // Augmenter la limite de taille du cache pour les gros fichiers (ex: index.js avec jspdf/html2canvas)
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MiB
+
+        // Routes à exclure du service worker (OAuth, API...)
+        navigateFallbackDenylist: [/^\/api/, /^\/~oauth/, /^\/admin/],
+
+        // Toutes les routes frontend redirigent vers index.html (SPA)
+        navigateFallback: "index.html",
+
+        // Assets mis en cache statiquement au moment du build
+        globPatterns: [
+          "**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2,ttf,eot}",
+        ],
+
+        // Nettoyage des anciens caches après mise à jour du SW
+        cleanupOutdatedCaches: true,
+
+        // Stratégies de cache pour les ressources dynamiques
+        runtimeCaching: [
           {
-            src: "pwa-icon-192.png",
-            sizes: "192x192",
-            type: "image/png",
+            // API backend → Network First (données fraîches en priorité)
+            urlPattern: /^https:\/\/.*\/api\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "beautyflow-api-cache",
+              networkTimeoutSeconds: 10,
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24, // 1 jour
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
           },
           {
-            src: "pwa-icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
+            // Images → Cache First (performances maximales)
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "beautyflow-images-cache",
+              expiration: {
+                maxEntries: 60,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 jours
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
           },
           {
-            src: "pwa-icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
+            // Fonts Google → Cache First
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "beautyflow-fonts-cache",
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 an
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
           },
         ],
       },
@@ -62,4 +115,18 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('jspdf') || id.includes('html2canvas')) {
+              return 'pdf-utils';
+            }
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
 }));

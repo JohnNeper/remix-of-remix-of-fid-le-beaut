@@ -1,0 +1,19 @@
+{
+  "rewrites": [
+    {
+      "source": "/booking/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|twitterbot|whatsapp|linkedinbot|discordbot|telegrambot).*"
+        }
+      ],
+      "destination": "https://apisalon.westtechs.org/api/marketplace/salons/:slug/share-preview"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

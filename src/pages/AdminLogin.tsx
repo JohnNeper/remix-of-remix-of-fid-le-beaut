@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import bfLogo from '@/assets/BF.png';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,8 +13,14 @@ export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { loginAdmin } = useAuth();
+  const { session, loginAdmin } = useAuth();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (session?.type === 'admin') {
+      navigate('/admin', { replace: true });
+    }
+  }, [session, navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,11 +36,13 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm sm:max-w-md space-y-6">
         <div className="text-center">
-          <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-foreground flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
-            <Shield className="h-7 w-7 sm:h-9 sm:w-9 text-background" />
+          <div className="flex justify-center mb-4">
+            <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-xl border border-muted inline-flex items-center justify-center">
+              <img src={bfLogo} alt="BeautyFlow Logo" className="h-12 sm:h-14 object-contain" />
+            </div>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Administration</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">LeaderBright BeautyFlow</p>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">Espace de gestion global</p>
         </div>
 
         <Card className="card-shadow">

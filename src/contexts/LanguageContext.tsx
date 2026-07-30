@@ -5,7 +5,7 @@ import { getStorageItem, setStorageItem } from '@/lib/storage';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string, params?: Record<string, string | number>) => string;
+  t: (key: string, arg2?: string | Record<string, string | number>, arg3?: string | Record<string, string | number>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | null>(null);
@@ -22,8 +22,19 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setStorageItem(LANG_KEY, lang);
   }, []);
 
-  const t = useCallback((key: string, params?: Record<string, string | number>): string => {
-    let text = translations[language][key] || translations['fr'][key] || key;
+  const t = useCallback((key: string, arg2?: string | Record<string, string | number>, arg3?: string | Record<string, string | number>): string => {
+    let fallback: string | undefined;
+    let params: Record<string, string | number> | undefined;
+
+    if (typeof arg2 === 'string') {
+      fallback = arg2;
+      if (typeof arg3 === 'object') params = arg3;
+    } else if (typeof arg2 === 'object') {
+      params = arg2;
+      if (typeof arg3 === 'string') fallback = arg3;
+    }
+
+    let text = translations[language][key] || translations['fr'][key] || fallback || key;
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
         text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { createSalonAccount, addStaffToSalon } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
 import { PLANS, PlanType, getPlanColor, formatPlanPrice } from '@/lib/plans';
+import { api } from '@/lib/api';
 
 interface StaffEntry {
   nom: string;
@@ -66,29 +67,38 @@ export default function CreateSalonDialog({ open, onOpenChange, existingEmails, 
     setStaffList(staffList.filter((_, i) => i !== index));
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (existingEmails.includes(email)) {
-      toast({ title: 'Cet email est déjà utilisé', variant: 'destructive' });
-      return;
-    }
-    const salon = createSalonAccount({
-      nom, proprietaire, telephone, adresse, email, motDePasse,
-      dernierPaiement: new Date().toISOString().split('T')[0],
-      plan: selectedPlan,
-    });
 
-    // Add staff members
-    if (staffList.length > 0) {
-      staffList.forEach(staff => {
-        addStaffToSalon(salon.id, staff);
+    try {
+      const response = await api.adminCreateSalon({
+        salonName: nom,
+        salonPhone: telephone,
+        salonEmail: email,
+        salonAddress: adresse,
+        ownerName: proprietaire,
+        ownerEmail: email, // Assuming same email for owner for now as in the original form
+        ownerPassword: motDePasse,
+        ownerPhone: telephone,
+        plan: selectedPlan,
+        staffList: staffList
+      });
+
+      toast({
+        title: 'Salon créé avec succès',
+        description: `${response.salon.name} — Plan ${plan.label} — Propriétaire: ${response.owner.name}`
+      });
+
+      resetForm();
+      onOpenChange(false);
+      onCreated();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur lors de la création',
+        description: error.message || 'Une erreur est survenue',
+        variant: 'destructive'
       });
     }
-
-    toast({ title: 'Salon créé avec succès', description: `${nom} — Plan ${plan.label} — ${1 + staffList.length} utilisateur(s).` });
-    resetForm();
-    onOpenChange(false);
-    onCreated();
   };
 
   return (
@@ -129,11 +139,10 @@ export default function CreateSalonDialog({ open, onOpenChange, existingEmails, 
                         setStaffList(staffList.slice(0, newMax));
                       }
                     }}
-                    className={`p-2.5 rounded-lg border-2 text-center transition-all ${
-                      isSelected
+                    className={`p-2.5 rounded-lg border-2 text-center transition-all ${isSelected
                         ? 'border-primary bg-primary/10 shadow-sm'
                         : 'border-border hover:border-primary/40'
-                    }`}
+                      }`}
                   >
                     <Badge className={`${getPlanColor(planKey)} text-[10px] mb-1`}>{p.label}</Badge>
                     <p className="text-xs font-bold">{p.price.toLocaleString('fr-FR')}</p>

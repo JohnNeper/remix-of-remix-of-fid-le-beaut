@@ -98,6 +98,32 @@ export const PLANS: Record<PlanType, Plan> = {
   },
 };
 
+export function updatePlanPrices(backendPlans: any[]) {
+  backendPlans.forEach((bp) => {
+    const key = bp.key as PlanType;
+    if (PLANS[key]) {
+      PLANS[key].price = bp.price;
+      if (bp.maxCustomers !== undefined) PLANS[key].maxCustomers = bp.maxCustomers;
+      if (bp.maxStaff !== undefined) PLANS[key].maxStaff = bp.maxStaff;
+      if (bp.maxCampaignsPerMonth !== undefined) PLANS[key].maxCampaignsPerMonth = bp.maxCampaignsPerMonth;
+      if (bp.campaignsEnabled !== undefined) PLANS[key].campaignsEnabled = bp.campaignsEnabled;
+      if (bp.exportEnabled !== undefined) PLANS[key].exportEnabled = bp.exportEnabled;
+      if (bp.analyticsLevel !== undefined) PLANS[key].analyticsLevel = bp.analyticsLevel as 'basic' | 'detailed' | 'advanced';
+      if (bp.automationEnabled !== undefined) PLANS[key].automationEnabled = bp.automationEnabled;
+      if (bp.multiBranchEnabled !== undefined) PLANS[key].multiBranchEnabled = bp.multiBranchEnabled;
+      if (bp.loyaltyRulesEnabled !== undefined) PLANS[key].loyaltyRulesEnabled = bp.loyaltyRulesEnabled;
+      if (bp.birthdayBonusEnabled !== undefined) PLANS[key].birthdayBonusEnabled = bp.birthdayBonusEnabled;
+      if (bp.stockHistoryEnabled !== undefined) PLANS[key].stockHistoryEnabled = bp.stockHistoryEnabled;
+      if (bp.scheduledCampaignsEnabled !== undefined) PLANS[key].scheduledCampaignsEnabled = bp.scheduledCampaignsEnabled;
+      if (bp.customerSegmentationEnabled !== undefined) PLANS[key].customerSegmentationEnabled = bp.customerSegmentationEnabled;
+      if (bp.profitEstimationEnabled !== undefined) PLANS[key].profitEstimationEnabled = bp.profitEstimationEnabled;
+      if (bp.prioritySupport !== undefined) PLANS[key].prioritySupport = bp.prioritySupport;
+      if (bp.description !== undefined) PLANS[key].description = bp.description;
+      if (bp.descriptionEn !== undefined) PLANS[key].descriptionEn = bp.descriptionEn;
+    }
+  });
+}
+
 export function getPlan(planName: PlanType): Plan {
   return PLANS[planName] || PLANS.basic;
 }

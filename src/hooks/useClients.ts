@@ -1,57 +1,119 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Client, ClientStatus } from '@/types';
 import { getStorageItem, setStorageItem, tenantStorageKey, STORAGE_KEYS } from '@/lib/storage';
 import { mockClients } from '@/lib/mock-data';
+import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function useClients() {
   const { session } = useAuth();
   const salonId = session?.salonId;
-  const key = tenantStorageKey(salonId, STORAGE_KEYS.CLIENTS);
+  const queryClient = useQueryClient();
 
-  const [clients, setClients] = useState<Client[]>(() => 
-    getStorageItem(key, mockClients)
-  );
-  const [loading, setLoading] = useState(false);
+  const { data: clients = [], isLoading: loading } = useQuery<Client[]>({
+    queryKey: ['clients', salonId],
+    queryFn: async () => {
+      try {
+        const data = await api.getClients(salonId!);
+        // Map 'name' from backend to 'nom' for frontend compatibility
+        return data.map((client: any) => ({
+          ...client,
+          id: client._id || client.id,
+          nom: client.nom || client.name || 'Client sans nom',
+          statut: client.statut || client.status || 'nouvelle',
+          dateInscription: client.dateInscription || client.createdAt || new Date().toISOString(),
+        }));
+      } catch (err: any) {
+        if (err.message?.includes('403') || err.message?.includes('Forbidden')) {
+          return [];
+        }
+        throw err;
+      }
+    },
+    enabled: !!salonId,
+  });
 
-  useEffect(() => {
-    setStorageItem(key, clients);
-  }, [clients, key]);
+  const addClientMutation = useMutation({
+    mutationFn: (newClient: Omit<Client, 'id' | 'dateInscription' | 'pointsFidelite' | 'totalDepense' | 'nombreVisites'>) =>
+      api.createClient(salonId!, newClient as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients', salonId] });
+    },
+  });
 
-  // Reload when salon changes
-  useEffect(() => {
-    setClients(getStorageItem(key, mockClients));
-  }, [key]);
+  const addClientsMutation = useMutation({
+    mutationFn: (newClients: Omit<Client, 'id' | 'dateInscription' | 'pointsFidelite' | 'totalDepense' | 'nombreVisites'>[]) =>
+      api.createClients(salonId!, newClients as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients', salonId] });
+    },
+  });
 
-  const addClient = useCallback((client: Omit<Client, 'id' | 'dateInscription' | 'pointsFidelite' | 'totalDepense' | 'nombreVisites'>) => {
-    const newClient: Client = {
-      ...client,
-      id: crypto.randomUUID(),
-      dateInscription: new Date().toISOString().split('T')[0],
-      pointsFidelite: 0,
-      totalDepense: 0,
-      nombreVisites: 0,
-    };
-    setClients(prev => [...prev, newClient]);
-    return newClient;
-  }, []);
+  const updateClientMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Client> }) => api.updateClient(salonId!, id, updates as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients', salonId] });
+    },
+  });
 
-  const updateClient = useCallback((id: string, updates: Partial<Client>) => {
-    setClients(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-  }, []);
+  const deleteClientMutation = useMutation({
+    mutationFn: (id: string) => api.deleteClient(salonId!, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients', salonId] });
+    },
+  });
 
-  const deleteClient = useCallback((id: string) => {
-    setClients(prev => prev.filter(c => c.id !== id));
-  }, []);
+  const checkDuplicatesMutation = useMutation({
+    mutationFn: (phones: string[]) => api.checkDuplicates(salonId!, phones),
+  });
 
-  const getClient = useCallback((id: string) => {
-    return clients.find(c => c.id === id);
-  }, [clients]);
+  const bulkImportMutation = useMutation({
+    mutationFn: (payload: {
+      contacts: Array<{ nom: string; telephone: string }>;
+      groupe?: { nom: string; couleur: string; description: string };
+    }) => api.bulkImport(salonId!, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['contactGroups', salonId] });
+    },
+  });
+
+  const addClient = async (client: Omit<Client, 'id' | 'dateInscription' | 'pointsFidelite' | 'totalDepense' | 'nombreVisites'>) => {
+    return await addClientMutation.mutateAsync(client);
+  };
+
+  const addClients = (clients: Omit<Client, 'id' | 'dateInscription' | 'pointsFidelite' | 'totalDepense' | 'nombreVisites'>[]) => {
+    return addClientsMutation.mutateAsync(clients);
+  };
+
+  const checkDuplicates = (phones: string[]) => {
+    return checkDuplicatesMutation.mutateAsync(phones);
+  };
+
+  const bulkImport = (payload: {
+    contacts: Array<{ nom: string; telephone: string }>;
+    groupe?: { nom: string; couleur: string; description: string };
+  }) => {
+    return bulkImportMutation.mutateAsync(payload);
+  };
+
+  const updateClient = (id: string, updates: Partial<Client>) => {
+    updateClientMutation.mutate({ id, updates });
+  };
+
+  const deleteClient = (id: string) => {
+    deleteClientMutation.mutate(id);
+  };
+
+  const getClient = (id: string) => {
+    return clients.find(c => (c as any)._id === id || c.id === id);
+  };
 
   const searchClients = useCallback((query: string) => {
     const q = query.toLowerCase();
-    return clients.filter(c => 
-      c.nom.toLowerCase().includes(q) || 
+    return clients.filter(c =>
+      c.nom.toLowerCase().includes(q) ||
       c.telephone.includes(q)
     );
   }, [clients]);
@@ -69,18 +131,37 @@ export function useClients() {
     });
   }, [clients]);
 
-  const updateClientStats = useCallback((clientId: string, montant: number) => {
-    setClients(prev => prev.map(c => {
-      if (c.id !== clientId) return c;
-      const nombreVisites = c.nombreVisites + 1;
-      const totalDepense = c.totalDepense + montant;
-      const pointsFidelite = c.pointsFidelite + 1;
-      let statut: ClientStatus = c.statut;
-      if (nombreVisites >= 10) statut = 'vip';
-      else if (nombreVisites >= 3) statut = 'reguliere';
-      return { ...c, nombreVisites, totalDepense, pointsFidelite, statut, derniereVisite: new Date().toISOString().split('T')[0] };
-    }));
-  }, []);
+  const updateClientStats = (clientId: string, montant: number) => {
+    // This logic might be better handled on the backend when a prestation is added
+    console.warn('updateClientStats should be handled on the backend');
+  };
 
-  return { clients, loading, addClient, updateClient, deleteClient, getClient, searchClients, getClientsByStatus, getInactiveClients, updateClientStats };
+  const searchClientsRemote = async (query: string) => {
+    if (!salonId) return [];
+    const data = await api.searchClients(salonId, query);
+    return data.map((client: any) => ({
+      ...client,
+      id: client._id || client.id,
+      nom: client.nom || client.name || 'Client sans nom',
+      statut: client.statut || client.status || 'nouvelle',
+      dateInscription: client.dateInscription || client.createdAt || new Date().toISOString(),
+    }));
+  };
+
+  return {
+    clients,
+    loading,
+    addClient,
+    addClients,
+    checkDuplicates,
+    bulkImport,
+    updateClient,
+    deleteClient,
+    getClient,
+    searchClients, // Local search (for owner)
+    searchClientsRemote, // Remote search (for staff)
+    getClientsByStatus,
+    getInactiveClients,
+    updateClientStats
+  };
 }

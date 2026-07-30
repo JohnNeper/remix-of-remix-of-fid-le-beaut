@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Download, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3 } from 'lucide-react';
+import { Calendar, Download, TrendingUp, TrendingDown, Wallet, PieChart, BarChart3, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Vente, Depense } from '@/types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, Legend } from 'recharts';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface GlobalCashReportProps {
   ventes: Vente[];
@@ -34,10 +35,14 @@ function getWeekRange(date: Date) {
 }
 
 export function GlobalCashReport({ ventes, depenses, hasExport, onExportCSV, onExportPDF }: GlobalCashReportProps) {
+  const { t } = useLanguage();
   const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'range'>('month');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [dateStart, setDateStart] = useState(new Date().toISOString().split('T')[0]);
   const [dateEnd, setDateEnd] = useState(new Date().toISOString().split('T')[0]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { filteredVentes, filteredDepenses, label } = useMemo(() => {
     const dateObj = new Date(selectedDate);
@@ -119,15 +124,17 @@ export function GlobalCashReport({ ventes, depenses, hasExport, onExportCSV, onE
       <Card className="card-shadow">
         <CardContent className="p-4">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-              <Tabs value={period} onValueChange={(v) => setPeriod(v as typeof period)}>
-                <TabsList>
-                  <TabsTrigger value="day">Jour</TabsTrigger>
-                  <TabsTrigger value="week">Semaine</TabsTrigger>
-                  <TabsTrigger value="month">Mois</TabsTrigger>
-                  <TabsTrigger value="range">Période</TabsTrigger>
-                </TabsList>
-              </Tabs>
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+              <div className="w-full sm:w-auto overflow-x-auto pb-1">
+                <Tabs value={period} onValueChange={(v) => setPeriod(v as typeof period)} className="w-full">
+                  <TabsList className="w-full sm:w-auto inline-flex">
+                    <TabsTrigger value="day" className="flex-1 whitespace-nowrap">{t('finances.periods.day')}</TabsTrigger>
+                    <TabsTrigger value="week" className="flex-1 whitespace-nowrap">{t('finances.periods.week')}</TabsTrigger>
+                    <TabsTrigger value="month" className="flex-1 whitespace-nowrap">{t('finances.periods.month')}</TabsTrigger>
+                    <TabsTrigger value="range" className="flex-1 whitespace-nowrap">{t('finances.periods.range')}</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
               {hasExport && (
                 <div className="flex gap-2 sm:ml-auto">
                   <Button variant="outline" size="sm" onClick={() => onExportCSV({ ventes: filteredVentes, depenses: filteredDepenses, label })}>
@@ -157,8 +164,7 @@ export function GlobalCashReport({ ventes, depenses, hasExport, onExportCSV, onE
 
       <p className="text-sm font-semibold text-primary">{label}</p>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-3">
         <Card className="card-shadow border-l-4 border-l-primary">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
@@ -293,44 +299,88 @@ export function GlobalCashReport({ ventes, depenses, hasExport, onExportCSV, onE
 
       {/* Transaction details */}
       <Card className="card-shadow overflow-hidden">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <CardTitle className="text-sm">Détail des transactions</CardTitle>
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Rechercher..." 
+              className="pl-8" 
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+            />
+          </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Montant</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {[
-                ...filteredVentes.map(v => ({ id: v.id, date: v.date, type: 'vente' as const, desc: v.items.map(i => i.nom).join(', '), montant: v.totalMontant })),
-                ...filteredDepenses.map(d => ({ id: d.id, date: d.date, type: 'depense' as const, desc: d.description, montant: d.montant })),
-              ].sort((a, b) => b.date.localeCompare(a.date)).map(t => (
-                <TableRow key={t.id}>
-                  <TableCell className="text-sm">{new Date(t.date).toLocaleDateString('fr-FR')}</TableCell>
-                  <TableCell>
-                    <Badge className={t.type === 'vente' ? 'bg-primary/10 text-primary border-0' : 'bg-destructive/10 text-destructive border-0'}>
-                      {t.type === 'vente' ? 'Recette' : 'Dépense'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm max-w-[200px] truncate">{t.desc}</TableCell>
-                  <TableCell className={`text-right font-semibold ${t.type === 'vente' ? 'text-primary' : 'text-destructive'}`}>
-                    {t.type === 'vente' ? '+' : '-'}{formatFCFA(t.montant)}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {nbTransactions === 0 && (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Aucune transaction pour cette période</TableCell>
+                  <TableHead className="min-w-[100px]">{t('finances.date')}</TableHead>
+                  <TableHead className="min-w-[100px]">{t('finances.invoice.type')}</TableHead>
+                  <TableHead className="min-w-[150px]">{t('finances.description')}</TableHead>
+                  <TableHead className="text-right min-w-[100px]">{t('finances.amount')}</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {(() => {
+                  const allTransactions = [
+                    ...filteredVentes.map(v => ({ id: v.id, date: v.date, type: 'vente' as const, desc: v.items.map(i => i.nom).join(', '), montant: v.totalMontant })),
+                    ...filteredDepenses.map(d => ({ id: d.id, date: d.date, type: 'depense' as const, desc: d.description, montant: d.montant })),
+                  ].sort((a, b) => b.date.localeCompare(a.date));
+                  
+                  const searched = allTransactions.filter(t => 
+                    t.desc.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                    new Date(t.date).toLocaleDateString('fr-FR').includes(searchQuery)
+                  );
+                  
+                  const totalPages = Math.ceil(searched.length / itemsPerPage);
+                  const paginated = searched.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+                  
+                  return (
+                    <>
+                      {paginated.map(t => (
+                        <TableRow key={t.id}>
+                          <TableCell className="text-sm">{new Date(t.date).toLocaleDateString('fr-FR')}</TableCell>
+                          <TableCell>
+                            <Badge className={t.type === 'vente' ? 'bg-primary/10 text-primary border-0' : 'bg-destructive/10 text-destructive border-0'}>
+                              {t.type === 'vente' ? 'Recette' : 'Dépense'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm max-w-[200px] truncate">{t.desc}</TableCell>
+                          <TableCell className={`text-right font-semibold ${t.type === 'vente' ? 'text-primary' : 'text-destructive'}`}>
+                            {t.type === 'vente' ? '+' : '-'}{formatFCFA(t.montant)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {searched.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Aucune transaction trouvée</TableCell>
+                        </TableRow>
+                      )}
+                      {totalPages > 1 && (
+                        <TableRow>
+                          <TableCell colSpan={4}>
+                            <div className="flex items-center justify-between py-2">
+                              <span className="text-sm text-muted-foreground">Page {currentPage} sur {totalPages}</span>
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                                  <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  );
+                })()}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

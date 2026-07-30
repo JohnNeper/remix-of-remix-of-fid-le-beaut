@@ -6,7 +6,7 @@ export const defaultConfigFidelite: ConfigFidelite = {
   visitesVIP: 10,
 };
 
-export const defaultSalon: Salon = {
+export const defaultSalon: any = {
   id: '1',
   nom: 'Mon Salon de Beauté',
   telephone: '+237 6XX XXX XXX',

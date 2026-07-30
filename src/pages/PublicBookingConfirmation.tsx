@@ -27,7 +27,7 @@ export default function PublicBookingConfirmation() {
   const shareBooking = async () => {
     const text = `J'ai réservé chez ${salon.nom} (réf. ${ref})${info.date ? ` le ${info.date}` : ''}${info.time ? ` à ${info.time}` : ''}.`;
     if (navigator.share) {
-      try { await navigator.share({ title: salon.nom, text }); return; } catch {}
+      try { await navigator.share({ title: salon.nom, text }); return; } catch (err) { console.error(err); }
     }
     await navigator.clipboard.writeText(text);
     toast({ title: 'Copié dans le presse-papier' });

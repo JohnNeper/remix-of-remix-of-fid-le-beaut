@@ -1,68 +1,178 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { TypePrestation, Prestation } from '@/types';
-import { getStorageItem, setStorageItem, tenantStorageKey, STORAGE_KEYS } from '@/lib/storage';
-import { defaultTypesPrestations, mockPrestations } from '@/lib/mock-data';
+import { defaultTypesPrestations } from '@/lib/mock-data';
+import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
-function mergeDefaultTypes(stored: TypePrestation[], defaults: TypePrestation[]): TypePrestation[] {
-  const storedIds = new Set(stored.map(t => t.id));
-  const newDefaults = defaults.filter(d => !storedIds.has(d.id));
-  return newDefaults.length > 0 ? [...stored, ...newDefaults] : stored;
+function normalizeTypePrestation(item: any): TypePrestation {
+  return {
+    ...item,
+    id: item._id || item.id,
+    nom: item.nom || 'Prestation',
+    prix: typeof item.prix === 'number' ? item.prix : parseFloat(item.prix || 0),
+    description: item.description || '',
+    categorie: item.categorie || '',
+    imageUrl: item.imageUrl || '',
+  };
+}
+
+function normalizePrestation(item: any): Prestation {
+  return {
+    ...item,
+    id: item._id || item.id,
+    clientId: item.clientId?._id || item.clientId || '',
+    typePrestationId: item.typePrestationId?._id || item.typePrestationId || '',
+    date: item.date || item.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+    employe: typeof item.employe === 'object' ? item.employe?.name : item.employe,
+    notes: item.notes || '',
+    imageUrls: item.imageUrls || [],
+    montant: typeof item.montant === 'number' ? item.montant : parseFloat(item.montant || 0),
+  };
 }
 
 export function usePrestations() {
   const { session } = useAuth();
   const salonId = session?.salonId;
-  const typesKey = tenantStorageKey(salonId, STORAGE_KEYS.TYPES_PRESTATIONS);
-  const prestKey = tenantStorageKey(salonId, STORAGE_KEYS.PRESTATIONS);
+  const queryClient = useQueryClient();
 
-  const [typesPrestations, setTypesPrestations] = useState<TypePrestation[]>(() => {
-    const stored = getStorageItem(typesKey, defaultTypesPrestations);
-    return mergeDefaultTypes(stored, defaultTypesPrestations);
+  // Query: Types de Prestations (Catalogue)
+  const { data: rawTypes = [], isLoading: loadingTypes } = useQuery<TypePrestation[]>({
+    queryKey: ['typesPrestations', salonId],
+    queryFn: async () => {
+      if (!salonId) return defaultTypesPrestations;
+      try {
+        const data = await api.getTypesPrestations(salonId);
+        if (!data || data.length === 0) {
+          return defaultTypesPrestations;
+        }
+        return data.map(normalizeTypePrestation);
+      } catch (err) {
+        console.error('Erreur lors du chargement des types de prestations:', err);
+        return defaultTypesPrestations;
+      }
+    },
+    enabled: !!salonId,
   });
-  const [prestations, setPrestations] = useState<Prestation[]>(() => 
-    getStorageItem(prestKey, mockPrestations)
+
+  const typesPrestations = rawTypes.length > 0 ? rawTypes : defaultTypesPrestations;
+
+  // Query: Prestations effectuées (Historique)
+  const { data: prestations = [], isLoading: loadingPrestations } = useQuery<Prestation[]>({
+    queryKey: ['prestations', salonId],
+    queryFn: async () => {
+      if (!salonId) return [];
+      try {
+        const data = await api.getPrestations(salonId);
+        return (data || []).map(normalizePrestation);
+      } catch (err) {
+        console.error('Erreur lors du chargement des prestations:', err);
+        return [];
+      }
+    },
+    enabled: !!salonId,
+  });
+
+  // Mutation: Ajouter un type de prestation
+  const addTypePrestationMutation = useMutation({
+    mutationFn: async (type: Omit<TypePrestation, 'id'>) => {
+      if (!salonId) throw new Error('Salon non identifié');
+      const res = await api.createTypePrestation(salonId, type);
+      return normalizeTypePrestation(res);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['typesPrestations', salonId] });
+    },
+  });
+
+  // Mutation: Mettre à jour un type de prestation
+  const updateTypePrestationMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<TypePrestation> }) => {
+      if (!salonId) throw new Error('Salon non identifié');
+      const res = await api.updateTypePrestation(salonId, id, updates);
+      return normalizeTypePrestation(res);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['typesPrestations', salonId] });
+    },
+  });
+
+  // Mutation: Supprimer un type de prestation
+  const deleteTypePrestationMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!salonId) throw new Error('Salon non identifié');
+      await api.deleteTypePrestation(salonId, id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['typesPrestations', salonId] });
+    },
+  });
+
+  // Mutation: Enregistrer une nouvelle prestation effectuée
+  const addPrestationMutation = useMutation({
+    mutationFn: async (prestation: Omit<Prestation, 'id' | 'date'>) => {
+      if (!salonId) throw new Error('Salon non identifié');
+      const dateStr = new Date().toISOString().split('T')[0];
+      const payload = {
+        ...prestation,
+        date: dateStr,
+      };
+      const res = await api.createPrestation(salonId, payload as any);
+      return normalizePrestation(res);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prestations', salonId] });
+    },
+  });
+
+  const addTypePrestation = useCallback(
+    async (type: Omit<TypePrestation, 'id'>) => {
+      return await addTypePrestationMutation.mutateAsync(type);
+    },
+    [addTypePrestationMutation]
   );
 
-  useEffect(() => { setStorageItem(typesKey, typesPrestations); }, [typesPrestations, typesKey]);
-  useEffect(() => { setStorageItem(prestKey, prestations); }, [prestations, prestKey]);
-  useEffect(() => {
-    setTypesPrestations(mergeDefaultTypes(getStorageItem(typesKey, defaultTypesPrestations), defaultTypesPrestations));
-    setPrestations(getStorageItem(prestKey, mockPrestations));
-  }, [typesKey, prestKey]);
+  const updateTypePrestation = useCallback(
+    (id: string, updates: Partial<TypePrestation>) => {
+      updateTypePrestationMutation.mutate({ id, updates });
+    },
+    [updateTypePrestationMutation]
+  );
 
-  const addTypePrestation = useCallback((type: Omit<TypePrestation, 'id'>) => {
-    const newType: TypePrestation = { ...type, id: crypto.randomUUID() };
-    setTypesPrestations(prev => [...prev, newType]);
-    return newType;
-  }, []);
+  const deleteTypePrestation = useCallback(
+    (id: string) => {
+      deleteTypePrestationMutation.mutate(id);
+    },
+    [deleteTypePrestationMutation]
+  );
 
-  const updateTypePrestation = useCallback((id: string, updates: Partial<TypePrestation>) => {
-    setTypesPrestations(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-  }, []);
+  const getTypePrestation = useCallback(
+    (id: string) => {
+      return typesPrestations.find((t) => t.id === id || (t as any)._id === id);
+    },
+    [typesPrestations]
+  );
 
-  const deleteTypePrestation = useCallback((id: string) => {
-    setTypesPrestations(prev => prev.filter(t => t.id !== id));
-  }, []);
+  const addPrestation = useCallback(
+    async (prestation: Omit<Prestation, 'id' | 'date'>) => {
+      return await addPrestationMutation.mutateAsync(prestation);
+    },
+    [addPrestationMutation]
+  );
 
-  const getTypePrestation = useCallback((id: string) => {
-    return typesPrestations.find(t => t.id === id);
-  }, [typesPrestations]);
-
-  const addPrestation = useCallback((prestation: Omit<Prestation, 'id' | 'date'>) => {
-    const newPrestation: Prestation = { ...prestation, id: crypto.randomUUID(), date: new Date().toISOString().split('T')[0] };
-    setPrestations(prev => [...prev, newPrestation]);
-    return newPrestation;
-  }, []);
-
-  const getPrestationsClient = useCallback((clientId: string) => {
-    return prestations.filter(p => p.clientId === clientId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [prestations]);
+  const getPrestationsClient = useCallback(
+    (clientId: string) => {
+      return prestations
+        .filter((p) => p.clientId === clientId || (p as any).clientId?._id === clientId)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    },
+    [prestations]
+  );
 
   const getPrestationsCeMois = useCallback(() => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    return prestations.filter(p => new Date(p.date) >= startOfMonth);
+    return prestations.filter((p) => new Date(p.date) >= startOfMonth);
   }, [prestations]);
 
   const getRevenusCeMois = useCallback(() => {
@@ -71,12 +181,28 @@ export function usePrestations() {
 
   const getPrestationsPopulaires = useCallback(() => {
     const counts: Record<string, number> = {};
-    prestations.forEach(p => {
-      const type = typesPrestations.find(t => t.id === p.typePrestationId);
+    prestations.forEach((p) => {
+      const type = typesPrestations.find((t) => t.id === p.typePrestationId || (t as any)._id === p.typePrestationId);
       if (type) counts[type.nom] = (counts[type.nom] || 0) + 1;
     });
-    return Object.entries(counts).map(([nom, count]) => ({ nom, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+    return Object.entries(counts)
+      .map(([nom, count]) => ({ nom, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
   }, [prestations, typesPrestations]);
 
-  return { typesPrestations, prestations, addTypePrestation, updateTypePrestation, deleteTypePrestation, getTypePrestation, addPrestation, getPrestationsClient, getPrestationsCeMois, getRevenusCeMois, getPrestationsPopulaires };
+  return {
+    typesPrestations,
+    prestations,
+    loading: loadingTypes || loadingPrestations,
+    addTypePrestation,
+    updateTypePrestation,
+    deleteTypePrestation,
+    getTypePrestation,
+    addPrestation,
+    getPrestationsClient,
+    getPrestationsCeMois,
+    getRevenusCeMois,
+    getPrestationsPopulaires,
+  };
 }

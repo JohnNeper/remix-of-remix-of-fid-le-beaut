@@ -6,6 +6,7 @@ export interface Client {
   id: string;
   nom: string;
   telephone: string;
+  email?: string;
   dateInscription: string;
   dateAnniversaire?: string;
   statut: ClientStatus;
@@ -16,6 +17,7 @@ export interface Client {
   derniereVisite?: string;
   parrainId?: string;
   filleuls?: string[];
+  groupe?: string;
 }
 
 // Produits & Stock
@@ -36,6 +38,7 @@ export interface Vente {
   id: string;
   date: string;
   clientId?: string;
+  employe?: string;
   items: VenteItem[];
   totalMontant: number;
   modePaiement: 'especes' | 'mobile_money' | 'carte' | 'mixte';
@@ -66,6 +69,7 @@ export interface TypePrestation {
   prix: number;
   description?: string;
   categorie?: string;
+  imageUrl?: string;
 }
 
 export interface Prestation {
@@ -75,6 +79,7 @@ export interface Prestation {
   date: string;
   employe?: string;
   notes?: string;
+  imageUrls?: string[];
   montant: number;
 }
 
@@ -96,13 +101,72 @@ export interface ConfigFidelite {
 
 export interface Salon {
   id: string;
-  nom: string;
-  logo?: string;
-  telephone: string;
-  adresse?: string;
-  configFidelite: ConfigFidelite;
+  _id?: string;
+  name: string;
+  slug?: string;
+  slogan?: string;
+  description?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  galleryUrls?: string[];
+  typeEtablissement?: 'salon_coiffure' | 'spa' | 'institut_beaute' | 'barbershop' | 'onglerie' | 'mixte' | 'autre';
+
+  phone: string;
+  email: string;
+  address: string;
+  ville?: string;
+  pays?: string;
+  location?: { lat: number; lng: number };
+
+  devise?: string;
+  horaires?: string;
+  availability?: any;
+
   joursRappelInactivite: number;
   joursRappelSuivi: number;
+  configFidelite: ConfigFidelite;
+
+  owner: string; // or User type depending on population
+  abonnement?: {
+    statut: 'actif' | 'expire' | 'suspendu' | 'essai' | string;
+    montant: number;
+    dureeJours?: number;
+    dateDebut: string;
+    dateFin: string;
+    dernierPaiement?: string;
+    renouvellementAuto?: boolean;
+    downgradePlan?: string | null;
+    downgradeDate?: string | null;
+  };
+  plan?: 'basic' | 'pro' | 'premium' | string;
+  affiliateCode?: string | null;
+  affiliatePaid?: boolean;
+  isActive?: boolean;
+
+  limits?: {
+    maxCustomers: number;
+    maxStaff: number;
+    maxRendezvous?: number;
+    maxCampaignsPerMonth: number;
+    exportEnabled: boolean;
+    campaignsEnabled: boolean;
+  };
+  paymentConfig?: {
+    payoutMomoNumber?: string;
+    payoutOperator?: 'mtn' | 'orange' | '';
+    payoutMomoName?: string;
+    payoutMtnNumber?: string;
+    payoutMtnName?: string;
+    payoutOrangeNumber?: string;
+    payoutOrangeName?: string;
+    payoutWaveNumber?: string;
+    payoutWaveName?: string;
+  };
+
+  // Legacy / Aliases (gardés pour rétrocompatibilité frontend temporaire)
+  nom?: string;
+  telephone?: string;
+  adresse?: string;
 }
 
 export interface Utilisateur {
@@ -111,6 +175,7 @@ export interface Utilisateur {
   nom: string;
   role: 'admin' | 'employe';
   salonId: string;
+  avatarUrl?: string;
 }
 
 export interface StatistiquesDashboard {
@@ -120,4 +185,15 @@ export interface StatistiquesDashboard {
   visitesCeMois: number;
   revenusCeMois: number;
   prestationsPopulaires: { nom: string; count: number }[];
+}
+
+export interface User {
+  id: string;
+  _id?: string;
+  name: string;
+  email: string;
+  role?: string;
+  salonId?: string;
+  telephone?: string;
+  avatarUrl?: string;
 }

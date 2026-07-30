@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "BeautyFlow - Gestion Salon de Beauté",
+  "short_name": "BeautyFlow",
+  "description": "Application de gestion complète pour salons de beauté : rendez-vous, clients, finances et prestations.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
+  "orientation": "portrait-primary",
+  "theme_color": "#d6336c",
+  "background_color": "#faf5f0",
+  "categories": [
+    "business",
+    "productivity",
+    "health"
+  ],
+  "icons": [
+    {
+      "src": "/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nouveau Rendez-vous",
+      "short_name": "Rendez-vous",
+      "description": "Créer rapidement un nouveau rendez-vous",
+      "url": "/rendez-vous",
+      "icons": [
+        {
+          "src": "/pwa-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Voir les Clients",
+      "short_name": "Clients",
+      "description": "Accéder à la liste des clients",
+      "url": "/clientes",
+      "icons": [
+        {
+          "src": "/pwa-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Tableau de Bord",
+      "short_name": "Dashboard",
+      "description": "Accéder au tableau de bord principal",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/pwa-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}

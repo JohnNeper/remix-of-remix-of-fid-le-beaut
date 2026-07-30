@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Produit } from '@/types';
-import { getStorageItem, setStorageItem, tenantStorageKey, STORAGE_KEYS } from '@/lib/storage';
+import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 const defaultProduits: Produit[] = [
@@ -21,34 +22,98 @@ const defaultProduits: Produit[] = [
 export function useStock() {
   const { session } = useAuth();
   const salonId = session?.salonId;
-  const key = tenantStorageKey(salonId, STORAGE_KEYS.PRODUITS);
+  const queryClient = useQueryClient();
 
-  const [produits, setProduits] = useState<Produit[]>(() => getStorageItem(key, defaultProduits));
+  const { data: produits = [] } = useQuery<Produit[]>({
+    queryKey: ['produits', salonId],
+    queryFn: async () => {
+      const data = await api.getProduits(salonId!);
+      // Normalise l'id et assure la rétro-compatibilité avec d'anciens documents
+      return data.map((p: any) => ({
+        ...p,
+        id: p._id || p.id,
+        prix: p.prixVente || p.prix || 0,
+        quantite: p.stock !== undefined ? p.stock : p.quantite,
+        seuilAlerte: p.stockMinimum !== undefined ? p.stockMinimum : p.seuilAlerte,
+      }));
+    },
+    enabled: !!salonId,
+  });
 
-  useEffect(() => { setStorageItem(key, produits); }, [produits, key]);
-  useEffect(() => { setProduits(getStorageItem(key, defaultProduits)); }, [key]);
+  const addMutation = useMutation({
+    mutationFn: (produit: Omit<Produit, 'id'>) => {
+      // Mapper les noms frontend → backend
+      const payload: any = {
+        ...produit,
+        prixVente: (produit as any).prix,
+        stock: (produit as any).quantite,
+        stockMinimum: (produit as any).seuilAlerte
+      };
+      // Supprimer les clés frontend pour éviter la confusion
+      delete payload.prix;
+      delete payload.quantite;
+      delete payload.seuilAlerte;
 
-  const addProduit = useCallback((produit: Omit<Produit, 'id'>) => {
-    const newProduit: Produit = { ...produit, id: crypto.randomUUID() };
-    setProduits(prev => [...prev, newProduit]);
-    return newProduit;
-  }, []);
+      return api.createProduit(salonId!, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['produits', salonId] });
+    },
+  });
 
-  const updateProduit = useCallback((id: string, updates: Partial<Produit>) => {
-    setProduits(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-  }, []);
+  const updateMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Produit> }) => {
+      const payload: any = { ...updates };
+      if ('prix' in payload) {
+        payload.prixVente = payload.prix;
+        delete payload.prix;
+      }
+      if ('quantite' in payload) {
+        payload.stock = payload.quantite;
+        delete payload.quantite;
+      }
+      if ('seuilAlerte' in payload) {
+        payload.stockMinimum = payload.seuilAlerte;
+        delete payload.seuilAlerte;
+      }
+      return api.updateProduit(salonId!, id, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['produits', salonId] });
+    },
+  });
 
-  const deleteProduit = useCallback((id: string) => {
-    setProduits(prev => prev.filter(p => p.id !== id));
-  }, []);
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.deleteProduit(salonId!, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['produits', salonId] });
+    },
+  });
 
-  const adjustStock = useCallback((id: string, quantiteChange: number) => {
-    setProduits(prev => prev.map(p => p.id === id ? { ...p, quantite: Math.max(0, p.quantite + quantiteChange) } : p));
-  }, []);
+  const adjustStockMutation = useMutation({
+    mutationFn: async ({ id, quantiteChange }: { id: string, quantiteChange: number }) => {
+      const p = produits.find(p => p.id === id);
+      if (!p) throw new Error("Produit non trouvé");
+      return api.adjustStock(salonId!, id, p.quantite, quantiteChange);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['produits', salonId] });
+    },
+  });
 
   const produitsEnAlerte = useMemo(() => produits.filter(p => p.quantite <= p.seuilAlerte), [produits]);
   const categories = useMemo(() => [...new Set(produits.map(p => p.categorie))], [produits]);
   const valeurStock = useMemo(() => produits.reduce((sum, p) => sum + p.prixAchat * p.quantite, 0), [produits]);
 
-  return { produits, addProduit, updateProduit, deleteProduit, adjustStock, produitsEnAlerte, categories, valeurStock };
+  return {
+    produits,
+    addProduit: addMutation.mutate,
+    updateProduit: updateMutation.mutate,
+    deleteProduit: deleteMutation.mutate,
+    adjustStock: (id: string, quantiteChange: number) =>
+      adjustStockMutation.mutateAsync({ id, quantiteChange }),
+    produitsEnAlerte,
+    categories,
+    valeurStock,
+  };
 }

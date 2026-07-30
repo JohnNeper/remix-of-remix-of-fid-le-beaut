@@ -10,31 +10,56 @@ export function useSubscriptionPlan() {
     return getPlan(planName || 'basic');
   }, [currentSalon]);
 
-  const canAddCustomer = (currentCount: number): boolean => {
-    if (plan.maxCustomers === -1) return true;
-    return currentCount < plan.maxCustomers;
-  };
-
-  const canAddStaff = (currentCount: number): boolean => {
-    if (plan.maxStaff === -1) return true;
-    return currentCount < plan.maxStaff;
-  };
-
-  const canCreateCampaign = (currentMonthCount: number): boolean => {
-    if (plan.maxCampaignsPerMonth === -1) return true;
-    return currentMonthCount < plan.maxCampaignsPerMonth;
-  };
-
   const getCustomerLimit = (): number | null => {
-    return plan.maxCustomers === -1 ? null : plan.maxCustomers;
+    const limit = currentSalon?.limits?.maxCustomers !== undefined 
+      ? currentSalon.limits.maxCustomers 
+      : plan.maxCustomers;
+    return limit === -1 ? null : limit;
   };
 
   const getStaffLimit = (): number | null => {
-    return plan.maxStaff === -1 ? null : plan.maxStaff;
+    const limit = currentSalon?.limits?.maxStaff !== undefined 
+      ? currentSalon.limits.maxStaff 
+      : plan.maxStaff;
+    return limit === -1 ? null : limit;
   };
 
   const getCampaignLimit = (): number | null => {
-    return plan.maxCampaignsPerMonth === -1 ? null : plan.maxCampaignsPerMonth;
+    const limit = currentSalon?.limits?.maxCampaignsPerMonth !== undefined 
+      ? currentSalon.limits.maxCampaignsPerMonth 
+      : plan.maxCampaignsPerMonth;
+    return limit === -1 ? null : limit;
+  };
+
+  const getRendezvousLimit = (): number | null => {
+    const limit = currentSalon?.limits?.maxRendezvous !== undefined 
+      ? currentSalon.limits.maxRendezvous 
+      : (plan as any).maxRendezvous;
+    return limit === -1 || limit === undefined ? null : limit;
+  };
+
+  const canAddCustomer = (currentCount: number): boolean => {
+    const limit = getCustomerLimit();
+    if (limit === null) return true;
+    return currentCount < limit;
+  };
+
+  const canAddStaff = (currentCount: number): boolean => {
+    const limit = getStaffLimit();
+    if (limit === null) return true;
+    return currentCount < limit;
+  };
+
+  const canCreateCampaign = (currentMonthCount: number): boolean => {
+    const limit = getCampaignLimit();
+    if (limit === null) return true;
+    return currentMonthCount < limit;
+  };
+
+  const canAddRendezvous = (currentCount: number): boolean => {
+    const limit = getRendezvousLimit();
+    if (limit === null) return true;
+    return currentCount < limit;
   };
 
   const getUpgradePlan = (): Plan | null => {
@@ -49,9 +74,11 @@ export function useSubscriptionPlan() {
     canAddCustomer,
     canAddStaff,
     canCreateCampaign,
+    canAddRendezvous,
     getCustomerLimit,
     getStaffLimit,
     getCampaignLimit,
+    getRendezvousLimit,
     getUpgradePlan,
     // Feature flags
     hasAutomation: plan.automationEnabled,

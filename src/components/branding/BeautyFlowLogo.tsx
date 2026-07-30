@@ -1,4 +1,5 @@
 import React from 'react';
+import bfIcon from '@/assets/BF.png';
 import logoAsset from '@/assets/beautyflow-logo.asset.json';
 
 interface Props {
@@ -9,9 +10,8 @@ interface Props {
 }
 
 /**
- * Official BeautyFlow logo. The source image bundles both the icon (left)
- * and the wordmark (right). We crop with object-position when only the icon
- * is needed so a single asset serves every placement.
+ * Official BeautyFlow logo component.
+ * Renders BF icon perfectly filling a circular frame as requested.
  */
 export function BeautyFlowLogo({ className = 'h-8 w-8', withWordmark = false, alt = 'BeautyFlow' }: Props) {
   if (withWordmark) {
@@ -25,15 +25,14 @@ export function BeautyFlowLogo({ className = 'h-8 w-8', withWordmark = false, al
       />
     );
   }
-  // Crop to icon only: source icon sits in the left third of the image.
+
   return (
-    <div className={`${className} overflow-hidden`} aria-label={alt} role="img">
+    <div className={`${className} rounded-full overflow-hidden flex items-center justify-center bg-rose-500 shadow-md ring-2 ring-rose-400/40 shrink-0 transition-transform hover:scale-105`}>
       <img
-        src={logoAsset.url}
-        alt=""
-        aria-hidden
-        className="h-full w-auto max-w-none"
-        style={{ transform: 'translateX(-12%) scale(2.7)', transformOrigin: 'left center' }}
+        src={bfIcon}
+        alt={alt}
+        className="w-full h-full object-cover scale-110"
+        loading="eager"
       />
     </div>
   );

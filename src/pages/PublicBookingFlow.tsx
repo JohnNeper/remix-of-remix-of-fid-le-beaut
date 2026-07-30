@@ -34,11 +34,9 @@ export default function PublicBookingFlow() {
   const navigate = useNavigate();
   const salon = slug ? readPublicSalon(slug) : null;
   const { client } = useClientAuth();
-  if (!salon) return <Navigate to="/booking/not-found" replace />;
-
-  const services = readServices(salon.id);
-  const settings = salon.bookingSettings!;
-  const staffList: SalonStaff[] = salon.branding?.staff || [];
+  const services = salon ? readServices(salon.id) : [];
+  const settings = salon?.bookingSettings || { openingHour: '09:00', closingHour: '18:00', slotDurationMin: 30 };
+  const staffList: SalonStaff[] = salon?.branding?.staff || [];
   const slots = useMemo(
     () => buildTimeSlots(settings.openingHour, settings.closingHour, settings.slotDurationMin),
     [settings],
@@ -78,6 +76,7 @@ export default function PublicBookingFlow() {
   }, [step, staffList.length]);
 
   const handleSubmit = () => {
+    if (!salon) return;
     const parsed = customerSchema.safeParse(form);
     if (!parsed.success) {
       const errs: Record<string, string> = {};
@@ -141,6 +140,8 @@ export default function PublicBookingFlow() {
       { label: 'Soirée', icon: Moon, items: evening },
     ].filter(g => g.items.length > 0);
   }, [slots]);
+
+  if (!salon) return <Navigate to="/booking/not-found" replace />;
 
   return (
     <BrandedShell salon={salon}>

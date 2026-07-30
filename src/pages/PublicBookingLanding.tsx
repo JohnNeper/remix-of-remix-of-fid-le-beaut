@@ -28,17 +28,15 @@ export default function PublicBookingLanding() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [salon?.id, client?.id]);
 
-  if (!salon) return <Navigate to="/booking/not-found" replace />;
-
-  const allServices = readServices(salon.id);
-  const banner = salon.branding?.bannerUrl || getCategoryImage(salon.branding?.category?.split(' ')[0]);
-  const logo = salon.branding?.logoUrl;
-  const gallery = salon.branding?.gallery || [];
-  const staff = salon.branding?.staff || [];
-  const rating = salon.branding?.rating ?? 4.8;
-  const reviewCount = salon.branding?.reviewCount ?? 0;
-  const fav = isFavorite(salon.id);
-  const instant = salon.bookingSettings?.autoConfirm ?? true;
+  const allServices = salon ? readServices(salon.id) : [];
+  const banner = salon?.branding?.bannerUrl || getCategoryImage(salon?.branding?.category?.split(' ')[0]);
+  const logo = salon?.branding?.logoUrl;
+  const gallery = salon?.branding?.gallery || [];
+  const staff = salon?.branding?.staff || [];
+  const rating = salon?.branding?.rating ?? 4.8;
+  const reviewCount = salon?.branding?.reviewCount ?? 0;
+  const fav = salon ? isFavorite(salon.id) : false;
+  const instant = salon?.bookingSettings?.autoConfirm ?? true;
 
   const servicesByCat = useMemo(() => {
     const m = new Map<string, typeof allServices>();
@@ -59,12 +57,14 @@ export default function PublicBookingLanding() {
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
-      try { await navigator.share({ title: salon.nom, url }); } catch {}
+      try { await navigator.share({ title: salon.nom, url }); } catch (err) { console.error(err); }
     } else {
       await navigator.clipboard.writeText(url);
       toast({ title: 'Lien copié' });
     }
   };
+
+  if (!salon) return <Navigate to="/booking/not-found" replace />;
 
   return (
     <BrandedShell salon={salon} showHeader={false}>

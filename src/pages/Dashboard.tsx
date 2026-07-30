@@ -1,12 +1,35 @@
 import React, { useMemo } from 'react';
-import { Users, UserCheck, UserX, Calendar, TrendingUp, Scissors, ArrowRight, Gift, Star } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import {
+  Users,
+  UserPlus,
+  Calendar,
+  DollarSign,
+  TrendingUp,
+  Clock,
+  AlertTriangle,
+  Sparkles,
+  Plus,
+  Scissors,
+  Star,
+  Gift,
+  ArrowRight,
+  MessageCircle,
+  Package,
+  CheckCircle2,
+  Phone,
+  Zap,
+  Building2,
+  Lightbulb,
+  ShoppingBag,
+  TrendingDown
+} from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { RevenueChart } from '@/components/dashboard/RevenueChart';
-import { ServicesPieChart } from '@/components/dashboard/ServicesPieChart';
-import { RevenueByServiceType } from '@/components/dashboard/RevenueByServiceType';
 import { TodayAppointments } from '@/components/dashboard/TodayAppointments';
+import { RevenueByServiceType } from '@/components/dashboard/RevenueByServiceType';
 import { StockAlerts } from '@/components/dashboard/StockAlerts';
+import { ProTipsCard } from '@/components/dashboard/ProTipsCard';
+import { useTranslations } from '@/hooks/useTranslations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,217 +39,322 @@ import { useSalon } from '@/hooks/useSalon';
 import { useRendezVous } from '@/hooks/useRendezVous';
 import { useStock } from '@/hooks/useStock';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
-import { getPlanColor } from '@/lib/plans';
+import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import heroSalon from '@/assets/hero-salon.jpg';
-import serviceHair from '@/assets/service-hair.jpg';
-import serviceMakeup from '@/assets/service-makeup.jpg';
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('fr-CM', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
-}
+import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
-  const { clients, getInactiveClients } = useClients();
-  const { getPrestationsCeMois, getRevenusCeMois, getPrestationsPopulaires, typesPrestations, prestations } = usePrestations();
+  const { clients, loading: loadingClients } = useClients();
+  const { typesPrestations, prestations } = usePrestations();
   const { salon } = useSalon();
-  const { getRendezVousAujourdhui } = useRendezVous();
-  const { produitsEnAlerte } = useStock();
-  const { t } = useLanguage();
-  const { plan, analyticsLevel } = useSubscriptionPlan();
+  const { session } = useAuth();
+  const { t, language } = useLanguage();
+  const { formatCurrency } = useTranslations();
+  const { produits } = useStock();
+  const { rendezVous } = useRendezVous();
+  
+  const isOwner = session?.userRole === 'owner' || session?.type === 'admin';
 
-  const clientesInactives = getInactiveClients(salon.joursRappelInactivite);
-  const clientesActives = clients.length - clientesInactives.length;
-  const visitesCeMois = getPrestationsCeMois().length;
-  const revenusCeMois = getRevenusCeMois();
-  const prestationsPopulaires = getPrestationsPopulaires();
-  const rdvAujourdhui = getRendezVousAujourdhui();
-  const clientesVIP = clients.filter(c => c.statut === 'vip');
-
-  const trend = useMemo(() => {
+  // Format today's date nicely
+  const formattedTodayDate = useMemo(() => {
     const now = new Date();
-    const thisKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastKey = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
-    const thisRev = prestations.filter(p => p.date.startsWith(thisKey)).reduce((s, p) => s + p.montant, 0);
-    const lastRev = prestations.filter(p => p.date.startsWith(lastKey)).reduce((s, p) => s + p.montant, 0);
-    if (lastRev === 0) return undefined;
-    const pct = Math.round(((thisRev - lastRev) / lastRev) * 100);
-    return { value: Math.abs(pct), positive: pct >= 0 };
-  }, [prestations]);
+    return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).format(now);
+  }, [language]);
 
-  // Revenue by service type
-  const revenueByServiceType = useMemo(() => {
-    const map: Record<string, { revenue: number; count: number }> = {};
-    prestations.forEach(p => {
-      const type = typesPrestations.find(t => t.id === p.typePrestationId);
-      if (type) {
-        if (!map[type.nom]) map[type.nom] = { revenue: 0, count: 0 };
-        map[type.nom].revenue += p.montant;
-        map[type.nom].count += 1;
-      }
-    });
-    return Object.entries(map)
-      .map(([nom, data]) => ({ nom, ...data }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 6);
-  }, [prestations, typesPrestations]);
+  const dashboardStats = useMemo(() => {
+    if (!clients || !prestations || !rendezVous) return null;
+
+    const activeClientsCount = clients.filter(c => c.statut !== 'inactif').length;
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const localTodayStr = `${year}-${month}-${day}`;
+    const isoTodayStr = now.toISOString().split('T')[0];
+
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const monthVisits = prestations.filter(p => new Date(p.date) >= firstDayOfMonth);
+    const monthRevenue = monthVisits.reduce((acc, p) => acc + (p.montant || 0), 0);
+
+    const todayRdv = rendezVous.filter(r => r.date === localTodayStr || r.date === isoTodayStr);
+
+    // Personal stats for staff
+    const myTodayRdv = todayRdv.filter(r => r.employe === session?.userId || r.employe === session?.userName);
+    const myTodayPrestations = prestations.filter(p => (p.employe === session?.userName || p.employe === session?.userId) && (p.date === localTodayStr || p.date === isoTodayStr));
+    const myMonthPrestations = prestations.filter(p => (p.employe === session?.userName || p.employe === session?.userId) && new Date(p.date) >= firstDayOfMonth);
+
+    // Revenue by service type
+    const revByType = typesPrestations.map(type => {
+      const typePrestations = prestations.filter(p => p.typePrestationId === type.id);
+      return {
+        nom: type.nom,
+        revenue: typePrestations.reduce((acc, p) => acc + (p.montant || 0), 0),
+        count: typePrestations.length
+      };
+    }).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+
+    return {
+      activeClientsCount,
+      monthRevenue,
+      monthVisitsCount: monthVisits.length,
+      todayRdvCount: todayRdv.length,
+      todayRdv,
+      revByType,
+      myTodayRdvCount: myTodayRdv.length,
+      myTodayPrestationsCount: myTodayPrestations.length,
+      myMonthPrestationsCount: myMonthPrestations.length,
+      myTodayRdv
+    };
+  }, [clients, prestations, rendezVous, typesPrestations, session]);
+
+  const alertProducts = useMemo(() => {
+    return produits.filter(p => p.quantite <= p.seuilAlerte);
+  }, [produits]);
+
+  const openWhatsApp = (phone: string, name: string) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    const formattedPhone = cleanPhone.startsWith('237') ? cleanPhone : `237${cleanPhone}`;
+    const text = encodeURIComponent(
+      `Bonjour ${name}, nous serions ravis de vous accueillir à nouveau au salon ${salon?.name || 'BeautyFlow'} !`
+    );
+    window.open(`https://wa.me/${formattedPhone}?text=${text}`, '_blank');
+  };
+
+  if (loadingClients) {
+    return (
+      <div className="p-6 space-y-6 animate-pulse">
+        <Skeleton className="h-64 w-full rounded-[32px]" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-40 rounded-[28px]" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Skeleton className="h-[450px] lg:col-span-2 rounded-[28px]" />
+          <Skeleton className="h-[450px] rounded-[28px]" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 lg:p-6 space-y-6">
-      {/* Hero Header */}
-      <div className="relative h-40 sm:h-48 lg:h-56 rounded-2xl overflow-hidden">
-        <img src={heroSalon} alt="Salon de beauté" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/50 to-transparent flex items-end p-4 sm:p-6">
-          <div className="text-white">
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-white/80 text-sm">{t('dashboard.welcome')}</p>
-              <Badge className={`${getPlanColor(plan.name)} text-[10px]`}>{plan.label}</Badge>
+    <div className="p-3 sm:p-5 lg:p-6 space-y-4 sm:space-y-6 animate-in fade-in duration-300 max-w-7xl mx-auto font-sans">
+      
+      {/* ========================================================================= */}
+      {/* HERO BANNER - VISIBLE IMAGE & RICH GLASS OVERLAY */}
+      {/* ========================================================================= */}
+      <div className="relative rounded-2xl overflow-hidden shadow-xl border border-slate-200/80 dark:border-slate-800 bg-slate-950 text-white transition-all min-h-[190px] sm:min-h-[220px]">
+        {/* Background Image with HIGH VISIBILITY & Vibrant Gradient Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={heroSalon}
+            alt="Salon Hero"
+            className="w-full h-full object-cover opacity-75 scale-100 transition-transform duration-1000 ease-out hover:scale-105"
+          />
+          {/* Subtle gradient vignette */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/65 to-rose-950/45 backdrop-blur-[1px]" />
+        </div>
+
+        {/* Content Container */}
+        <div className="relative z-10 p-5 sm:p-6 md:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+          
+          <div className="space-y-2 max-w-2xl">
+            {/* Salon Badge & Date */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-600/30 border border-rose-400/40 text-rose-200 text-xs font-bold backdrop-blur-md shadow-xs">
+                <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
+                <span>{t('dashboard.welcome')} {session?.userName || 'Gérant'}</span>
+              </span>
+
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 text-slate-100 text-xs font-semibold backdrop-blur-md border border-white/20 capitalize shadow-xs">
+                <Calendar className="h-3.5 w-3.5 text-slate-200" />
+                <span>{formattedTodayDate}</span>
+              </span>
             </div>
-            <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold">{salon.nom}</h1>
-            <p className="text-white/80 mt-1 text-sm hidden sm:block">{t('dashboard.subtitle')}</p>
+
+            {/* Salon Title */}
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white drop-shadow-md leading-none">
+              {salon?.name || "BeautySpace Salon"}
+            </h1>
+
+            <p className="text-slate-200 text-xs sm:text-sm font-medium leading-relaxed max-w-xl drop-shadow-sm">
+              {t('dashboard.subtitle')}
+            </p>
           </div>
+
+          {/* Quick Action Toolbar */}
+          <div className="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+            <Link to="/prestations" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto h-10 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-600/30 flex items-center justify-center gap-2 border-0 transition-transform hover:scale-[1.01] active:scale-95">
+                <Scissors className="h-4 w-4" />
+                <span>{t('dashboard.newService')}</span>
+              </Button>
+            </Link>
+
+            <Link to="/rendez-vous" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto h-10 px-4 rounded-xl border-white/30 bg-black/40 hover:bg-black/60 text-white font-bold text-xs backdrop-blur-md flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] active:scale-95 shadow-sm">
+                <Calendar className="h-4 w-4" />
+                <span>{t('dashboard.newAppointment')}</span>
+              </Button>
+            </Link>
+
+            <Link to="/clientes" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto h-10 px-4 rounded-xl border-white/30 bg-black/40 hover:bg-black/60 text-white font-bold text-xs backdrop-blur-md flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] active:scale-95 shadow-sm">
+                <UserPlus className="h-4 w-4" />
+                <span>{t('dashboard.newClient')}</span>
+              </Button>
+            </Link>
+          </div>
+
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <StatCard title={t('dashboard.totalClients')} value={clients.length} icon={Users} variant="primary" />
-        <StatCard title={t('dashboard.activeClients')} value={clientesActives} subtitle={t('dashboard.activeLast30')} icon={UserCheck} variant="success" />
-        <StatCard title={t('dashboard.inactiveClients')} value={clientesInactives.length} subtitle={`+${salon.joursRappelInactivite} ${t('dashboard.days')}`} icon={UserX} variant="warning" />
-        <StatCard title={t('dashboard.todayAppointments')} value={rdvAujourdhui.length} icon={Calendar} variant="default" />
-        <StatCard title={t('dashboard.monthRevenue')} value={formatCurrency(revenusCeMois)} icon={TrendingUp} variant="accent" trend={trend} />
-        <StatCard title={t('dashboard.monthVisits')} value={visitesCeMois} icon={Scissors} variant="default" />
+      {/* ========================================================================= */}
+      {/* STATS / KPI CARDS GRID */}
+      {/* ========================================================================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        
+        {/* KPI 1: Monthly Revenue or Staff Prestations */}
+        {isOwner ? (
+          <StatCard
+            title={t('dashboard.monthRevenue')}
+            value={formatCurrency(dashboardStats?.monthRevenue || 0)}
+            icon={DollarSign}
+            trend={{ value: 12, positive: true }}
+            subtitle={t('dashboard.monthRevenueSub') || "Chiffre d'affaires enregistré ce mois"}
+            variant="success"
+          />
+        ) : (
+          <StatCard
+            title={t('dashboard.myTodayPrestations')}
+            value={dashboardStats?.myTodayPrestationsCount.toString() || '0'}
+            icon={Scissors}
+            subtitle={t('dashboard.myTodayPrestationsSub') || "Prestations réalisées aujourd'hui"}
+            variant="primary"
+          />
+        )}
+
+        {/* KPI 2: Today's Appointments */}
+        <StatCard
+          title={isOwner ? t('dashboard.todayAppointments') : t('dashboard.myTodayRdv')}
+          value={isOwner ? dashboardStats?.todayRdvCount.toString() || '0' : dashboardStats?.myTodayRdvCount.toString() || '0'}
+          icon={Calendar}
+          subtitle={isOwner ? (t('dashboard.todayAppointmentsSub') || "Rendez-vous programmés aujourd'hui") : (t('dashboard.myTodayRdvSub') || "Mes rendez-vous du jour")}
+          variant="warning"
+        />
+
+        {/* KPI 3: Monthly Visits / Services */}
+        <StatCard
+          title={isOwner ? t('dashboard.monthVisits') : t('dashboard.myMonthPrestations')}
+          value={isOwner ? dashboardStats?.monthVisitsCount.toString() || '0' : dashboardStats?.myMonthPrestationsCount.toString() || '0'}
+          icon={TrendingUp}
+          subtitle={isOwner ? (t('dashboard.monthVisitsSub') || "Prestations effectuées ce mois") : (t('dashboard.myMonthPrestationsSub') || "Mes prestations ce mois")}
+          variant="purple"
+        />
+
+        {/* KPI 4: Total Active Clients */}
+        <StatCard
+          title={t('dashboard.totalClients')}
+          value={clients.length.toString()}
+          icon={Users}
+          subtitle={`${dashboardStats?.activeClientsCount || 0} ${t('dashboard.activeClients')}`}
+          variant="accent"
+        />
+
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-        <RevenueChart prestations={prestations} />
-        <ServicesPieChart data={prestationsPopulaires} />
-      </div>
+      {/* ========================================================================= */}
+      {/* MAIN TWO-COLUMN LAYOUT */}
+      {/* ========================================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* LEFT COLUMN (2/3 Width) */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Today's Appointments Component */}
+          <TodayAppointments
+            rendezVous={isOwner
+              ? dashboardStats?.todayRdv || []
+              : dashboardStats?.myTodayRdv || []
+            }
+            clients={clients}
+            typesPrestations={typesPrestations}
+          />
 
-      {/* Revenue by service type */}
-      <RevenueByServiceType data={revenueByServiceType} />
+          {/* Revenue Breakdown / Service Types Chart */}
+          {isOwner && (
+            <RevenueByServiceType data={dashboardStats?.revByType || []} />
+          )}
 
-      {/* RDV + Stock Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-        <TodayAppointments rendezVous={rdvAujourdhui} clients={clients} typesPrestations={typesPrestations} />
-        <StockAlerts produits={produitsEnAlerte} />
-      </div>
+        </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="card-shadow overflow-hidden group hover:shadow-lg transition-shadow">
-          <div className="flex h-full">
-            <div className="w-1/3 relative">
-              <img src={serviceHair} alt="Coiffure" className="absolute inset-0 w-full h-full object-cover" />
-            </div>
-            <CardContent className="flex-1 p-4 flex flex-col justify-center">
-              <h3 className="font-semibold text-base sm:text-lg mb-1">{t('dashboard.newService')}</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground mb-3">{t('dashboard.registerVisit')}</p>
-              <Link to="/prestations">
-                <Button size="sm" className="gradient-primary"><ArrowRight className="h-4 w-4 mr-2" />{t('dashboard.add')}</Button>
-              </Link>
-            </CardContent>
-          </div>
-        </Card>
-        <Card className="card-shadow overflow-hidden group hover:shadow-lg transition-shadow">
-          <div className="flex h-full">
-            <div className="w-1/3 relative">
-              <img src={serviceMakeup} alt="Maquillage" className="absolute inset-0 w-full h-full object-cover" />
-            </div>
-            <CardContent className="flex-1 p-4 flex flex-col justify-center">
-              <h3 className="font-semibold text-base sm:text-lg mb-1">{t('dashboard.newClient')}</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground mb-3">{t('dashboard.addClientDesc')}</p>
+        {/* RIGHT COLUMN (1/3 Width) */}
+        <div className="space-y-6">
+          
+          {/* Stock Alerts Widget */}
+          <StockAlerts produits={alertProducts} />
+
+          {/* BeautyFlow Pro Tip Card */}
+          <ProTipsCard />
+
+          {/* Recent Clients Card */}
+          <Card className="rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden bg-white dark:bg-slate-900 transition-all">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4 sm:px-5">
+              <CardTitle className="text-sm font-extrabold flex items-center gap-2 text-slate-900 dark:text-white">
+                <Users className="h-4.5 w-4.5 text-rose-500" />
+                <span>{t('dashboard.recentClients')}</span>
+              </CardTitle>
+
               <Link to="/clientes">
-                <Button size="sm" className="gradient-primary"><ArrowRight className="h-4 w-4 mr-2" />{t('dashboard.add')}</Button>
+                <Button variant="ghost" size="sm" className="h-7 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 px-2">
+                  <span>{t('dashboard.viewAll')}</span>
+                  <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                </Button>
               </Link>
-            </CardContent>
-          </div>
-        </Card>
-      </div>
+            </CardHeader>
 
-      {/* VIP + Recent Clients */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-        <Card className="card-shadow">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Star className="h-5 w-5 text-accent" />
-              {t('dashboard.vipClients')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {clientesVIP.length > 0 ? (
-              <div className="space-y-3">
-                {clientesVIP.slice(0, 5).map(client => (
-                  <div key={client.id} className="flex items-center gap-3 p-3 rounded-xl bg-accent/5 border border-accent/20">
-                    <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center">
-                      <Star className="h-5 w-5 text-accent" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground truncate">{client.nom}</p>
-                      <p className="text-xs text-muted-foreground">{client.nombreVisites} {t('dashboard.visits')}</p>
-                    </div>
-                    <Badge className="bg-accent/20 text-accent border-0">
-                      <Gift className="h-3 w-3 mr-1" />{client.pointsFidelite} {t('dashboard.pts')}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Star className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm">{t('dashboard.noVip')}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="card-shadow">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              {t('dashboard.recentClients')}
-            </CardTitle>
-            <Link to="/clientes">
-              <Button variant="ghost" size="sm">{t('dashboard.viewAll')} <ArrowRight className="h-4 w-4 ml-2" /></Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {clients.length > 0 ? (
-              <div className="space-y-3">
-                {clients
+            <CardContent className="px-4 sm:px-5 pb-4 space-y-2.5">
+              {clients.length > 0 ? (
+                clients
                   .sort((a, b) => new Date(b.dateInscription).getTime() - new Date(a.dateInscription).getTime())
                   .slice(0, 5)
                   .map(client => (
-                    <div key={client.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
-                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                        <span className="text-primary font-semibold">{client.nom.charAt(0).toUpperCase()}</span>
+                    <div key={client.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="h-8 w-8 rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center font-extrabold text-xs shrink-0">
+                          {client.nom.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-extrabold text-xs text-slate-900 dark:text-white truncate">{client.nom}</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{client.telephone}</p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground truncate">{client.nom}</p>
-                        <p className="text-xs text-muted-foreground">{client.telephone}</p>
-                      </div>
-                      <Badge className={`shrink-0 border-0 ${
-                        client.statut === 'vip' ? 'bg-accent/20 text-accent' :
-                        client.statut === 'reguliere' ? 'bg-success/20 text-success' :
-                        'bg-muted text-muted-foreground'
-                      }`}>
-                        {client.statut === 'vip' && <Star className="h-3 w-3 mr-1" />}
-                        {client.statut.charAt(0).toUpperCase() + client.statut.slice(1)}
+
+                      <Badge variant="outline" className="text-[11px] font-extrabold text-rose-600 dark:text-rose-400 border-rose-500/30 bg-rose-500/10 flex items-center gap-1 shrink-0 px-2 py-0.5">
+                        <Gift className="h-3 w-3 text-rose-500" />
+                        <span>{client.pointsFidelite || 0} {t('dashboard.pts')}</span>
                       </Badge>
                     </div>
-                  ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm">{t('dashboard.noClients')}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))
+              ) : (
+                <div className="text-center py-5 text-slate-500 dark:text-slate-400">
+                  <Users className="h-8 w-8 mx-auto mb-1.5 opacity-30 text-slate-400" />
+                  <p className="text-xs font-semibold">{t('dashboard.noClients')}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+        </div>
+
       </div>
+
     </div>
   );
 }

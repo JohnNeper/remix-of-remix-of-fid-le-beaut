@@ -20,7 +20,7 @@ function simpleHash(str: string): string {
 
 // Admin par défaut
 const defaultAdmin: AdminUser = {
-  email: 'admin@leaderbright.com',
+  email: 'admin@beautyflow.com',
   motDePasse: simpleHash('admin2025'),
 };
 
@@ -232,11 +232,20 @@ export function verifySalonLogin(email: string, password: string): { salon: Salo
 }
 
 export function isSalonSubscriptionActive(salon: SalonAccount): boolean {
-  if (!salon.abonnementActif) return false;
-  const lastPayment = new Date(salon.dernierPaiement);
-  const expiry = new Date(lastPayment);
-  expiry.setDate(expiry.getDate() + salon.joursAbonnement);
-  return new Date() <= expiry;
+  if (!salon) return true;
+  if (salon.abonnementActif === false) return false;
+
+  if (salon.dernierPaiement) {
+    const lastPayment = new Date(salon.dernierPaiement);
+    if (!isNaN(lastPayment.getTime())) {
+      const days = salon.joursAbonnement || 30;
+      const expiry = new Date(lastPayment);
+      expiry.setDate(expiry.getDate() + days);
+      return new Date() <= expiry;
+    }
+  }
+
+  return true;
 }
 
 export function renewSalonSubscription(salonId: string): void {
@@ -260,15 +269,33 @@ export function toggleSalonActive(salonId: string, active: boolean): void {
 
 // ===== Session =====
 export function getSession(): AuthSession | null {
-  return getStorageItem(SESSION_KEY, null);
+  const session = getStorageItem<AuthSession | null>(SESSION_KEY, null);
+  if (session) return session;
+  
+  // Fallback check for bf_auth_session
+  const raw = localStorage.getItem('bf_auth_session');
+  if (raw) {
+    try {
+      return JSON.parse(raw) as AuthSession;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 export function setSession(session: AuthSession): void {
   setStorageItem(SESSION_KEY, session);
+  localStorage.setItem('bf_auth_session', JSON.stringify(session));
+  if (session.token) {
+    localStorage.setItem('bf_token', session.token);
+  }
 }
 
 export function clearSession(): void {
   localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem('bf_auth_session');
+  localStorage.removeItem('bf_token');
 }
 
 // ===== Tenant storage keys =====

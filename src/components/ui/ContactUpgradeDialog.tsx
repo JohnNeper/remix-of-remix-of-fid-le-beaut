@@ -19,9 +19,9 @@ export function ContactUpgradeDialog({ open, onOpenChange, feature, currentPlan,
 
   if (!requiredPlan) return null;
 
-  const whatsappNumber = '237600000000'; // LeaderBright contact
+  const whatsappNumber = '237600000000'; // BeautyFlow contact
   const whatsappMessage = encodeURIComponent(
-    `Bonjour LeaderBright,\nJe souhaite passer au plan ${requiredPlan.label} pour mon salon.\nPlan actuel : ${currentPlan?.toUpperCase() || 'BASIC'}\nMerci !`
+    `Bonjour BeautyFlow,\nJe souhaite passer au plan ${requiredPlan.label} pour mon salon.\nPlan actuel : ${currentPlan?.toUpperCase() || 'BASIC'}\nMerci !`
   );
 
   return (
@@ -70,7 +70,7 @@ export function ContactUpgradeDialog({ open, onOpenChange, feature, currentPlan,
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => window.open('mailto:contact@leaderbright.com')}
+            onClick={() => window.open('mailto:contact@beautyflow.com')}
           >
             <Mail className="h-4 w-4 mr-2" />
             {language === 'fr' ? 'Envoyer un email' : 'Send an email'}
