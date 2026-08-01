@@ -208,7 +208,7 @@ export function NotificationsSettingsTab({
           <CardHeader className="border-b border-border/30 px-6 py-4">
             <div className="flex items-center gap-2">
               <Smartphone className="h-4 w-4 text-emerald-500" />
-              <CardTitle className="text-sm font-extrabold">Aperçu du Message WhatsApp</CardTitle>
+              <CardTitle className="text-sm font-extrabold">{t('settings.whatsappPreviewTitle')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-6">
@@ -216,17 +216,17 @@ export function NotificationsSettingsTab({
             <div className="rounded-2xl bg-slate-900 p-4 text-white shadow-xl space-y-3 border border-slate-800">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-800 text-xs">
                 <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="font-bold text-slate-300">{salon.name}</span>
-                <span className="text-[10px] text-slate-500 ml-auto">Relance Automatique</span>
+                <span className="font-bold text-slate-300">{salon.nom || (salon as any).name}</span>
+                <span className="text-[10px] text-slate-500 ml-auto">{t('settings.autoRelanceTag')}</span>
               </div>
 
               {/* Chat Bubble */}
               <div className="bg-emerald-950/80 border border-emerald-800/40 p-3.5 rounded-2xl text-xs space-y-2 text-emerald-100 shadow-inner">
                 <p className="font-medium leading-relaxed">
-                  Bonjour Marie ! 👋 Nous avons remarqué que cela fait {watchInactivite} jours que nous ne vous avons pas vue chez <strong>{salon.name}</strong>.
+                  {t('settings.whatsappPreviewMsg1', { days: watchInactivite })} <strong>{salon.nom || (salon as any).name}</strong>.
                 </p>
                 <p className="font-medium leading-relaxed">
-                  Profitez de -{salon.configFidelite?.reductionPourcentage || 20}% sur votre prochaine réservation pour vous chouchouter ! 💅✨
+                  {t('settings.whatsappPreviewMsg2', { percent: salon.configFidelite?.reductionPourcentage || 20 })}
                 </p>
                 <div className="text-[9px] text-emerald-400 font-bold text-right pt-1">
                   10:42 • WhatsApp Business

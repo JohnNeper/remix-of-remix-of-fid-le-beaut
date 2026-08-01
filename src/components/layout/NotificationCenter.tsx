@@ -1,5 +1,5 @@
-import React from 'react';
-import { Bell, Package, Calendar, Users, Check, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, Package, Calendar, Users, Check, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -27,8 +27,16 @@ const typeColors: Record<string, string> = {
 };
 
 export function NotificationCenter() {
-  const { notifications, unreadCount, markAsRead, clearAll } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
   const { t } = useLanguage();
+  const [open, setOpen] = useState(false);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen && unreadCount > 0) {
+      markAllAsRead();
+    }
+  };
 
   const getNotifDisplay = (notif: typeof notifications[0]) => {
     if (!notif) return { title: '', desc: '' };
@@ -67,22 +75,25 @@ export function NotificationCenter() {
   };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center animate-pulse">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between p-3 border-b border-border">
-          <h3 className="font-semibold text-sm">{t('notifications.title')}</h3>
+      <PopoverContent className="w-80 p-0 rounded-2xl shadow-xl border-border/80" align="end">
+        <div className="flex items-center justify-between p-3.5 border-b border-border/60 bg-muted/30">
+          <h3 className="font-extrabold text-sm flex items-center gap-2">
+            <Bell className="h-4 w-4 text-primary" />
+            {t('notifications.title')}
+          </h3>
           {notifications.length > 0 && (
-            <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={clearAll}>
+            <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg" onClick={clearAll}>
               <Trash2 className="h-3 w-3 mr-1" />
               {t('notifications.clearAll')}
             </Button>
@@ -90,12 +101,12 @@ export function NotificationCenter() {
         </div>
         <ScrollArea className="max-h-80">
           {notifications.length === 0 ? (
-            <div className="p-6 text-center">
+            <div className="p-8 text-center">
               <Bell className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">{t('notifications.empty')}</p>
+              <p className="text-sm font-medium text-muted-foreground">{t('notifications.empty')}</p>
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-border/40">
               {notifications.map(notif => {
                 const Icon = (notif?.type && typeIcons[notif.type]) || Bell;
                 const colorClass = (notif?.type && typeColors[notif.type]) || 'text-muted-foreground bg-muted';
@@ -104,20 +115,34 @@ export function NotificationCenter() {
                   <div
                     key={notif.id}
                     className={cn(
-                      'flex items-start gap-3 p-3 transition-colors hover:bg-muted/50 cursor-pointer',
+                      'group relative flex items-start gap-3 p-3 transition-colors hover:bg-muted/60 cursor-pointer',
                       !notif.read && 'bg-primary/5'
                     )}
                     onClick={() => markAsRead(notif.id)}
                   >
-                    <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center shrink-0', colorClass)}>
+                    <div className={cn('h-8 w-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs', colorClass)}>
                       <Icon className="h-4 w-4" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={cn('text-sm font-medium', !notif.read && 'text-foreground')}>
+                    <div className="flex-1 min-w-0 pr-6">
+                      <p className={cn('text-xs font-bold leading-snug', !notif.read ? 'text-foreground' : 'text-muted-foreground')}>
                         {display.title}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">{display.desc}</p>
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">{display.desc}</p>
                     </div>
+                    
+                    {/* Delete Individual Notification Button */}
+                    <button
+                      type="button"
+                      className="absolute right-2.5 top-2.5 p-1 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-80 group-hover:opacity-100"
+                      title={t('common.delete')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(notif.id);
+                      }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+
                     {!notif.read && (
                       <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5" />
                     )}

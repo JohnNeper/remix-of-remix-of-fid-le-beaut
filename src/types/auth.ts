@@ -130,23 +130,27 @@ export interface AbonnementData {
 }
 
 export function buildSession(user: any, salon: any | null, token: string): AuthSession {
-  if (!salon) {
+  const isAdminRole = user?.role === 'admin' || user?.role === 'superadmin';
+  const salonId = salon?.id || salon?._id || user?.salon || user?.salonId;
+
+  if (isAdminRole) {
     return {
       type: 'admin',
-      userId: user.id || user._id,
-      userName: user.nom || user.name,
-      email: user.email,
+      userId: user?.id || user?._id,
+      userName: user?.nom || user?.name || user?.email,
+      email: user?.email,
       timestamp: Date.now(),
       token,
     };
   }
+
   return {
     type: 'salon',
-    salonId: salon.id || salon._id,
-    userId: user.id || user._id,
-    userRole: user.role,
-    userName: user.nom || user.name,
-    email: user.email,
+    salonId: salonId || (user?.id || user?._id) || 'salon-1',
+    userId: user?.id || user?._id,
+    userRole: user?.role || 'owner',
+    userName: user?.nom || user?.name || user?.email,
+    email: user?.email,
     timestamp: Date.now(),
     token,
   };

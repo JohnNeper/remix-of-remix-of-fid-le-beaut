@@ -382,43 +382,34 @@ Merci pour votre confiance ! 🌸`;
         </div>
 
         {/* Sticky footer with actions */}
-        <div className="flex flex-col sm:flex-row gap-3 p-4 bg-muted/10 border-t shrink-0">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="w-full sm:w-auto px-6 h-11 rounded-xl text-foreground font-bold order-3 sm:order-1"
-          >
-            <X className="h-4 w-4 mr-2" />
-            {t('common.close')}
-          </Button>
-
-          {onDeleteRequest && (
-            <Button
-              variant="destructive"
-              onClick={onDeleteRequest}
-              className="w-full sm:w-auto px-6 h-11 rounded-xl font-bold order-4 sm:order-2"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Supprimer
-            </Button>
-          )}
-
+        <div className="flex flex-col sm:flex-row items-center gap-3 p-4 bg-muted/10 border-t shrink-0">
           <Button
             onClick={handleWhatsAppShare}
             disabled={isGeneratingPdf}
-            className="flex-1 bg-[#25D366] hover:bg-[#20ba5a] text-white h-11 rounded-xl font-bold order-1 sm:order-3 flex items-center justify-center gap-2 transition-colors duration-200"
+            className="w-full sm:flex-1 bg-[#25D366] hover:bg-[#20ba5a] text-white h-11 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors duration-200 shadow-sm"
           >
             <WhatsAppIcon className="h-5 w-5 fill-current" />
-            <span>{isGeneratingPdf ? 'Génération du PDF...' : 'Envoyer par WhatsApp'}</span>
+            <span>{isGeneratingPdf ? (language === 'fr' ? 'Génération du PDF...' : 'Generating PDF...') : (language === 'fr' ? 'Partager PDF sur WhatsApp' : 'Share PDF on WhatsApp')}</span>
           </Button>
 
           <Button
             onClick={handlePrint}
-            className="flex-1 gradient-primary h-11 rounded-xl text-white font-bold order-2 sm:order-4"
+            className="w-full sm:flex-1 gradient-primary h-11 rounded-xl text-white font-bold flex items-center justify-center gap-2 shadow-sm"
           >
-            <Printer className="h-4 w-4 mr-2" />
-            {t('finances.invoice.print')}
+            <Printer className="h-4 w-4" />
+            <span>{t('finances.invoice.print')}</span>
           </Button>
+
+          {onDeleteRequest && (
+            <Button
+              variant="outline"
+              onClick={onDeleteRequest}
+              className="w-full sm:w-auto border-destructive/30 text-destructive hover:bg-destructive/10 h-11 rounded-xl font-bold flex items-center justify-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>{language === 'fr' ? 'Supprimer' : 'Delete'}</span>
+            </Button>
+          )}
         </div>
 
       </DialogContent>

@@ -114,16 +114,16 @@ export function GeneralSettingsTab({ salon, updateSalon, t, language }: GeneralS
     setIsSubmitting(true);
     try {
       await updateSalon(data as any);
-      toast({ 
-        title: '✅ ' + (t('common.success') || 'Succès'), 
-        description: language === 'fr' ? 'Informations générales mises à jour avec succès.' : 'General info updated successfully.' 
+      toast({
+        title: '✅ ' + (t('common.success') || 'Succès'),
+        description: language === 'fr' ? 'Informations générales mises à jour avec succès.' : 'General info updated successfully.'
       });
       setEditingInfo(false);
     } catch (err: any) {
-      toast({ 
-        title: '❌ ' + (t('common.error') || 'Erreur'), 
-        description: err?.message || (language === 'fr' ? 'Échec de la mise à jour' : 'Failed to update'), 
-        variant: 'destructive' 
+      toast({
+        title: '❌ ' + (t('common.error') || 'Erreur'),
+        description: err?.message || (language === 'fr' ? 'Échec de la mise à jour' : 'Failed to update'),
+        variant: 'destructive'
       });
     } finally {
       setIsSubmitting(false);
@@ -132,7 +132,7 @@ export function GeneralSettingsTab({ salon, updateSalon, t, language }: GeneralS
 
   const handleLogoUpdate = async (url: string) => {
     try {
-      await updateSalon({ logo: url });
+      await updateSalon({ logo: url, logoUrl: url } as any);
       toast({
         title: '✅ ' + (t('common.success') || 'Succès'),
         description: language === 'fr' ? 'Logo du salon mis à jour.' : 'Salon logo updated.'
@@ -155,6 +155,9 @@ export function GeneralSettingsTab({ salon, updateSalon, t, language }: GeneralS
   };
 
   const fallbackText = language === 'fr' ? 'Non renseigné' : 'Not specified';
+  const currentLogo = salon.logoUrl || (salon as any).logo || (salon as any).branding?.logoUrl;
+  const salonName = salon.name || (salon as any).nom || 'Mon Salon';
+  const salonInitial = salonName.charAt(0).toUpperCase();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in-50 duration-300">
@@ -174,10 +177,10 @@ export function GeneralSettingsTab({ salon, updateSalon, t, language }: GeneralS
               </div>
             </div>
 
-            <Button 
-              variant={editingInfo ? "ghost" : "outline"} 
-              size="sm" 
-              onClick={() => setEditingInfo(!editingInfo)} 
+            <Button
+              variant={editingInfo ? "ghost" : "outline"}
+              size="sm"
+              onClick={() => setEditingInfo(!editingInfo)}
               className="gap-2 rounded-2xl font-semibold border-border/80"
             >
               {editingInfo ? (
@@ -198,28 +201,22 @@ export function GeneralSettingsTab({ salon, updateSalon, t, language }: GeneralS
                 <InfoRow icon={Phone} label={t('settings.phone')} value={salon.phone} fallback={fallbackText} />
                 <InfoRow icon={Mail} label={t('login.email')} value={salon.email} fallback={fallbackText} />
                 <InfoRow icon={MapPin} label={t('settings.address')} value={salon.address} fallback={fallbackText} />
-                <InfoRow icon={MapPin} label={t('clients.ville')} value={salon.ville} fallback={fallbackText} />
-                <InfoRow icon={Globe} label={t('clients.pays')} value={salon.pays} fallback={fallbackText} />
-                <InfoRow icon={CreditCard} label={t('clients.devise')} value={salon.devise} fallback={fallbackText} />
-                <InfoRow icon={MapPin} label="Latitude GPS" value={salon.location?.lat?.toString() || '4.0508'} />
-                <InfoRow icon={MapPin} label="Longitude GPS" value={salon.location?.lng?.toString() || '9.7085'} />
+                <InfoRow icon={Globe} label={t('clients.ville')} value={salon.ville} fallback={fallbackText} />
+                <InfoRow icon={CreditCard} label={t('clients.devise')} value={salon.devise} fallback="XAF" />
+                <InfoRow icon={Store} label="Type d'établissement" value={TYPES_ETAB.find(t => t.value === salon.typeEtablissement)?.[language === 'fr' ? 'labelFr' : 'labelEn']} fallback={fallbackText} />
               </div>
 
               {salon.description && (
-                <div className="p-4 rounded-2xl bg-muted/30 border border-border/40">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
-                    {t('finances.description')}
-                  </p>
-                  <p className="text-sm font-medium text-foreground leading-relaxed">
-                    {salon.description}
-                  </p>
+                <div className="p-4 rounded-2xl bg-muted/40 border space-y-1">
+                  <p className="text-xs font-semibold text-muted-foreground">{t('finances.description')}</p>
+                  <p className="text-sm font-medium text-foreground leading-relaxed">{salon.description}</p>
                 </div>
               )}
             </div>
           ) : (
             <Form {...infoForm}>
-              <form onSubmit={infoForm.handleSubmit(onInfoSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <form onSubmit={infoForm.handleSubmit(onInfoSubmit)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField control={infoForm.control} name="name" render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-semibold text-xs">{t('settings.salonName')} *</FormLabel>
@@ -232,25 +229,6 @@ export function GeneralSettingsTab({ salon, updateSalon, t, language }: GeneralS
                     <FormItem>
                       <FormLabel className="font-semibold text-xs">{t('settings.slogan')}</FormLabel>
                       <FormControl><Input className="rounded-xl" placeholder={language === 'fr' ? 'Ex: Votre beauté, notre passion' : 'e.g. Your beauty, our passion'} {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  <FormField control={infoForm.control} name="typeEtablissement" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-semibold text-xs">{t('services.type')}</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="rounded-2xl">
-                          {TYPES_ETAB.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {language === 'fr' ? type.labelFr : type.labelEn}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -275,6 +253,23 @@ export function GeneralSettingsTab({ salon, updateSalon, t, language }: GeneralS
                     <FormItem>
                       <FormLabel className="font-semibold text-xs">{t('settings.address')} *</FormLabel>
                       <FormControl><Input className="rounded-xl" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  <FormField control={infoForm.control} name="typeEtablissement" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-xs">Type d'établissement</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl><SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger></FormControl>
+                        <SelectContent className="rounded-2xl">
+                          {TYPES_ETAB.map((t) => (
+                            <SelectItem key={t.value} value={t.value}>
+                              {language === 'fr' ? t.labelFr : t.labelEn}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -382,16 +377,40 @@ export function GeneralSettingsTab({ salon, updateSalon, t, language }: GeneralS
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-6 text-center space-y-4">
-            <div className="flex justify-center">
-              <ImageUpload
-                value={salon.logo || ''}
-                onChange={handleLogoUpdate}
-                aspectRatio="square"
-                className="w-32 h-32 rounded-2xl border-2 border-dashed border-primary/30"
-              />
+          <CardContent className="p-6 text-center space-y-5">
+            {/* Current Salon Logo Display */}
+            <div className="space-y-2">
+              <p className="text-xs font-extrabold text-muted-foreground uppercase tracking-wider">
+                {language === 'fr' ? 'Logo Actuel' : 'Current Logo'}
+              </p>
+              <div className="flex justify-center">
+                <div className="h-28 w-28 rounded-2xl border-2 border-primary/20 bg-muted/30 overflow-hidden flex items-center justify-center shadow-md">
+                  {currentLogo ? (
+                    <img src={currentLogo} alt={salonName} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full bg-gradient-to-br from-rose-500 to-rose-600 text-white font-extrabold text-3xl flex items-center justify-center shadow-inner">
+                      {salonInitial}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
+
+            {/* Image Upload Component to change/update logo */}
+            {/* <div className="pt-3 border-t border-border/40 space-y-2">
+              <p className="text-xs font-semibold text-foreground">
+                {language === 'fr' ? 'Modifier ou téléverser un nouveau logo :' : 'Modify or upload a new logo:'}
+              </p>
+              <div className="flex justify-center">
+                <ImageUpload
+                  value={currentLogo || ''}
+                  onChange={handleLogoUpdate}
+                  aspectRatio="square"
+                  className="w-32 h-32 rounded-2xl border-2 border-dashed border-primary/30"
+                />
+              </div>
+            </div> */}
+            <p className="text-[11px] text-muted-foreground">
               {language === 'fr' ? 'Format recommandé: Carré (1:1), max 5 Mo' : 'Recommended format: Square (1:1), max 5 MB'}
             </p>
           </CardContent>

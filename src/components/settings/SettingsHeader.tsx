@@ -44,6 +44,10 @@ export function SettingsHeader({
 
   const planColorClass = getPlanColor(plan);
 
+  const logoUrl = salon.logoUrl || (salon as any).logo || (salon as any).branding?.logoUrl;
+  const salonName = salon.name || (salon as any).nom || 'Mon Salon';
+  const salonInitial = salonName.charAt(0).toUpperCase();
+
   return (
     <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card p-6 lg:p-8 card-shadow shadow-sm transition-all duration-300">
       {/* Subtle decorative background gradient elements */}
@@ -54,14 +58,16 @@ export function SettingsHeader({
         {/* Left: Salon Profile info */}
         <div className="flex items-center gap-5">
           <div className="relative group">
-            <div className="h-20 w-20 lg:h-24 lg:w-24 rounded-2xl border-2 border-primary/20 bg-muted/40 overflow-hidden flex items-center justify-center shadow-inner shrink-0">
-              {salon.logo ? (
-                <img src={salon.logo} alt={salon.name} className="h-full w-full object-cover" />
+            <div className="h-20 w-20 lg:h-24 lg:w-24 rounded-2xl border-2 border-primary/20 bg-muted/40 overflow-hidden flex items-center justify-center shadow-md shrink-0">
+              {logoUrl ? (
+                <img src={logoUrl} alt={salonName} className="h-full w-full object-cover" />
               ) : (
-                <Store className="h-10 w-10 text-primary/70" />
+                <div className="h-full w-full bg-gradient-to-br from-rose-500 to-rose-600 text-white font-extrabold text-3xl lg:text-4xl flex items-center justify-center shadow-inner">
+                  {salonInitial}
+                </div>
               )}
             </div>
-            <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-emerald-500 border-2 border-background flex items-center justify-center title={language === 'fr' ? 'Salon Actif' : 'Salon Active'}" />
+            <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-emerald-500 border-2 border-background flex items-center justify-center" title={language === 'fr' ? 'Salon Actif' : 'Salon Active'} />
           </div>
 
           <div className="space-y-1.5">

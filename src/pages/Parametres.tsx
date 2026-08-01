@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Building2, Users, Clock, Image as ImageIcon, Palette, Crown, Gift, Bell, CreditCard,
   AlertTriangle, Loader2, Copy
@@ -39,6 +39,7 @@ import { BookingSettingsCard } from '@/components/settings/BookingSettingsCard';
 import { PlanComparisonDialog } from '@/components/settings/PlanComparisonDialog';
 import PaymentModal from '@/components/settings/PaymentModal';
 import type { User } from '@/types';
+import { useSearchParams } from 'react-router-dom';
 
 type DayAvailability = {
   open: boolean;
@@ -66,11 +67,27 @@ const timeOptions = Array.from({ length: 29 }, (_, i) => {
 });
 
 export default function Parametres() {
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const getInitialTab = () => {
+    if (tabParam === 'subscription' || tabParam === 'abonnement') return 'abonnement';
+    return tabParam || 'general';
+  };
+
   const { salon, staff, updateSalon, updateConfigFidelite, refetch } = useSalon();
   const { t, language } = useLanguage();
   const { plan, getStaffLimit } = useSubscriptionPlan();
 
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+
+  useEffect(() => {
+    if (tabParam === 'subscription' || tabParam === 'abonnement') {
+      setActiveTab('abonnement');
+    } else if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
   const [selectedUpgradePlan, setSelectedUpgradePlan] = useState<PlanType | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);

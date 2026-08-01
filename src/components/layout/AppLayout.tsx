@@ -31,6 +31,8 @@ import { LanguageToggle } from '@/components/layout/LanguageToggle';
 import { Badge } from '@/components/ui/badge';
 import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
 import bfLogo from '@/assets/BF.png';
+import { useSalon } from '@/hooks/useSalon';
+import { ContactUpgradeDialog } from '../ui/ContactUpgradeDialog';
 
 interface NavItem {
   href: string;
@@ -95,17 +97,15 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   );
 }
 
-function Sidebar({ className, onItemClick }: { className?: string; onItemClick?: () => void }) {
-  const { logout, currentSalon, session } = useAuth();
+function Sidebar({ className, onItemClick, onUpgradeClick }: { className?: string; onItemClick?: () => void; onUpgradeClick?: () => void }) {
+  const { logout, session } = useAuth();
+  const { salon } = useSalon();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { plan: currentPlan, getUpgradePlan } = useSubscriptionPlan();
+  const { getUpgradePlan } = useSubscriptionPlan();
 
   const nextPlan = getUpgradePlan();
   const upgradeLabel = nextPlan?.name === 'premium' ? t('nav.upgradeToPremium') : t('nav.upgradeToPro');
-  const upgradeMsg = t(nextPlan?.name === 'premium' ? 'nav.upgradeMsgPremium' : 'nav.upgradeMsgPro', {
-    name: currentSalon?.name || ''
-  });
 
   const handleLogout = () => {
     logout();
@@ -115,25 +115,25 @@ function Sidebar({ className, onItemClick }: { className?: string; onItemClick?:
   return (
     <aside className={cn('flex flex-col h-full bg-sidebar', className)}>
       {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border ios-sidebar-logo-pt">
-        <Link to="/" className="flex items-center gap-3">
-          {currentSalon?.logoUrl ? (
-            <div className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center overflow-hidden border border-border/50">
-              <img src={currentSalon.logoUrl} alt="Logo" className="h-full w-full object-cover" />
+      <div className="p-5 border-b border-sidebar-border ios-sidebar-logo-pt">
+        <Link to="/" className="flex items-center gap-3 group">
+          {salon?.logoUrl ? (
+            <div className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center overflow-hidden border border-border/60 bg-background shadow-xs">
+              <img src={salon.logoUrl} alt={salon?.nom || 'Logo'} className="h-full w-full object-cover" />
             </div>
           ) : (
-            <img src={bfLogo} alt="BeautyFlow" className="h-10 object-contain drop-shadow-sm shrink-0 max-w-[160px]" />
+            <img src={bfLogo} alt="BeautyFlow" className="h-9 object-contain shrink-0 drop-shadow-xs" />
           )}
-          {currentSalon?.name && (
-            <div className="flex-1 min-w-0">
-              <h1 className="font-bold text-base text-sidebar-foreground leading-tight truncate">
-                {currentSalon.name}
-              </h1>
-              {currentSalon.slogan && (
-                <p className="text-[10px] text-muted-foreground truncate">{currentSalon.slogan}</p>
-              )}
-            </div>
-          )}
+          <div className="flex-1 min-w-0">
+            <h1 className="font-extrabold text-base text-sidebar-foreground leading-tight truncate group-hover:text-primary transition-colors">
+              {salon?.nom || (salon as any)?.name || 'Mon Salon'}
+            </h1>
+            {salon?.slogan ? (
+              <p className="text-[10px] text-muted-foreground truncate">{salon.slogan}</p>
+            ) : (
+              <p className="text-[10px] font-bold text-rose-500">BeautyFlow Pro</p>
+            )}
+          </div>
         </Link>
       </div>
 
@@ -153,7 +153,8 @@ function Sidebar({ className, onItemClick }: { className?: string; onItemClick?:
             variant="outline"
             className="w-full justify-start text-primary border-primary/20 hover:bg-primary/5 font-semibold"
             onClick={() => {
-              window.open(`https://wa.me/237658315610?text=${encodeURIComponent(upgradeMsg)}`, '_blank');
+              if (onUpgradeClick) onUpgradeClick();
+              if (onItemClick) onItemClick();
             }}
           >
             <Sparkles className="h-4 w-4 mr-2" />
@@ -173,19 +174,27 @@ function Sidebar({ className, onItemClick }: { className?: string; onItemClick?:
 }
 
 export default function AppLayout() {
-  const { currentSalon } = useAuth();
-  const { language } = useLanguage();
+  const { currentSalon, session } = useAuth();
+  const { salon } = useSalon();
+  const { language, t } = useLanguage();
+  const { getUpgradePlan } = useSubscriptionPlan();
+  const nextPlan = getUpgradePlan();
+  const upgradeLabel = nextPlan?.name === 'premium' ? t('nav.upgradeToPremium') : t('nav.upgradeToPro');
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const isMobile = useIsMobile();
+
+  const salonName = salon?.nom || (currentSalon as any)?.name || 'Mon Salon';
 
   // Calculate remaining days for abonnement warning
   const daysLeft = React.useMemo(() => {
-    if (!currentSalon?.abonnement?.dateFin) return null;
-    const fin = new Date(currentSalon.abonnement.dateFin);
+    if (!salon?.abonnement?.dateFin) return null;
+    const fin = new Date(salon.abonnement.dateFin);
     const diff = fin.getTime() - Date.now();
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  }, [currentSalon]);
+  }, [salon]);
 
   const showBanner = daysLeft !== null && daysLeft > 0 && daysLeft <= 14 && !bannerDismissed;
 
@@ -194,27 +203,38 @@ export default function AppLayout() {
       {/* Desktop Sidebar - hidden on mobile devices */}
       {!isMobile && (
         <div className="hidden lg:block w-64 border-r border-border fixed inset-y-0 left-0 z-30">
-          <Sidebar />
+          <Sidebar onUpgradeClick={() => setIsUpgradeModalOpen(true)} />
         </div>
       )}
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-card border-b border-border ios-header-pt">
-        <div className="flex items-center justify-between p-4">
-          <Link to="/" className="flex items-center gap-2">
-            {currentSalon?.logoUrl ? (
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center overflow-hidden border border-border/50">
-                <img src={currentSalon.logoUrl} alt="Logo" className="h-full w-full object-cover" />
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-card border-b border-border ios-header-pt shadow-xs">
+        <div className="flex items-center justify-between p-3.5 sm:p-4">
+          <Link to="/" className="flex items-center gap-2.5 min-w-0">
+            {salon?.logoUrl ? (
+              <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center overflow-hidden border border-border/60 bg-card">
+                <img src={salon.logoUrl} alt={salonName} className="h-full w-full object-cover" />
               </div>
             ) : (
-              <img src={bfLogo} alt="BeautyFlow" className="h-7 object-contain max-w-[120px]" />
+              <img src={bfLogo} alt="BeautyFlow" className="h-7 object-contain shrink-0" />
             )}
-            {currentSalon?.name && (
-              <span className="font-bold text-foreground text-sm truncate max-w-[120px]">{currentSalon.name}</span>
-            )}
+            {/* <span className="font-extrabold text-foreground text-sm truncate max-w-[140px] sm:max-w-[200px]">
+              {salonName}
+            </span> */}
           </Link>
 
           <div className="flex items-center gap-1">
+            {nextPlan && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-primary border-primary/30 hover:bg-primary/10 h-8 text-[11px] font-bold rounded-full px-2.5 shadow-sm mr-1"
+                onClick={() => setIsUpgradeModalOpen(true)}
+              >
+                <Sparkles className="h-3 w-3 mr-1 text-primary shrink-0" />
+                <span className="truncate">{upgradeLabel}</span>
+              </Button>
+            )}
             <LanguageToggle />
             <NotificationCenter />
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -224,7 +244,7 @@ export default function AppLayout() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-72 p-0">
-                <Sidebar onItemClick={() => setMobileMenuOpen(false)} />
+                <Sidebar onItemClick={() => setMobileMenuOpen(false)} onUpgradeClick={() => setIsUpgradeModalOpen(true)} />
               </SheetContent>
             </Sheet>
           </div>
@@ -233,7 +253,18 @@ export default function AppLayout() {
 
       {/* Desktop top bar */}
       {!isMobile && (
-        <div className="hidden lg:flex fixed top-0 left-64 right-0 z-20 h-14 bg-card border-b border-border items-center justify-end px-6 gap-2">
+        <div className="hidden lg:flex fixed top-0 left-64 right-0 z-20 h-14 bg-card border-b border-border items-center justify-end px-6 gap-3">
+          {nextPlan && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-primary border-primary/30 hover:bg-primary/10 h-8 text-xs font-bold rounded-full px-3 shadow-sm"
+              onClick={() => setIsUpgradeModalOpen(true)}
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1.5 text-primary" />
+              {upgradeLabel}
+            </Button>
+          )}
           <LanguageToggle />
           <NotificationCenter />
         </div>
@@ -257,12 +288,7 @@ export default function AppLayout() {
                   size="sm"
                   variant="outline"
                   className="border-amber-500/40 text-amber-800 dark:text-amber-300 hover:bg-amber-500/10 h-8 text-xs font-semibold rounded-lg"
-                  onClick={() => {
-                    const upgradeMsg = language === 'fr'
-                      ? `Bonjour, je souhaite renouveler l'abonnement de mon salon ${currentSalon?.name}`
-                      : `Hello, I would like to renew the subscription for my salon ${currentSalon?.name}`;
-                    window.open(`https://wa.me/237658315610?text=${encodeURIComponent(upgradeMsg)}`, '_blank');
-                  }}
+                  onClick={() => setIsUpgradeModalOpen(true)}
                 >
                   {language === 'fr' ? 'Renouveler' : 'Renew'}
                 </Button>
@@ -280,6 +306,13 @@ export default function AppLayout() {
           </div>
         </div>
       </main>
+
+      {/* Global Interactive Subscription Upgrade & Renewal Modal */}
+      <ContactUpgradeDialog
+        open={isUpgradeModalOpen}
+        onOpenChange={setIsUpgradeModalOpen}
+        requiredPlan={nextPlan}
+      />
     </div>
   );
 }

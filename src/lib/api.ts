@@ -189,6 +189,29 @@ class ApiService {
     return session;
   }
 
+  async getMe(): Promise<any> {
+    const response = await this.request<any>('/auth/me', {
+      method: 'GET',
+    });
+    return response;
+  }
+
+  googleLogin(): void {
+    const redirectUrl = encodeURIComponent(`${window.location.origin}/login`);
+    window.location.href = `${API_URL}/auth/google?redirect=${redirectUrl}`;
+  }
+
+  async googleLoginWithToken(token: string, role?: string): Promise<any> {
+    const response = await this.request<any>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ token, role }),
+    });
+    if (response?.token) {
+      this.setToken(response.token);
+    }
+    return response;
+  }
+
   getSession(): AuthSession | null {
     return this.getStoredSession();
   }
@@ -631,6 +654,7 @@ class ApiService {
   // ==================== NOTIFICATIONS ====================
 
   async getNotifications(): Promise<any[]> {
+    if (!this.getToken()) return [];
     try {
       return (await this.request<any[]>('/notifications', { method: 'GET' })) || [];
     } catch {
@@ -639,6 +663,7 @@ class ApiService {
   }
 
   async markNotificationAsRead(id: string): Promise<any> {
+    if (!this.getToken()) return null;
     try {
       return await this.request<any>(`/notifications/${id}/read`, { method: 'PATCH' });
     } catch {
@@ -647,6 +672,7 @@ class ApiService {
   }
 
   async markAllNotificationsAsRead(): Promise<any> {
+    if (!this.getToken()) return null;
     try {
       return await this.request<any>('/notifications/read-all', { method: 'PATCH' });
     } catch {
