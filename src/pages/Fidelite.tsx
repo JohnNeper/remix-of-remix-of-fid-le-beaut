@@ -220,8 +220,8 @@ export default function Fidelite() {
 
       {/* ── STATS CARDS ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-card border border-border/40 rounded-2xl p-4 shadow-sm flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+        <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-xs flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <Crown className="h-5 w-5" />
           </div>
           <div className="min-w-0">
@@ -231,8 +231,8 @@ export default function Fidelite() {
           </div>
         </div>
 
-        <div className="bg-card border border-border/40 rounded-2xl p-4 shadow-sm flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">
+        <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-xs flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <Trophy className="h-5 w-5" />
           </div>
           <div className="min-w-0">
@@ -242,8 +242,8 @@ export default function Fidelite() {
           </div>
         </div>
 
-        <div className="bg-card border border-border/40 rounded-2xl p-4 shadow-sm flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+        <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-xs flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <TrendingUp className="h-5 w-5" />
           </div>
           <div className="min-w-0">
@@ -253,8 +253,8 @@ export default function Fidelite() {
           </div>
         </div>
 
-        <div className="bg-card border border-border/40 rounded-2xl p-4 shadow-sm flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+        <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-xs flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <Gift className="h-5 w-5" />
           </div>
           <div className="min-w-0">

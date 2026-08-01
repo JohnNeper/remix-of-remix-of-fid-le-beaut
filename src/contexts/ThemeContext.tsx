@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "dark" | "light" | "system";
-type ThemeColor = "zinc" | "rose" | "blue" | "green" | "orange";
+type ThemeColor = "zinc" | "rose" | "blue" | "green" | "orange" | "violet" | "gold";
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -64,7 +64,7 @@ export function ThemeProvider({
   useEffect(() => {
     const root = window.document.documentElement;
     // Remove previous color classes
-    root.classList.remove("theme-zinc", "theme-rose", "theme-blue", "theme-green", "theme-orange");
+    root.classList.remove("theme-zinc", "theme-rose", "theme-blue", "theme-green", "theme-orange", "theme-violet", "theme-gold");
     // Add new color class
     root.classList.add(`theme-${color}`);
   }, [color]);

@@ -71,13 +71,13 @@ export function PendingPublicBookings() {
             : null;
 
           return (
-            <div key={r.id} className="p-3.5 rounded-xl bg-card border border-border/40 space-y-2.5 shadow-sm max-w-full overflow-hidden">
+            <div key={r.id} className="p-3.5 rounded-xl bg-card border border-border/40 border-l-4 border-l-amber-500 space-y-2.5 shadow-sm hover:shadow-amber-500/10 transition-all max-w-full overflow-hidden">
               <div className="flex items-start justify-between gap-2 flex-wrap">
                 <div className="min-w-0 flex-1">
-                  <div className="font-bold text-sm text-foreground truncate">{r.customerName || 'Cliente en ligne'}</div>
+                  <div className="font-extrabold text-sm text-foreground truncate">{r.customerName || 'Cliente en ligne'}</div>
                   {r.reference && <div className="text-[11px] font-mono text-muted-foreground">Réf. {r.reference}</div>}
                 </div>
-                <Badge variant="outline" className="text-[10px] font-semibold bg-amber-500/10 text-amber-600 border-amber-500/20 shrink-0">
+                <Badge className="text-[11px] font-extrabold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/25 border-0 shrink-0 px-3 py-0.5 rounded-full">
                   {t('appointments.status.en_attente', 'En attente')}
                 </Badge>
               </div>

@@ -83,6 +83,8 @@ function DepenseForm({ onSubmit, onCancel }: { onSubmit: (d: z.infer<typeof depe
 }
 
 function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) => void; onCancel: () => void }) {
+  const { t } = useLanguage();
+  const { formatCurrency } = useTranslations();
   const { clients } = useClients();
   const { produits, adjustStock } = useStock();
   const { typesPrestations } = usePrestations();
@@ -92,7 +94,7 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
   const [itemType, setItemType] = useState<'produit' | 'prestation'>('produit');
   const [selectedRef, setSelectedRef] = useState('');
   const [itemQty, setItemQty] = useState(1);
-  const [itemPrice, setItemPrice] = useState(0);
+  const [prixUnitaire, setPrixUnitaire] = useState(0);
   const [notes, setNotes] = useState('');
 
 
@@ -161,7 +163,7 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
           {t('finances.addArticle')}
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Select value={itemType} onValueChange={(v) => { setItemType(v as 'produit' | 'prestation'); setSelectedRef(''); setItemPrice(0); }}>
+          <Select value={itemType} onValueChange={(v) => { setItemType(v as 'produit' | 'prestation'); setSelectedRef(''); setPrixUnitaire(0); }}>
             <SelectTrigger className="w-full sm:w-[150px] h-12 rounded-xl bg-background border-none shadow-inner focus:ring-primary/20 font-medium"><SelectValue /></SelectTrigger>
             <SelectContent className="rounded-xl border-none shadow-2xl">
               <SelectItem value="produit" className="rounded-lg m-1 font-medium">{t('finances.products')}</SelectItem>
@@ -173,7 +175,7 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
             const item = itemType === 'produit'
               ? produits.find(p => String(p.id) === val || String((p as any)._id) === val)
               : typesPrestations.find(tp => String(tp.id) === val || String((tp as any)._id) === val);
-            if (item) setItemPrice(item.prix);
+            if (item) setPrixUnitaire(item.prix);
           }}>
             <SelectTrigger className="flex-1 h-12 rounded-xl bg-background border-none shadow-inner focus:ring-primary/20 font-medium"><SelectValue placeholder={t('finances.choose')} /></SelectTrigger>
             <SelectContent className="rounded-xl border-none shadow-2xl">
@@ -186,7 +188,7 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
         </div>
         <div className="flex flex-wrap sm:flex-nowrap gap-3 items-center">
           <div className="flex-1 min-w-[120px]">
-            <Input type="number" value={itemPrice} onChange={e => setItemPrice(Number(e.target.value))} className="w-full h-12 rounded-xl bg-background border-none shadow-inner focus:ring-primary/20 font-semibold" placeholder={t('finances.amount')} />
+            <Input type="number" value={prixUnitaire} onChange={e => setPrixUnitaire(Number(e.target.value))} className="w-full h-12 rounded-xl bg-background border-none shadow-inner focus:ring-primary/20 font-semibold" placeholder={t('finances.amount')} />
           </div>
           <Input type="number" value={itemQty} onChange={e => setItemQty(Number(e.target.value))} min={1} className="w-20 h-12 rounded-xl bg-background border-none shadow-inner focus:ring-primary/20 text-center font-bold" placeholder="Qté" />
           <Button type="button" onClick={addItem} variant="secondary" className="h-12 px-5 gap-2 rounded-xl font-bold bg-primary/10 text-primary hover:bg-primary/20 w-full sm:w-auto">
@@ -313,7 +315,7 @@ export default function Finances() {
   const { formatCurrency, formatDate } = useTranslations();
   const { hasExport, hasProfitEstimation, getUpgradePlan, plan } = useSubscriptionPlan();
   const { session } = useAuth();
-  const isOwner = session?.userRole === 'owner' || session?.userRole === 'admin';
+  const isOwner = session?.userRole === 'owner' || session?.type === 'admin';
   const [showVenteForm, setShowVenteForm] = useState(false);
   const [showDepenseForm, setShowDepenseForm] = useState(false);
   const [invoiceVente, setInvoiceVente] = useState<Vente | null>(null);

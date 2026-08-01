@@ -109,32 +109,32 @@ export function CalendrierRendezVous() {
       confirme: {
         label: t('appointments.status.confirme', 'Confirmé'),
         icon: CheckCircle2,
-        className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+        className: 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold shadow-sm shadow-emerald-500/25 border-0',
       },
       en_attente: {
         label: t('appointments.status.en_attente', 'En attente'),
         icon: AlertCircle,
-        className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+        className: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white font-extrabold shadow-sm shadow-amber-500/25 border-0',
       },
       annule: {
         label: t('appointments.status.annule', 'Annulé'),
         icon: XCircle,
-        className: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+        className: 'bg-gradient-to-r from-rose-500 to-red-600 text-white font-extrabold shadow-sm shadow-rose-500/25 border-0',
       },
       termine: {
         label: t('appointments.status.termine', 'Terminé'),
         icon: CheckCircle2,
-        className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+        className: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold shadow-sm shadow-blue-500/25 border-0',
       },
       completed: {
         label: t('appointments.status.termine', 'Terminé'),
         icon: CheckCircle2,
-        className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+        className: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold shadow-sm shadow-blue-500/25 border-0',
       },
       paid: {
         label: t('appointments.status.confirme', 'Payé'),
         icon: CheckCircle2,
-        className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+        className: 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold shadow-sm shadow-emerald-500/25 border-0',
       },
     }),
     [t]

@@ -70,7 +70,7 @@ export default function Dashboard() {
   const dashboardStats = useMemo(() => {
     if (!clients || !prestations || !rendezVous) return null;
 
-    const activeClientsCount = clients.filter(c => c.statut !== 'inactif').length;
+    const activeClientsCount = clients.length;
 
     const now = new Date();
     const year = now.getFullYear();
@@ -167,7 +167,7 @@ export default function Dashboard() {
           <div className="space-y-2 max-w-2xl">
             {/* Salon Badge & Date */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-600/30 border border-rose-400/40 text-rose-200 text-xs font-bold backdrop-blur-md shadow-xs">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/20 border border-primary/30 text-white text-xs font-bold backdrop-blur-md shadow-xs">
                 <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
                 <span>{t('dashboard.welcome')} {session?.userName || 'Gérant'}</span>
               </span>
@@ -191,7 +191,7 @@ export default function Dashboard() {
           {/* Quick Action Toolbar */}
           <div className="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
             <Link to="/prestations" className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto h-10 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-600/30 flex items-center justify-center gap-2 border-0 transition-transform hover:scale-[1.01] active:scale-95">
+              <Button className="w-full sm:w-auto h-10 px-4 rounded-xl gradient-primary font-bold text-xs shadow-md flex items-center justify-center gap-2 border-0 transition-transform hover:scale-[1.01] active:scale-95">
                 <Scissors className="h-4 w-4" />
                 <span>{t('dashboard.newService')}</span>
               </Button>
@@ -306,13 +306,13 @@ export default function Dashboard() {
           {/* Recent Clients Card */}
           <Card className="rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden bg-white dark:bg-slate-900 transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4 sm:px-5">
-              <CardTitle className="text-sm font-extrabold flex items-center gap-2 text-slate-900 dark:text-white">
-                <Users className="h-4.5 w-4.5 text-rose-500" />
+              <CardTitle className="text-sm sm:text-base font-extrabold flex items-center gap-2 text-foreground">
+                <Users className="h-4.5 w-4.5 text-primary" />
                 <span>{t('dashboard.recentClients')}</span>
               </CardTitle>
 
               <Link to="/clientes">
-                <Button variant="ghost" size="sm" className="h-7 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 px-2">
+                <Button variant="ghost" size="sm" className="h-7 text-xs font-bold text-primary hover:bg-primary/10 px-2">
                   <span>{t('dashboard.viewAll')}</span>
                   <ArrowRight className="h-3.5 w-3.5 ml-1" />
                 </Button>
@@ -325,19 +325,19 @@ export default function Dashboard() {
                   .sort((a, b) => new Date(b.dateInscription).getTime() - new Date(a.dateInscription).getTime())
                   .slice(0, 5)
                   .map(client => (
-                    <div key={client.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80">
+                    <div key={client.id} className="flex items-center justify-between p-2.5 rounded-xl bg-muted/40 border border-border/50">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="h-8 w-8 rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center font-extrabold text-xs shrink-0">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-extrabold text-xs shrink-0">
                           {client.nom.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-extrabold text-xs text-slate-900 dark:text-white truncate">{client.nom}</p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{client.telephone}</p>
+                          <p className="font-extrabold text-xs text-foreground truncate">{client.nom}</p>
+                          <p className="text-[11px] text-muted-foreground font-medium">{client.telephone}</p>
                         </div>
                       </div>
 
-                      <Badge variant="outline" className="text-[11px] font-extrabold text-rose-600 dark:text-rose-400 border-rose-500/30 bg-rose-500/10 flex items-center gap-1 shrink-0 px-2 py-0.5">
-                        <Gift className="h-3 w-3 text-rose-500" />
+                      <Badge variant="outline" className="text-[11px] font-extrabold text-primary border-primary/30 bg-primary/10 flex items-center gap-1 shrink-0 px-2 py-0.5">
+                        <Gift className="h-3 w-3 text-primary" />
                         <span>{client.pointsFidelite || 0} {t('dashboard.pts')}</span>
                       </Badge>
                     </div>

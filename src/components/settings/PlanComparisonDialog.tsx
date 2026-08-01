@@ -15,9 +15,12 @@ import { PLANS, PlanType, getPlanColor, formatPlanPrice } from '@/lib/plans';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-interface PlanComparisonDialogProps {
+export interface PlanComparisonDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   currentPlan: PlanType;
-  onUpgrade: (plan: PlanType) => void;
+  onSelectPlan?: (plan: PlanType) => void;
+  onUpgrade?: (plan: PlanType) => void;
 }
 
 const FEATURE_LIST = [
@@ -30,12 +33,13 @@ const FEATURE_LIST = [
   { name: 'settings.features.support', basic: 'Email', pro: 'Prioritaire', premium: 'Dédié 24/7' },
 ];
 
-export function PlanComparisonDialog({ currentPlan, onUpgrade }: PlanComparisonDialogProps) {
+export function PlanComparisonDialog({ open, onOpenChange, currentPlan, onSelectPlan, onUpgrade }: PlanComparisonDialogProps) {
   const { t } = useLanguage();
   const plansArray = Object.values(PLANS);
+  const handleUpgrade = onSelectPlan || onUpgrade;
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button className="gradient-primary h-12 px-10 text-lg rounded-full">
           {t('settings.explorePlans')}
@@ -89,7 +93,7 @@ export function PlanComparisonDialog({ currentPlan, onUpgrade }: PlanComparisonD
                       disabled={isCurrent}
                       onClick={() => {
                         console.log("Plan choisi dans le dialog:", plan.name);
-                        onUpgrade(plan.name);
+                        handleUpgrade?.(plan.name);
                       }}
                     >
                       {isCurrent ? t('settings.planCurrent') : t('common.select')}

@@ -12,6 +12,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { updateSalonAccount, slugify, getSalonBySlug, getSalonAccounts } from '@/lib/auth';
 import { getBookingPublicUrl } from '@/lib/booking';
 
+import type { Salon } from '@/types';
+
 const PALETTES = [
   { name: 'Rose Gold', primary: '350 75% 55%', secondary: '25 95% 60%' },
   { name: 'Coral', primary: '14 85% 60%', secondary: '340 75% 65%' },
@@ -20,7 +22,12 @@ const PALETTES = [
   { name: 'Or noir', primary: '40 80% 50%', secondary: '0 0% 15%' },
 ];
 
-export function BookingSettingsCard() {
+export interface BookingSettingsCardProps {
+  salon?: Salon;
+  onUpdate?: (updates: Partial<Salon>) => Promise<any>;
+}
+
+export function BookingSettingsCard({ salon, onUpdate }: BookingSettingsCardProps = {}) {
   const { session } = useAuth();
   const [tick, force] = useState(0);
   const currentSalon = session?.salonId

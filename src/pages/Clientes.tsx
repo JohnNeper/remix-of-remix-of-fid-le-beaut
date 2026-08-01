@@ -217,7 +217,7 @@ export default function Clientes() {
           {t('clients.restrictedAccessDesc') || 'En tant que membre du personnel, vous n\'avez pas accès à la liste complète des clients pour des raisons de confidentialité.'}
         </p>
         <div className="flex gap-4 pt-2">
-          <Button onClick={() => setShowAddDialog(true)} className="bg-rose-600 hover:bg-rose-700 text-white font-bold h-10 px-4 rounded-xl">
+          <Button onClick={() => setShowAddDialog(true)} className="gradient-primary text-white font-bold h-10 px-4 rounded-xl shadow-md">
             <Plus className="h-4 w-4 mr-2" />
             {t('clients.new') || 'Nouvelle cliente'}
           </Button>

@@ -36,14 +36,14 @@ export default function RendezVousPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20 shadow-sm">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 shadow-xs">
               <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground tracking-tight">
                 {t('appointments.title') || 'Gestion des Rendez-vous'}
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+              <p className="text-xs sm:text-sm text-muted-foreground font-medium">
                 {t('appointments.subtitle') || 'Gérez vos créneaux, réservations en ligne et le planning de votre salon.'}
               </p>
             </div>
@@ -53,16 +53,16 @@ export default function RendezVousPage() {
 
       {/* Public Booking Link Card */}
       {slug && (
-        <Card className="p-4 sm:p-6 rounded-3xl border-rose-500/20 bg-gradient-to-r from-rose-500/10 via-purple-500/5 to-slate-900/5 dark:from-rose-500/15 dark:via-purple-900/10 dark:to-slate-950/80 shadow-lg backdrop-blur-md relative overflow-hidden">
-          <div className="absolute top-0 right-0 h-40 w-40 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+        <Card className="p-4 sm:p-6 rounded-3xl border-primary/20 bg-gradient-to-r from-primary/10 via-card to-muted/20 shadow-md backdrop-blur-md relative overflow-hidden">
+          <div className="absolute top-0 right-0 h-40 w-40 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-2xl bg-gradient-to-br from-rose-600 to-purple-700 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-600/20">
+              <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-2xl gradient-primary text-white flex items-center justify-center shrink-0 shadow-md">
                 <Link2 className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                  <h3 className="font-extrabold text-sm sm:text-base text-foreground">
                     Lien de réservation en ligne
                   </h3>
                   {instant && (

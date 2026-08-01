@@ -326,8 +326,8 @@ class ApiService {
   async bulkImport(salonId: string, payload: {
     contacts: Array<{ nom: string; telephone: string }>;
     groupe?: { nom: string; couleur: string; description: string };
-  }): Promise<{ imported: number; success: boolean }> {
-    return this.request<{ imported: number; success: boolean }>(`/salons/${salonId}/clients/bulk-import`, {
+  }): Promise<{ inserted: number; skipped: number; groupe?: { id: string; nom: string } | null }> {
+    return this.request<{ inserted: number; skipped: number; groupe?: { id: string; nom: string } | null }>(`/salons/${salonId}/clients/bulk-import`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });

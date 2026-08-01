@@ -107,6 +107,7 @@ export interface Salon {
   slogan?: string;
   description?: string;
   logoUrl?: string;
+  logo?: string;
   bannerUrl?: string;
   galleryUrls?: string[];
   typeEtablissement?: 'salon_coiffure' | 'spa' | 'institut_beaute' | 'barbershop' | 'onglerie' | 'mixte' | 'autre';
@@ -121,6 +122,7 @@ export interface Salon {
   devise?: string;
   horaires?: string;
   availability?: any;
+  disponibilite?: any;
 
   joursRappelInactivite: number;
   joursRappelSuivi: number;

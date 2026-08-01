@@ -146,6 +146,10 @@ export const translations: Record<Language, Record<string, string>> = {
         'login.demoStaff': 'Démo Équipe',
         'login.clientLink': 'Vous êtes cliente ? Réservez un soin sur le portail public',
         'login.portalSecured': 'Portail Sécurisé Professionnels',
+        'login.whyTrustUs': 'Pourquoi les pros nous choisissent :',
+        'login.quickDemoFill': 'Accès Démo Rapide (Test)',
+        'login.hide': 'Masquer',
+        'login.allRightsReserved': 'Tous droits réservés.',
 
         // Subscription Stepper
         'sub.title': 'Renouvellement d\'Abonnement BeautyFlow',
@@ -1091,6 +1095,10 @@ export const translations: Record<Language, Record<string, string>> = {
         'login.demoStaff': 'Staff Demo',
         'login.clientLink': 'Are you a client? Book a service on our public portal',
         'login.portalSecured': 'Secure Professional Portal',
+        'login.whyTrustUs': 'Why pros choose us:',
+        'login.quickDemoFill': 'Quick Demo Access (Test)',
+        'login.hide': 'Hide',
+        'login.allRightsReserved': 'All rights reserved.',
 
         // Subscription Stepper
         'sub.title': 'BeautyFlow Subscription Renewal',

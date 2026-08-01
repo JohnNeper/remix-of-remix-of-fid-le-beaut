@@ -118,8 +118,8 @@ export default function Bilan() {
 
   // RDV stats
   const rdvTotal = filteredRdv.length;
-  const rdvConfirmes = filteredRdv.filter(r => (r as any).statut === 'confirme').length;
-  const rdvAnnules = filteredRdv.filter(r => (r as any).statut === 'annule').length;
+  const rdvConfirmes = filteredRdv.filter(r => r.statut === 'confirme').length;
+  const rdvAnnules = filteredRdv.filter(r => r.statut === 'annule').length;
 
   // Clients nouveaux (inscrits dans la période)
   const newClients = clients.filter(c => {

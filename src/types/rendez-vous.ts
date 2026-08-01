@@ -11,4 +11,7 @@ export interface RendezVous {
   source?: 'salon' | 'en_ligne' | 'public';
   customerName?: string;
   customerPhone?: string;
+  customerEmail?: string;
+  reference?: string;
+  createdAt?: string;
 }

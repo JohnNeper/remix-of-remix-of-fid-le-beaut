@@ -14,11 +14,27 @@ interface TodayAppointmentsProps {
   typesPrestations: TypePrestation[];
 }
 
-const statutColors: Record<string, string> = {
-  confirme: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 font-bold',
-  en_attente: 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 font-bold',
-  annule: 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/40 font-bold',
-  termine: 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 font-bold',
+const statutColors: Record<string, { badge: string; cardBorder: string; timeBg: string }> = {
+  confirme: {
+    badge: 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold shadow-sm shadow-emerald-500/25 border-0',
+    cardBorder: 'border-l-4 border-l-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20 border-slate-200/80 dark:border-slate-800',
+    timeBg: 'bg-emerald-500 text-white shadow-xs',
+  },
+  en_attente: {
+    badge: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white font-extrabold shadow-sm shadow-amber-500/25 border-0',
+    cardBorder: 'border-l-4 border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20 border-slate-200/80 dark:border-slate-800',
+    timeBg: 'bg-amber-500 text-white shadow-xs',
+  },
+  annule: {
+    badge: 'bg-gradient-to-r from-rose-500 to-red-600 text-white font-extrabold shadow-sm shadow-rose-500/25 border-0',
+    cardBorder: 'border-l-4 border-l-rose-500 bg-rose-50/40 dark:bg-rose-950/20 border-slate-200/80 dark:border-slate-800 opacity-90',
+    timeBg: 'bg-rose-500 text-white shadow-xs',
+  },
+  termine: {
+    badge: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold shadow-sm shadow-blue-500/25 border-0',
+    cardBorder: 'border-l-4 border-l-blue-600 bg-blue-50/40 dark:bg-blue-950/20 border-slate-200/80 dark:border-slate-800',
+    timeBg: 'bg-blue-600 text-white shadow-xs',
+  },
 };
 
 export function TodayAppointments({ rendezVous, clients, typesPrestations }: TodayAppointmentsProps) {
@@ -54,7 +70,7 @@ export function TodayAppointments({ rendezVous, clients, typesPrestations }: Tod
           <Calendar className="h-4.5 w-4.5 text-rose-500" />
           <span>{t('todayRdv.title') || "Rendez-vous du jour"}</span>
           {rendezVous.length > 0 && (
-            <Badge variant="outline" className="text-[11px] font-bold text-rose-600 dark:text-rose-400 border-rose-500/30 bg-rose-500/10 px-2 py-0.5">
+            <Badge variant="outline" className="text-[11px] font-extrabold text-rose-600 dark:text-rose-400 border-rose-500/30 bg-rose-500/10 px-2 py-0.5">
               {rendezVous.length}
             </Badge>
           )}
@@ -73,16 +89,22 @@ export function TodayAppointments({ rendezVous, clients, typesPrestations }: Tod
             {rendezVous.slice(0, 5).map(rdv => {
               const client = clients.find(c => c.id === rdv.clientId);
               const type = typesPrestations.find(t => t.id === rdv.typePrestationId);
+              const style = statutColors[rdv.statut] || {
+                badge: 'bg-slate-700 text-white font-bold',
+                cardBorder: 'border-l-4 border-l-slate-400 bg-slate-50 dark:bg-slate-950',
+                timeBg: 'bg-slate-700 text-white',
+              };
+
               return (
-                <div key={rdv.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-100 dark:border-slate-800 hover:border-rose-300 dark:hover:border-slate-700 transition-all">
+                <div key={rdv.id} className={`flex items-center justify-between p-3 rounded-xl shadow-2xs transition-all hover:scale-[1.005] ${style.cardBorder}`}>
                   
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="flex flex-col items-center justify-center bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg px-2.5 py-1 shrink-0 border border-rose-500/20 font-extrabold">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`flex flex-col items-center justify-center rounded-xl px-2.5 py-1 shrink-0 font-black ${style.timeBg}`}>
                       <Clock className="h-3.5 w-3.5 mb-0.5" />
-                      <span className="text-[11px] font-extrabold">{rdv.heure}</span>
+                      <span className="text-[11px] font-black">{rdv.heure}</span>
                     </div>
 
-                    <div className="min-w-0 space-y-1">
+                    <div className="min-w-0 space-y-0.5">
                       <p className="font-black text-sm text-slate-950 dark:text-white truncate">
                         {client?.nom || rdv.customerName || 'Client inconnu'}
                       </p>
@@ -115,7 +137,7 @@ export function TodayAppointments({ rendezVous, clients, typesPrestations }: Tod
                       </Button>
                     )}
 
-                    <Badge variant="outline" className={`text-xs px-2.5 py-1 ${statutColors[rdv.statut] || 'bg-slate-100 text-slate-700'}`}>
+                    <Badge className={`text-[11px] px-3 py-1 rounded-full ${style.badge}`}>
                       {getStatutLabel(rdv.statut)}
                     </Badge>
                   </div>

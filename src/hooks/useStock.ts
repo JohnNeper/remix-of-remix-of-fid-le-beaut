@@ -108,7 +108,8 @@ export function useStock() {
   return {
     produits,
     addProduit: addMutation.mutate,
-    updateProduit: updateMutation.mutate,
+    updateProduit: (id: string, updates: Partial<Produit>) =>
+      updateMutation.mutate({ id, updates }),
     deleteProduit: deleteMutation.mutate,
     adjustStock: (id: string, quantiteChange: number) =>
       adjustStockMutation.mutateAsync({ id, quantiteChange }),
