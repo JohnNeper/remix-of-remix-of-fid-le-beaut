@@ -25,17 +25,17 @@ import { toast } from '@/hooks/use-toast';
 import type { Salon } from '@/types';
 
 const infoSchema = z.object({
-  name: z.string().min(2, 'Nom requis'),
-  phone: z.string().min(9, 'Numéro invalide'),
-  email: z.string().email('Email invalide').optional().or(z.literal('')),
-  address: z.string().min(2, 'Adresse requise'),
-  ville: z.string().optional(),
-  pays: z.string().min(2, 'Pays requis'),
-  devise: z.string().min(1),
-  description: z.string().max(500).optional(),
-  slogan: z.string().max(200).optional(),
-  horaires: z.string().max(100).optional(),
-  typeEtablissement: z.string().optional(),
+  name: z.string().min(1, 'Nom requis'),
+  phone: z.string().optional().or(z.literal('')),
+  email: z.string().optional().or(z.literal('')),
+  address: z.string().optional().or(z.literal('')),
+  ville: z.string().optional().or(z.literal('')),
+  pays: z.string().optional().or(z.literal('')),
+  devise: z.string().optional().or(z.literal('')),
+  description: z.string().optional().or(z.literal('')),
+  slogan: z.string().optional().or(z.literal('')),
+  horaires: z.string().optional().or(z.literal('')),
+  typeEtablissement: z.string().optional().or(z.literal('')),
   location: z.object({
     lat: z.coerce.number(),
     lng: z.coerce.number()
@@ -113,7 +113,14 @@ export function GeneralSettingsTab({ salon, updateSalon, t, language }: GeneralS
   const onInfoSubmit = async (data: z.infer<typeof infoSchema>) => {
     setIsSubmitting(true);
     try {
-      await updateSalon(data as any);
+      const payload = {
+        ...data,
+        location: {
+          lat: Number(data.location?.lat || mapLat || 4.0508),
+          lng: Number(data.location?.lng || mapLng || 9.7085),
+        }
+      };
+      await updateSalon(payload as any);
       toast({
         title: '✅ ' + (t('common.success') || 'Succès'),
         description: language === 'fr' ? 'Informations générales mises à jour avec succès.' : 'General info updated successfully.'
@@ -215,7 +222,17 @@ export function GeneralSettingsTab({ salon, updateSalon, t, language }: GeneralS
             </div>
           ) : (
             <Form {...infoForm}>
-              <form onSubmit={infoForm.handleSubmit(onInfoSubmit)} className="space-y-4">
+              <form
+                onSubmit={infoForm.handleSubmit(onInfoSubmit, (errors) => {
+                  console.error('Validation errors:', errors);
+                  toast({
+                    title: '⚠️ ' + (t('common.error') || 'Erreur'),
+                    description: language === 'fr' ? 'Veuillez vérifier les informations du formulaire.' : 'Please check form fields.',
+                    variant: 'destructive'
+                  });
+                })}
+                className="space-y-4"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField control={infoForm.control} name="name" render={({ field }) => (
                     <FormItem>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, UserPlus, Clock, Trash2, Mail, Phone, ShieldCheck, Crown, AlertTriangle } from 'lucide-react';
+import { Users, UserPlus, Clock, Trash2, Mail, Phone, ShieldCheck, Crown, AlertTriangle, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -16,6 +16,7 @@ interface TeamSettingsTabProps {
   t: (key: string) => string;
   onOpenAddStaff: () => void;
   onEditStaffAvail: (staffMember: User) => void;
+  onEditStaffDetails?: (staffMember: User) => void;
   onRefetch: () => void;
   onExplorePlans: () => void;
 }
@@ -28,6 +29,7 @@ export function TeamSettingsTab({
   t,
   onOpenAddStaff,
   onEditStaffAvail,
+  onEditStaffDetails,
   onRefetch,
   onExplorePlans
 }: TeamSettingsTabProps) {
@@ -73,8 +75,8 @@ export function TeamSettingsTab({
               </div>
               <p className="text-sm text-muted-foreground">
                 {language === 'fr' 
-                  ? 'Gérez votre équipe, leurs rôles et leurs plages d\'intervention individuelles.'
-                  : 'Manage your team, their roles, and individual working schedules.'}
+                  ? 'Gérez votre équipe, leurs photos, leurs rôles et leurs plannings.'
+                  : 'Manage your team, photos, roles, and working schedules.'}
               </p>
             </div>
 
@@ -127,14 +129,22 @@ export function TeamSettingsTab({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {staff.map((member) => {
           const isManager = member.role === 'admin' || member.role === 'manager';
+          const avatar = member.avatarUrl || (member as any).photoUrl || (member as any).avatar || (member as any).photo;
+
           return (
             <Card key={(member as any)._id || member.id} className="card-shadow rounded-3xl border-border/60 overflow-hidden hover:border-primary/40 transition-all duration-300 group">
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-extrabold text-primary text-lg shadow-inner">
-                      {member.name ? member.name.charAt(0).toUpperCase() : 'U'}
-                    </div>
+                    {avatar ? (
+                      <div className="h-12 w-12 rounded-2xl border border-primary/20 overflow-hidden shadow-inner shrink-0">
+                        <img src={avatar} alt={member.name} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-extrabold text-primary text-lg shadow-inner shrink-0">
+                        {member.name ? member.name.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                    )}
                     <div>
                       <h4 className="font-bold text-base text-foreground group-hover:text-primary transition-colors">
                         {member.name}
@@ -177,11 +187,20 @@ export function TeamSettingsTab({
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => onEditStaffDetails?.(member)}
+                    className="flex-1 gap-1.5 rounded-xl text-xs font-semibold hover:bg-primary/5 hover:text-primary border-border/80"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-primary" />
+                    {language === 'fr' ? 'Modifier' : 'Edit'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onEditStaffAvail(member)}
-                    className="w-full gap-2 rounded-xl text-xs font-semibold hover:bg-primary/5 hover:text-primary border-border/80"
+                    className="flex-1 gap-1.5 rounded-xl text-xs font-semibold hover:bg-primary/5 hover:text-primary border-border/80"
                   >
                     <Clock className="h-3.5 w-3.5 text-primary" />
-                    {language === 'fr' ? 'Horaires spécifiques' : 'Working hours'}
+                    {language === 'fr' ? 'Horaires' : 'Hours'}
                   </Button>
                 </div>
               </CardContent>

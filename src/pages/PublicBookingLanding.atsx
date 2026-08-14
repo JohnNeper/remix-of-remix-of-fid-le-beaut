@@ -31,7 +31,7 @@ export default function PublicBookingLanding() {
   const allServices = salon ? readServices(salon.id) : [];
   const banner = salon?.branding?.bannerUrl || getCategoryImage(salon?.branding?.category?.split(' ')[0]);
   const logo = salon?.branding?.logoUrl;
-  const gallery = salon?.branding?.gallery || [];
+  const gallery = (salon?.galleryUrls && salon.galleryUrls.length > 0) ? salon.galleryUrls : (salon?.branding?.gallery || []);
   const staff = salon?.branding?.staff || [];
   const rating = salon?.branding?.rating ?? 4.8;
   const reviewCount = salon?.branding?.reviewCount ?? 0;

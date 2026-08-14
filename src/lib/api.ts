@@ -50,7 +50,7 @@ export interface Campaign {
   updatedAt?: string;
 }
 
-const API_URL = 'http://localhost:3000/api'; //import.meta.env.VITE_BACKEND_URL || 'https://apisalon.westtechs.org/api';
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'https://apisalon.westtechs.org/api'; // 'http://localhost:3000/api'; //
 
 interface ApiResponse<T = unknown> {
   success: boolean;

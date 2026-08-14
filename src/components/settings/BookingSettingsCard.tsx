@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link2, Copy, ExternalLink, Image as ImageIcon, Palette, Globe2 } from 'lucide-react';
+import { Link2, Copy, ExternalLink, Image as ImageIcon, Palette, Globe2, Eye, EyeOff } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -259,6 +259,43 @@ export function BookingSettingsCard({ salon, onUpdate }: BookingSettingsCardProp
                 className="h-9 mt-1"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Salon Hide / Visibility Toggle */}
+        <div className="rounded-xl border bg-amber-500/10 border-amber-500/30 p-4 space-y-2">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <div className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                {(salon?.isHidden || salon?.hidden || (currentSalon as any)?.isHidden) ? (
+                  <EyeOff className="h-4 w-4 text-amber-600 shrink-0" />
+                ) : (
+                  <Eye className="h-4 w-4 text-emerald-600 shrink-0" />
+                )}
+                Visibilité du salon sur la plateforme public
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {(salon?.isHidden || salon?.hidden || (currentSalon as any)?.isHidden)
+                  ? '⚠️ Votre salon est actuellement masqué du public. Vos données restent conservées mais les clients ne peuvent pas réserver.'
+                  : 'Votre salon est public et visible sur l\'annuaire. Activez le bouton pour masquer votre salon temporairement sans le supprimer.'}
+              </div>
+            </div>
+            <Switch
+              checked={!(salon?.isHidden || salon?.hidden || (currentSalon as any)?.isHidden)}
+              onCheckedChange={async (isPublic) => {
+                const shouldHide = !isPublic;
+                if (onUpdate) {
+                  await onUpdate({ isHidden: shouldHide, hidden: shouldHide } as any);
+                }
+                save({ isHidden: shouldHide, hidden: shouldHide } as any);
+                toast({
+                  title: shouldHide ? '🙈 Salon masqué du public' : '👁️ Salon de nouveau visible',
+                  description: shouldHide
+                    ? 'Votre salon n\'apparaît plus sur l\'annuaire et la plateforme de réservation.'
+                    : 'Votre salon est désormais visible et prêt à recevoir des réservations.',
+                });
+              }}
+            />
           </div>
         </div>
 

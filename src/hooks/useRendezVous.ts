@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { RendezVous } from '@/types/rendez-vous';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { sendNativeNotification } from '@/lib/webNotifications';
 
 function normalizeRendezVous(item: any): RendezVous {
   return {
@@ -53,8 +54,18 @@ export function useRendezVous() {
       const res = await api.createRendezVous(salonId, payload as any);
       return normalizeRendezVous(res);
     },
-    onSuccess: () => {
+    onSuccess: (newRdv) => {
       queryClient.invalidateQueries({ queryKey: ['rendezVous', salonId] });
+      try {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          sendNativeNotification('📅 Nouveau Rendez-vous enregistré !', {
+            body: `Rendez-vous programmé à ${newRdv.heure || 'l\'heure indiquée'}.`,
+            tag: `rdv-created-${newRdv.id || Date.now()}`,
+          });
+        }
+      } catch (e) {
+        console.error('Instant notification error:', e);
+      }
     },
   });
 

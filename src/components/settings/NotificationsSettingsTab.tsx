@@ -17,6 +17,8 @@ import {
   FormDescription
 } from '@/components/ui/form';
 import { toast } from '@/hooks/use-toast';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { cn } from '@/lib/utils';
 import type { Salon } from '@/types';
 
 const rappelSchema = z.object({
@@ -39,6 +41,7 @@ export function NotificationsSettingsTab({
 }: NotificationsSettingsTabProps) {
   const [editing, setEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { permissionState, requestPermission, sendTestNativeNotification } = useNotifications();
 
   const form = useForm<z.infer<typeof rappelSchema>>({
     resolver: zodResolver(rappelSchema),
@@ -202,8 +205,85 @@ export function NotificationsSettingsTab({
         </CardContent>
       </Card>
 
-      {/* Live Phone / WhatsApp Message Preview */}
+      {/* Live Phone / WhatsApp Message Preview & Native PWA Notifications */}
       <div className="space-y-6">
+        <Card className="card-shadow rounded-3xl border-border/60 overflow-hidden bg-gradient-to-br from-amber-500/10 via-card to-card">
+          <CardHeader className="border-b border-border/30 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4 text-amber-500" />
+                <CardTitle className="text-sm font-extrabold">Notifications PWA & App</CardTitle>
+              </div>
+              <Badge
+                variant="secondary"
+                className={cn(
+                  'text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border',
+                  permissionState === 'granted' && 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+                  permissionState === 'denied' && 'bg-destructive/10 text-destructive border-destructive/30',
+                  permissionState === 'default' && 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
+                  permissionState === 'unsupported' && 'bg-muted text-muted-foreground border-border'
+                )}
+              >
+                {permissionState === 'granted' && 'Activées ✅'}
+                {permissionState === 'denied' && 'Bloquées ❌'}
+                {permissionState === 'default' && 'À activer ⚠️'}
+                {permissionState === 'unsupported' && 'Non supporté'}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Recevez les alertes en temps réel de votre salon (réservations en ligne, alertes stock, rappels du jour) directement en notification sur votre téléphone ou ordinateur.
+            </p>
+
+            <div className="flex flex-col gap-2 pt-1">
+              {permissionState !== 'granted' && (
+                <Button
+                  onClick={async () => {
+                    const res = await requestPermission();
+                    if (res === 'granted') {
+                      toast({
+                        title: '✅ Notifications activées',
+                        description: 'Votre appareil recevra désormais les alertes en temps réel.',
+                      });
+                    } else if (res === 'denied') {
+                      toast({
+                        title: '⚠️ Notifications bloquées',
+                        description: 'Veuillez autoriser les notifications dans les paramètres de votre navigateur.',
+                        variant: 'destructive',
+                      });
+                    }
+                  }}
+                  className="w-full gradient-primary rounded-xl text-xs font-bold shadow-sm"
+                >
+                  <Bell className="h-3.5 w-3.5 mr-2" />
+                  Activer sur cet appareil
+                </Button>
+              )}
+
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  if (permissionState !== 'granted') {
+                    await requestPermission();
+                  }
+                  const sent = await sendTestNativeNotification();
+                  if (sent) {
+                    toast({
+                      title: '🔔 Notification de test envoyée !',
+                      description: "Vérifiez les notifications de votre système d'exploitation.",
+                    });
+                  }
+                }}
+                className="w-full rounded-xl text-xs font-bold border-amber-500/30 hover:bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              >
+                <Zap className="h-3.5 w-3.5 mr-2 text-amber-500" />
+                Envoyer une notification test
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="card-shadow rounded-3xl border-border/60 overflow-hidden bg-gradient-to-br from-emerald-500/10 via-card to-card">
           <CardHeader className="border-b border-border/30 px-6 py-4">
             <div className="flex items-center gap-2">

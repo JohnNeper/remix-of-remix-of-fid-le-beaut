@@ -34,6 +34,7 @@ import { getCategoryImage } from '@/lib/category-images';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/hooks/useTranslations';
 import { useAuth } from '@/contexts/AuthContext';
+import { TourPointer } from '@/components/ui/TourPointer';
 import { cn } from '@/lib/utils';
 
 export default function Prestations() {
@@ -115,14 +116,19 @@ export default function Prestations() {
           <p className="text-muted-foreground mt-1 font-medium">{typesPrestations.length} {t('services.types')} disponibles</p>
         </div>
         <div className="flex gap-2.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
-          <Button onClick={() => setShowAddType(true)} variant="outline" className="rounded-xl border-primary/20 text-primary hover:bg-primary/5 whitespace-nowrap">
-            <Plus className="h-4 w-4 mr-2" />
-            {t('services.newType')}
-          </Button>
-          <Button onClick={() => setShowNouvellePrestation(true)} className="rounded-xl gradient-primary whitespace-nowrap shadow-md">
-            <Scissors className="h-4 w-4 mr-2" />
-            {t('services.register')}
-          </Button>
+          <TourPointer stepId="step-3" title="Étape 3 : Créer votre catalogue" description="Ajoutez vos soins, catégories et tarifs">
+            <Button onClick={() => setShowAddType(true)} variant="outline" className="rounded-xl border-primary/20 text-primary hover:bg-primary/5 whitespace-nowrap">
+              <Plus className="h-4 w-4 mr-2" />
+              {t('services.newType')}
+            </Button>
+          </TourPointer>
+
+          <TourPointer stepId="step-4" title="Étape 4 : Enregistrer un service" description="Enregistrez une prestation effectuée pour cumuler les revenus et points">
+            <Button onClick={() => setShowNouvellePrestation(true)} className="rounded-xl gradient-primary whitespace-nowrap shadow-md">
+              <Scissors className="h-4 w-4 mr-2" />
+              {t('services.register')}
+            </Button>
+          </TourPointer>
         </div>
       </div>
 

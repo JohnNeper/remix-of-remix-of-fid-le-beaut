@@ -24,11 +24,6 @@ import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 import SubscriptionExpired from "@/pages/SubscriptionExpired";
 import BusinessSignup from "@/pages/BusinessSignup";
-
-import PublicBookingLanding from "@/pages/PublicBookingLanding";
-import PublicBookingFlow from "@/pages/PublicBookingFlow";
-import PublicBookingConfirmation from "@/pages/PublicBookingConfirmation";
-import PublicBookingNotFound from "@/pages/PublicBookingNotFound";
 import AppLayout from "./components/layout/AppLayout";
 
 const queryClient = new QueryClient();
@@ -89,6 +84,7 @@ function AppRoutes() {
 
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { OnboardingTourProvider } from "@/contexts/OnboardingTourContext";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -101,7 +97,9 @@ const App = () => (
           <LanguageProvider>
             <AuthProvider>
               <NotificationProvider>
-                <AppRoutes />
+                <OnboardingTourProvider>
+                  <AppRoutes />
+                </OnboardingTourProvider>
               </NotificationProvider>
             </AuthProvider>
           </LanguageProvider>

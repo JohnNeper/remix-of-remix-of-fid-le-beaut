@@ -25,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFinances } from '@/hooks/useFinances';
 import { RestockModal } from '@/components/stock/RestockModal';
+import { TourPointer } from '@/components/ui/TourPointer';
 
 const PRODUCT_CATEGORIES = [
   { value: 'Cheveux', label: 'Cheveux' },
@@ -342,9 +343,11 @@ function ProduitForm({ isOwner, produit, onSubmit, onCancel }: { isOwner: boolea
                   <Download className="h-5 w-5" />
                 </Button>
               )}
-              <Button onClick={() => setShowForm(true)} className="gradient-primary h-11 rounded-xl shadow-xl shadow-primary/20 px-6 font-bold hover:scale-[1.02] transition-transform">
-                <Plus className="h-5 w-5 mr-2" />{t('stock.newProduct')}
-              </Button>
+              <TourPointer stepId="step-5" title="Étape 5 : Gérer le stock" description="Ajoutez vos produits et définissez le seuil d'alerte">
+                <Button onClick={() => setShowForm(true)} className="gradient-primary h-11 rounded-xl shadow-xl shadow-primary/20 px-6 font-bold hover:scale-[1.02] transition-transform">
+                  <Plus className="h-5 w-5 mr-2" />{t('stock.newProduct')}
+                </Button>
+              </TourPointer>
             </div>
           </div>
 

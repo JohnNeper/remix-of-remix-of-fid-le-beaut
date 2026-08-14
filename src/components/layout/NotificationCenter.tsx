@@ -27,7 +27,7 @@ const typeColors: Record<string, string> = {
 };
 
 export function NotificationCenter() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAll, permissionState, requestPermission } = useNotifications();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
@@ -99,6 +99,21 @@ export function NotificationCenter() {
             </Button>
           )}
         </div>
+
+        {permissionState === 'default' && (
+          <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between gap-2">
+            <p className="text-[11px] font-medium text-amber-700 dark:text-amber-300 leading-tight">
+              Activer les notifications système sur cet appareil ?
+            </p>
+            <Button
+              size="sm"
+              onClick={() => requestPermission()}
+              className="h-6 px-2 text-[10px] font-bold rounded-lg gradient-primary shrink-0"
+            >
+              Activer
+            </Button>
+          </div>
+        )}
         <ScrollArea className="max-h-80">
           {notifications.length === 0 ? (
             <div className="p-8 text-center">

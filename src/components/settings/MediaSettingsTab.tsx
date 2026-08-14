@@ -13,14 +13,14 @@ interface MediaSettingsTabProps {
 }
 
 export function MediaSettingsTab({ salon, updateSalon, language, t }: MediaSettingsTabProps) {
-  const logoUrl = salon.logo || salon.logoUrl || '';
-  const bannerUrl = salon.bannerUrl || '';
-  const galleryUrls = salon.galleryUrls || [];
+  const logoUrl = salon.logoUrl || salon.logo || salon.branding?.logoUrl || '';
+  const bannerUrl = salon.bannerUrl || salon.branding?.bannerUrl || '';
+  const galleryUrls = salon.galleryUrls?.length ? salon.galleryUrls : (salon.branding?.gallery || []);
 
   const handleLogoChange = async (url: string | string[]) => {
     try {
       const finalUrl = Array.isArray(url) ? url[0] : url;
-      await updateSalon({ logo: finalUrl, logoUrl: finalUrl } as any);
+      await updateSalon({ logo: finalUrl, logoUrl: finalUrl, branding: { ...(salon.branding || {}), logoUrl: finalUrl } } as any);
       toast({ 
         title: '✅ ' + (t('common.success') || 'Succès'), 
         description: language === 'fr' ? 'Logo du salon mis à jour' : 'Logo updated' 
@@ -33,7 +33,7 @@ export function MediaSettingsTab({ salon, updateSalon, language, t }: MediaSetti
   const handleBannerChange = async (url: string | string[]) => {
     try {
       const finalUrl = Array.isArray(url) ? url[0] : url;
-      await updateSalon({ bannerUrl: finalUrl } as any);
+      await updateSalon({ bannerUrl: finalUrl, branding: { ...(salon.branding || {}), bannerUrl: finalUrl } } as any);
       toast({ 
         title: '✅ ' + (t('common.success') || 'Succès'), 
         description: language === 'fr' ? 'Bannière de couverture mise à jour' : 'Cover banner updated' 
@@ -46,7 +46,10 @@ export function MediaSettingsTab({ salon, updateSalon, language, t }: MediaSetti
   const handleGalleryChange = async (urls: string | string[]) => {
     try {
       const finalUrls = Array.isArray(urls) ? urls : [urls];
-      await updateSalon({ galleryUrls: finalUrls } as any);
+      await updateSalon({
+        galleryUrls: finalUrls,
+        branding: { ...(salon.branding || {}), gallery: finalUrls }
+      } as any);
       toast({ 
         title: '✅ ' + (t('common.success') || 'Succès'), 
         description: language === 'fr' ? 'Galerie photos mise à jour' : 'Gallery updated' 

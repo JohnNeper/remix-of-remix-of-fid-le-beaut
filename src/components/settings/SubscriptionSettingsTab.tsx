@@ -68,6 +68,7 @@ export function SubscriptionSettingsTab({
 
         {/* Enabled Features pills */}
         <div className="mt-6 pt-4 border-t border-border/30 flex flex-wrap gap-2">
+          <Badge variant="secondary" className="rounded-lg text-xs py-1 px-3 bg-muted/80">🕒 Disponibilité & Horaires</Badge>
           {currentPlan.automationEnabled && <Badge variant="secondary" className="rounded-lg text-xs py-1 px-3 bg-muted/80">🤖 Automatisations SMS/WA</Badge>}
           {currentPlan.exportEnabled && <Badge variant="secondary" className="rounded-lg text-xs py-1 px-3 bg-muted/80">📊 Export Excel/PDF</Badge>}
           {currentPlan.multiBranchEnabled && <Badge variant="secondary" className="rounded-lg text-xs py-1 px-3 bg-muted/80">🏢 Multi-établissements</Badge>}

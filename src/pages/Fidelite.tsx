@@ -19,6 +19,8 @@ import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
+import { TourPointer } from '@/components/ui/TourPointer';
+
 // ─── Tier config ────────────────────────────────────────────────────────────────
 // TIERS is moved inside Fidelite for dynamic translations
 
@@ -206,14 +208,16 @@ export default function Fidelite() {
               </p>
             </div>
 
-            <Button
-              onClick={() => setShowConfigModal(true)}
-              variant="outline"
-              className="h-11 px-4 rounded-xl font-bold border-border/60 hover:bg-muted text-xs shrink-0 shadow-sm"
-            >
-              <Settings className="h-4 w-4 mr-2 text-primary" />
-              <span>{t('loyalty.btn_config', 'Configurer les règles')}</span>
-            </Button>
+            <TourPointer stepId="step-6" title="Étape 6 : Activer & Configurer la Fidélité" description="Définissez le nombre de visites requises et le pourcentage de réduction">
+              <Button
+                onClick={() => setShowConfigModal(true)}
+                variant="outline"
+                className="h-11 px-4 rounded-xl font-bold border-border/60 hover:bg-muted text-xs shrink-0 shadow-sm"
+              >
+                <Settings className="h-4 w-4 mr-2 text-primary" />
+                <span>{t('loyalty.btn_config', 'Configurer les règles')}</span>
+              </Button>
+            </TourPointer>
           </div>
         </div>
       </Card>

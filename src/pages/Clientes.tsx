@@ -27,6 +27,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
 import { LimitReachedBanner } from '@/components/ui/UpgradePrompt';
 import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
+import { TourPointer } from '@/components/ui/TourPointer';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -270,14 +271,16 @@ export default function Clientes() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button
-            onClick={() => setShowAddDialog(true)}
-            className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold h-10 px-4 rounded-xl shadow-md shadow-rose-600/30 border-0 text-xs transition-transform hover:scale-[1.01] active:scale-95"
-            disabled={!canAddCustomer(clients.length)}
-          >
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>{t('clients.new') || 'Nouvelle cliente'}</span>
-          </Button>
+          <TourPointer stepId="step-2" title="Étape 2 : Ajouter votre 1er client" description="Cliquez ici pour créer la fiche de votre première cliente">
+            <Button
+              onClick={() => setShowAddDialog(true)}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold h-10 px-4 rounded-xl shadow-md shadow-rose-600/30 border-0 text-xs transition-transform hover:scale-[1.01] active:scale-95"
+              disabled={!canAddCustomer(clients.length)}
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              <span>{t('clients.new') || 'Nouvelle cliente'}</span>
+            </Button>
+          </TourPointer>
         </div>
       </div>
 

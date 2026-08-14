@@ -1,10 +1,16 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useStock } from '@/hooks/useStock';
 import { useRendezVous } from '@/hooks/useRendezVous';
 import { useClients } from '@/hooks/useClients';
 import { useSalon } from '@/hooks/useSalon';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
+import {
+  getNotificationPermission,
+  requestNotificationPermission,
+  sendNativeNotification,
+  NotificationPermissionState,
+} from '@/lib/webNotifications';
 
 export interface AppNotification {
   id: string;
@@ -25,6 +31,9 @@ interface NotificationContextType {
   stockAlertCount: number;
   rdvTodayCount: number;
   inactiveCount: number;
+  permissionState: NotificationPermissionState;
+  requestPermission: () => Promise<NotificationPermissionState>;
+  sendTestNativeNotification: () => Promise<boolean>;
 }
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
@@ -35,6 +44,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const { getRendezVousAujourdhui } = useRendezVous();
   const { getInactiveClients } = useClients();
   const { salon } = useSalon();
+
+  const [permissionState, setPermissionState] = useState<NotificationPermissionState>(() => getNotificationPermission());
+  const notifiedIdsRef = useRef<Set<string>>(new Set());
 
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
     try {
@@ -55,6 +67,26 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   });
 
   const [backendNotifications, setBackendNotifications] = useState<AppNotification[]>([]);
+
+  // Request native permission
+  const requestPermission = useCallback(async (): Promise<NotificationPermissionState> => {
+    const res = await requestNotificationPermission();
+    setPermissionState(res);
+    if (res === 'granted') {
+      sendNativeNotification('🔔 Notifications activées !', {
+        body: 'Vous recevrez désormais les alertes de votre salon en temps réel sur cet appareil.',
+        tag: 'perm-test',
+      });
+    }
+    return res;
+  }, []);
+
+  const sendTestNativeNotification = useCallback(async (): Promise<boolean> => {
+    return await sendNativeNotification('💡 Test de Notification BeautySpace', {
+      body: 'Les notifications système et PWA fonctionnent parfaitement sur votre appareil !',
+      tag: `test-notif-${Date.now()}`,
+    });
+  }, []);
 
   // Sync dismissedIds to localStorage
   const updateDismissedIds = useCallback((updater: (prev: Set<string>) => Set<string>) => {
@@ -138,8 +170,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         notifs.push({
           id,
           type: 'stock',
-          title: p.nom,
-          description: `${p.quantite}/${p.seuilAlerte}`,
+          title: `Alerte Stock: ${p.nom}`,
+          description: `Quantité restante: ${p.quantite} (Seuil d'alerte: ${p.seuilAlerte})`,
           read: readIds.has(id),
           timestamp: Date.now(),
         });
@@ -153,8 +185,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         notifs.push({
           id,
           type: 'rdv',
-          title: `${rdvToday.length}`,
-          description: 'today',
+          title: `${rdvToday.length} Rendez-vous aujourd'hui`,
+          description: 'Consultez votre agenda pour les détails de la journée.',
           read: readIds.has(id),
           timestamp: Date.now(),
         });
@@ -168,8 +200,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         notifs.push({
           id,
           type: 'inactive',
-          title: `${inactiveClients.length}`,
-          description: `${salon?.joursRappelInactivite || 30}`,
+          title: `${inactiveClients.length} Clientes inactives`,
+          description: `Aucune visite depuis plus de ${salon?.joursRappelInactivite || 30} jours.`,
           read: readIds.has(id),
           timestamp: Date.now(),
         });
@@ -178,6 +210,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     return notifs.sort((a, b) => b.timestamp - a.timestamp);
   }, [backendNotifications, produitsEnAlerte, rdvToday, inactiveClients, dismissedIds, readIds, salon?.joursRappelInactivite]);
+
+  // Dispatch Native Device Notifications for new unread notifications
+  useEffect(() => {
+    if (permissionState !== 'granted') return;
+
+    notifications.forEach(n => {
+      if (!n.read && !notifiedIdsRef.current.has(n.id)) {
+        notifiedIdsRef.current.add(n.id);
+        sendNativeNotification(n.title, {
+          body: n.description,
+          tag: n.id,
+        });
+      }
+    });
+  }, [notifications, permissionState]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -240,6 +287,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       stockAlertCount: (produitsEnAlerte || []).length,
       rdvTodayCount: (rdvToday || []).length,
       inactiveCount: (inactiveClients || []).length,
+      permissionState,
+      requestPermission,
+      sendTestNativeNotification,
     }}>
       {children}
     </NotificationContext.Provider>
@@ -256,6 +306,9 @@ const defaultContextValue: NotificationContextType = {
   stockAlertCount: 0,
   rdvTodayCount: 0,
   inactiveCount: 0,
+  permissionState: 'default',
+  requestPermission: async () => 'default',
+  sendTestNativeNotification: async () => false,
 };
 
 export function useNotifications() {

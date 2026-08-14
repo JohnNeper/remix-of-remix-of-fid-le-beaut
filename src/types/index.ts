@@ -110,6 +110,9 @@ export interface Salon {
   logo?: string;
   bannerUrl?: string;
   galleryUrls?: string[];
+  branding?: any;
+  isHidden?: boolean;
+  hidden?: boolean;
   typeEtablissement?: 'salon_coiffure' | 'spa' | 'institut_beaute' | 'barbershop' | 'onglerie' | 'mixte' | 'autre';
 
   phone: string;

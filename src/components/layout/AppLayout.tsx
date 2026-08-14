@@ -19,6 +19,7 @@ import {
   ShoppingCart,
   BarChart3,
   X,
+  BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -33,6 +34,9 @@ import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
 import bfLogo from '@/assets/BF.png';
 import { useSalon } from '@/hooks/useSalon';
 import { ContactUpgradeDialog } from '../ui/ContactUpgradeDialog';
+import { FloatingTourButton } from '@/components/dashboard/FloatingTourButton';
+import { GuidedTourPopover } from '@/components/dashboard/GuidedTourPopover';
+import { useOnboardingTour } from '@/contexts/OnboardingTourContext';
 
 interface NavItem {
   href: string;
@@ -63,7 +67,10 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   const location = useLocation();
   const { t } = useLanguage();
   const { stockAlertCount, rdvTodayCount, inactiveCount } = useNotifications();
+  const { isTourActive, currentStep } = useOnboardingTour();
+
   const isActive = location.pathname === item.href;
+  const isTargetedStep = isTourActive && currentStep && currentStep.route === item.href;
   const Icon = item.icon;
 
   const badgeCount = item.badgeKey === 'stock' ? stockAlertCount
@@ -71,19 +78,36 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
       : item.badgeKey === 'inactive' ? inactiveCount
         : 0;
 
+  const stepNumberLabel = isTargetedStep
+    ? currentStep.stepNumber === 1 ? '① Étape 1'
+      : currentStep.stepNumber === 2 ? '② Étape 2'
+      : currentStep.stepNumber === 3 ? '③ Étape 3'
+      : currentStep.stepNumber === 4 ? '④ Étape 4'
+      : currentStep.stepNumber === 5 ? '⑤ Étape 5'
+      : '⑥ Étape 6'
+    : null;
+
   return (
     <Link
       to={item.href}
       onClick={onClick}
       className={cn(
-        'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+        'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative',
         'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-        isActive && 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+        isActive && 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground',
+        isTargetedStep && !isActive && 'ring-2 ring-amber-400 bg-amber-400/10 text-foreground font-extrabold shadow-md animate-pulse'
       )}
     >
-      <Icon className="h-5 w-5" />
+      <Icon className={cn("h-5 w-5", isTargetedStep && "text-amber-500 animate-bounce")} />
       <span className="font-medium flex-1">{t(item.labelKey)}</span>
-      {badgeCount > 0 && (
+
+      {isTargetedStep && (
+        <Badge className="bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-0.5 border-0 shadow-sm animate-pulse shrink-0">
+          {stepNumberLabel}
+        </Badge>
+      )}
+
+      {!isTargetedStep && badgeCount > 0 && (
         <Badge
           className={cn(
             'h-5 min-w-[20px] px-1.5 text-[10px] font-bold flex items-center justify-center',
@@ -181,6 +205,8 @@ export default function AppLayout() {
   const nextPlan = getUpgradePlan();
   const upgradeLabel = nextPlan?.name === 'premium' ? t('nav.upgradeToPremium') : t('nav.upgradeToPro');
 
+  const { openTourModal } = useOnboardingTour();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -218,12 +244,19 @@ export default function AppLayout() {
             ) : (
               <img src={bfLogo} alt="BeautyFlow" className="h-7 object-contain shrink-0" />
             )}
-            {/* <span className="font-extrabold text-foreground text-sm truncate max-w-[140px] sm:max-w-[200px]">
-              {salonName}
-            </span> */}
           </Link>
 
           <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-amber-600 border-amber-500/30 hover:bg-amber-500/10 h-8 text-[11px] font-bold rounded-full px-2.5 shadow-xs"
+              onClick={() => openTourModal(0)}
+              title="Ouvrir le guide Premiers Pas"
+            >
+              <BookOpen className="h-3 w-3 mr-1 text-amber-500 shrink-0" />
+              <span>Guide 💡</span>
+            </Button>
             {nextPlan && (
               <Button
                 size="sm"
@@ -254,6 +287,15 @@ export default function AppLayout() {
       {/* Desktop top bar */}
       {!isMobile && (
         <div className="hidden lg:flex fixed top-0 left-64 right-0 z-20 h-14 bg-card border-b border-border items-center justify-end px-6 gap-3">
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 h-8 text-xs font-bold rounded-full px-3 shadow-xs flex items-center gap-1.5"
+            onClick={() => openTourModal(0)}
+          >
+            <BookOpen className="h-3.5 w-3.5 text-amber-500" />
+            <span>Premiers Pas 💡</span>
+          </Button>
           {nextPlan && (
             <Button
               size="sm"
@@ -313,6 +355,10 @@ export default function AppLayout() {
         onOpenChange={setIsUpgradeModalOpen}
         requiredPlan={nextPlan}
       />
+
+      {/* Floating Tour Action Button & Interactive Step Popover */}
+      <FloatingTourButton />
+      <GuidedTourPopover />
     </div>
   );
 }

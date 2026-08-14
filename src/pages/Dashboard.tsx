@@ -42,6 +42,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import heroSalon from '@/assets/hero-salon.jpg';
+import { OnboardingGuide } from '@/components/dashboard/OnboardingGuide';
 import { cn } from '@/lib/utils';
 
 export default function Dashboard() {

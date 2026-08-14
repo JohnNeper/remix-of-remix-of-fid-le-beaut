@@ -38,8 +38,10 @@ import { PayoutsSettingsTab } from '@/components/settings/PayoutsSettingsTab';
 import { BookingSettingsCard } from '@/components/settings/BookingSettingsCard';
 import { PlanComparisonDialog } from '@/components/settings/PlanComparisonDialog';
 import PaymentModal from '@/components/settings/PaymentModal';
+import { ImageUpload } from '@/components/ui/ImageUpload';
 import type { User } from '@/types';
 import { useSearchParams } from 'react-router-dom';
+import { TourPointer } from '@/components/ui/TourPointer';
 
 type DayAvailability = {
   open: boolean;
@@ -98,7 +100,16 @@ export default function Parametres() {
   const [newStaffEmail, setNewStaffEmail] = useState('');
   const [newStaffPhone, setNewStaffPhone] = useState('');
   const [newStaffPassword, setNewStaffPassword] = useState('');
+  const [newStaffAvatarUrl, setNewStaffAvatarUrl] = useState('');
   const [isAddingStaff, setIsAddingStaff] = useState(false);
+
+  // Edit Staff Modal
+  const [editingStaffDetails, setEditingStaffDetails] = useState<User | null>(null);
+  const [editStaffName, setEditStaffName] = useState('');
+  const [editStaffEmail, setEditStaffEmail] = useState('');
+  const [editStaffPhone, setEditStaffPhone] = useState('');
+  const [editStaffAvatarUrl, setEditStaffAvatarUrl] = useState('');
+  const [isUpdatingStaff, setIsUpdatingStaff] = useState(false);
 
   // Staff Working Hours Modal
   const [editingStaffAvail, setEditingStaffAvail] = useState<User | null>(null);
@@ -118,6 +129,14 @@ export default function Parametres() {
       setStaffAvail(salon?.disponibilite || defaultWeekAvailability);
       setUseGlobalHours(true);
     }
+  };
+
+  const handleOpenEditStaffDetails = (staffMember: User) => {
+    setEditingStaffDetails(staffMember);
+    setEditStaffName(staffMember.name || '');
+    setEditStaffEmail(staffMember.email || '');
+    setEditStaffPhone(staffMember.telephone || '');
+    setEditStaffAvatarUrl(staffMember.avatarUrl || (staffMember as any).photoUrl || (staffMember as any).avatar || '');
   };
 
   const handleAddStaffSubmit = async (e: React.FormEvent) => {
@@ -153,7 +172,8 @@ export default function Parametres() {
         email: newStaffEmail,
         password: newStaffPassword,
         telephone: newStaffPhone,
-      });
+        avatarUrl: newStaffAvatarUrl,
+      } as any);
 
       toast({
         title: '✅ ' + (t('common.success') || 'Succès'),
@@ -167,6 +187,7 @@ export default function Parametres() {
       setNewStaffEmail('');
       setNewStaffPhone('');
       setNewStaffPassword('');
+      setNewStaffAvatarUrl('');
       refetch();
     } catch (err: any) {
       toast({
@@ -176,6 +197,39 @@ export default function Parametres() {
       });
     } finally {
       setIsAddingStaff(false);
+    }
+  };
+
+  const handleEditStaffSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!salon || !editingStaffDetails) return;
+
+    setIsUpdatingStaff(true);
+    try {
+      await api.updateStaff(salon.id || (salon as any)._id, (editingStaffDetails as any)._id || editingStaffDetails.id, {
+        name: editStaffName,
+        email: editStaffEmail,
+        telephone: editStaffPhone,
+        avatarUrl: editStaffAvatarUrl,
+      } as any);
+
+      toast({
+        title: '✅ ' + (t('common.success') || 'Succès'),
+        description: language === 'fr'
+          ? 'Collaborateur mis à jour avec succès !'
+          : 'Team member updated successfully!',
+      });
+
+      setEditingStaffDetails(null);
+      refetch();
+    } catch (err: any) {
+      toast({
+        title: '❌ ' + (t('common.error') || 'Erreur'),
+        description: err.message || (language === 'fr' ? 'Échec de la mise à jour' : 'Failed to update team member'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingStaff(false);
     }
   };
 
@@ -209,12 +263,14 @@ export default function Parametres() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="bg-muted/40 p-1.5 rounded-2xl overflow-x-auto scrollbar-none border border-border/50">
           <TabsList className="bg-transparent flex w-max min-w-full justify-start gap-1 p-0 h-auto">
-            <TabsTrigger
-              value="general"
-              className="gap-2 rounded-xl px-4 py-2.5 font-bold text-xs shrink-0 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
-            >
-              <Building2 className="h-4 w-4" /> {t('settings.general')}
-            </TabsTrigger>
+            <TourPointer stepId="step-1" title="Étape 1 : Paramètres du Salon" description="Renseignez le profil de votre établissement et l'équipe">
+              <TabsTrigger
+                value="general"
+                className="gap-2 rounded-xl px-4 py-2.5 font-bold text-xs shrink-0 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
+              >
+                <Building2 className="h-4 w-4" /> {t('settings.general')}
+              </TabsTrigger>
+            </TourPointer>
 
             <TabsTrigger
               value="equipe"
@@ -294,6 +350,7 @@ export default function Parametres() {
             t={t}
             onOpenAddStaff={() => setShowAddStaffModal(true)}
             onEditStaffAvail={handleOpenStaffAvail}
+            onEditStaffDetails={handleOpenEditStaffDetails}
             onRefetch={refetch}
             onExplorePlans={() => setActiveTab('abonnement')}
           />
@@ -674,6 +731,19 @@ export default function Parametres() {
                 />
               </div>
 
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">
+                  {language === 'fr' ? 'Photo du collaborateur (optionnel)' : 'Staff Photo (optional)'}
+                </Label>
+                <ImageUpload
+                  value={newStaffAvatarUrl}
+                  onChange={(val) => setNewStaffAvatarUrl(Array.isArray(val) ? val[0] : val)}
+                  aspectRatio="square"
+                  label={language === 'fr' ? 'Ajouter une photo' : 'Add photo'}
+                  className="w-28 h-28 mx-auto rounded-2xl border-2 border-dashed border-primary/30"
+                />
+              </div>
+
               <DialogFooter className="pt-4 gap-2">
                 <Button
                   type="button"
@@ -696,6 +766,104 @@ export default function Parametres() {
                     </>
                   ) : (
                     language === 'fr' ? 'Créer le compte' : 'Create Account'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* --- DIALOG MODALE D'ÉDITION COLLABORATEUR --- */}
+      <Dialog open={!!editingStaffDetails} onOpenChange={(open) => !open && setEditingStaffDetails(null)}>
+        <DialogContent className="max-w-md bg-background rounded-3xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              {language === 'fr' ? 'Modifier le collaborateur' : 'Edit Team Member'}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {language === 'fr'
+                ? 'Modifiez les informations personnelles et la photo de votre collaborateur.'
+                : 'Update your team member profile information and photo.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingStaffDetails && (
+            <form onSubmit={handleEditStaffSubmit} className="space-y-4 py-2">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">
+                  {language === 'fr' ? 'Photo de profil' : 'Profile Photo'}
+                </Label>
+                <ImageUpload
+                  value={editStaffAvatarUrl}
+                  onChange={(val) => setEditStaffAvatarUrl(Array.isArray(val) ? val[0] : val)}
+                  aspectRatio="square"
+                  label={language === 'fr' ? 'Changer la photo' : 'Change photo'}
+                  className="w-28 h-28 mx-auto rounded-2xl border-2 border-dashed border-primary/30"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="edit-staff-name" className="text-xs font-semibold">
+                  {language === 'fr' ? 'Nom complet *' : 'Full Name *'}
+                </Label>
+                <Input
+                  id="edit-staff-name"
+                  value={editStaffName}
+                  onChange={(e) => setEditStaffName(e.target.value)}
+                  required
+                  className="rounded-xl"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="edit-staff-email" className="text-xs font-semibold">
+                  {language === 'fr' ? 'Adresse e-mail *' : 'Email Address *'}
+                </Label>
+                <Input
+                  id="edit-staff-email"
+                  type="email"
+                  value={editStaffEmail}
+                  onChange={(e) => setEditStaffEmail(e.target.value)}
+                  required
+                  className="rounded-xl"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="edit-staff-phone" className="text-xs font-semibold">
+                  {language === 'fr' ? 'Téléphone' : 'Phone'}
+                </Label>
+                <Input
+                  id="edit-staff-phone"
+                  value={editStaffPhone}
+                  onChange={(e) => setEditStaffPhone(e.target.value)}
+                  className="rounded-xl"
+                />
+              </div>
+
+              <DialogFooter className="pt-4 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-2xl font-semibold"
+                  onClick={() => setEditingStaffDetails(null)}
+                  disabled={isUpdatingStaff}
+                >
+                  {language === 'fr' ? 'Annuler' : 'Cancel'}
+                </Button>
+                <Button
+                  type="submit"
+                  className="gradient-primary font-bold rounded-2xl shadow-md"
+                  disabled={isUpdatingStaff}
+                >
+                  {isUpdatingStaff ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {language === 'fr' ? 'Mise à jour...' : 'Updating...'}
+                    </>
+                  ) : (
+                    language === 'fr' ? 'Enregistrer les modifications' : 'Save Changes'
                   )}
                 </Button>
               </DialogFooter>

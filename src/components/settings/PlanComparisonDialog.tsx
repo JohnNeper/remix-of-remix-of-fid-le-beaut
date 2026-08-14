@@ -24,6 +24,7 @@ export interface PlanComparisonDialogProps {
 }
 
 const FEATURE_LIST = [
+  { name: 'settings.availability', basic: true, pro: true, premium: true },
   { name: 'settings.features.crm', basic: '300', pro: 'Illimité', premium: 'Illimité' },
   { name: 'settings.staffMembers', basic: '2', pro: '6', premium: 'Illimité' },
   { name: 'nav.campaigns', basic: '-', pro: '5/mois', premium: 'Illimité' },
