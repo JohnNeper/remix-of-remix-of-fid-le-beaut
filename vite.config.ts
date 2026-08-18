@@ -57,6 +57,8 @@ export default defineConfig(({ mode }) => ({
 
         // Nettoyage des anciens caches après mise à jour du SW
         cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
 
         // Stratégies de cache pour les ressources dynamiques
         runtimeCaching: [

@@ -4,23 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useClients } from '@/hooks/useClients';
 import { useRendezVous } from '@/hooks/useRendezVous';
 import { Client, ClientStatus } from '@/types';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { ClientDetail } from '@/components/clients/ClientDetail';
-import { ImportContactsModal } from '@/components/clients/ImportContactsModal';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -58,8 +57,6 @@ export default function Clientes() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importInitialTab, setImportInitialTab] = useState<'phone' | 'vcf' | 'paste'>('phone');
 
   // Reset to page 1 when filters or search query change
   useEffect(() => {
@@ -248,29 +245,6 @@ export default function Clientes() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold h-10 px-3.5 rounded-xl text-xs shadow-2xs">
-                <Phone className="h-4 w-4 mr-2 text-rose-500" />
-                <span>{t('clients.import') || 'Importer contacts'}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="rounded-xl">
-              <DropdownMenuItem onClick={() => { setImportInitialTab('phone'); setShowImportModal(true); }} className="font-semibold">
-                <Phone className="h-4 w-4 mr-2 text-rose-500" />
-                {t('clients.importPhone') || 'Depuis le téléphone'}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setImportInitialTab('paste'); setShowImportModal(true); }} className="font-semibold">
-                <Clipboard className="h-4 w-4 mr-2 text-rose-500" />
-                {t('clients.importPaste') || 'Copier-Coller depuis PC'}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setImportInitialTab('vcf'); setShowImportModal(true); }} className="font-semibold">
-                <Calendar className="h-4 w-4 mr-2 text-rose-500" />
-                {t('clients.importVcf') || 'Fichier Contacts (.vcf / Mac)'}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
           <TourPointer stepId="step-2" title="Étape 2 : Ajouter votre 1er client" description="Cliquez ici pour créer la fiche de votre première cliente">
             <Button
               onClick={() => setShowAddDialog(true)}
@@ -682,7 +656,7 @@ export default function Clientes() {
           <Users className="h-12 w-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
           <h3 className="text-base font-bold text-slate-900 dark:text-white">{t('clients.notFound') || 'Aucune cliente trouvée'}</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-            {searchQuery ? 'Essayez de modifier votre recherche ou le filtre de statut.' : 'Commencez par ajouter votre première cliente ou importez vos contacts.'}
+            {searchQuery ? 'Essayez de modifier votre recherche ou le filtre de statut.' : 'Commencez par ajouter votre première cliente.'}
           </p>
         </div>
       )}
@@ -720,13 +694,6 @@ export default function Clientes() {
           {viewingClient && <ClientDetail client={viewingClient} />}
         </DialogContent>
       </Dialog>
-
-      {/* Import Contacts Modal */}
-      <ImportContactsModal
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        initialTab={importInitialTab}
-      />
     </div>
   );
 }

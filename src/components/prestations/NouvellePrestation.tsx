@@ -289,7 +289,7 @@ export function NouvellePrestation({ onClose, defaultPrestationId }: NouvellePre
         )} />
 
         {/* ── Actions ── */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6">
+        <div className="sticky bottom-0 bg-background/95 backdrop-blur-md pt-3 pb-3 border-t border-border/40 z-10 flex flex-col sm:flex-row gap-3 sm:gap-4 -mx-4 px-4 sm:-mx-6 sm:px-6">
           <Button
             type="button"
             variant="ghost"

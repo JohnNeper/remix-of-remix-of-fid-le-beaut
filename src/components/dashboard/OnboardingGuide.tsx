@@ -20,6 +20,9 @@ import {
   ChevronUp,
   X,
   RotateCcw,
+  TrendingUp,
+  FileText,
+  DollarSign,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useClients } from '@/hooks/useClients';
@@ -27,8 +30,10 @@ import { usePrestations } from '@/hooks/usePrestations';
 import { useSalon } from '@/hooks/useSalon';
 import { useStock } from '@/hooks/useStock';
 import { useRendezVous } from '@/hooks/useRendezVous';
+import { useFinances } from '@/hooks/useFinances';
 import { OnboardingModal, OnboardingStep } from './OnboardingModal';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?: () => void }> = ({
   forceOpenModal = false,
@@ -39,6 +44,8 @@ export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?
   const { typesPrestations, prestations } = usePrestations();
   const { produits } = useStock();
   const { rendezVous } = useRendezVous();
+  const { ventes, depenses } = useFinances();
+  const { t } = useLanguage();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedModalIndex, setSelectedModalIndex] = useState(0);
@@ -116,9 +123,12 @@ export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?
     const isStep1Done = Boolean(salon?.nom && (salon?.telephone || salon?.whatsappNumber) && salon?.adresse) || Boolean(manualChecks['step-1']);
     const isStep2Done = (clients && clients.length > 0) || Boolean(manualChecks['step-2']);
     const isStep3Done = (typesPrestations && typesPrestations.length > 0) || Boolean(manualChecks['step-3']);
-    const isStep4Done = (prestations && prestations.length > 0) || (rendezVous && rendezVous.length > 0) || Boolean(manualChecks['step-4']);
-    const isStep5Done = (produits && produits.length > 0) || Boolean(manualChecks['step-5']);
-    const isStep6Done = Boolean(salon?.fideliteActive || salon?.programmeFidelite?.actif) || Boolean(manualChecks['step-6']);
+    const isStep4Done = (rendezVous && rendezVous.length > 0) || Boolean(manualChecks['step-4']);
+    const isStep5Done = (prestations && prestations.length > 0) || Boolean(manualChecks['step-5']);
+    const isStep6Done = (ventes && ventes.length > 0) || (depenses && depenses.length > 0) || Boolean(manualChecks['step-6']);
+    const isStep7Done = (ventes && ventes.length > 0) || Boolean(manualChecks['step-7']);
+    const isStep8Done = (produits && produits.length > 0) || Boolean(manualChecks['step-8']);
+    const isStep9Done = Boolean(salon?.fideliteActive || salon?.programmeFidelite?.actif) || Boolean(manualChecks['step-9']);
 
     return [
       {
@@ -192,17 +202,40 @@ export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?
       },
       {
         id: 'step-4',
-        title: 'Étape 4 : Enregistrer un Service Effectué / RDV',
-        shortDesc: 'Comptabilisez vos prestations réalisées ou programmez vos prochains RDV.',
+        title: 'Étape 4 : Prise de Rendez-vous & Réservations',
+        shortDesc: 'Planifiez les créneaux, organisez l’agenda de l’équipe et gérez les réservations.',
         icon: Calendar,
         color: 'text-purple-500',
         bgColor: 'bg-purple-500/10',
         borderColor: 'border-purple-500/30',
-        route: '/prestations',
-        routeLabel: 'Enregistrer une Prestation',
+        route: '/rendez-vous',
+        routeLabel: 'Planning & Rendez-vous',
         completed: isStep4Done,
         notes: [
-          'Sélectionnez la cliente, le type de prestation et le collaborateur qui l’a réalisée.',
+          'Consultez le calendrier interactif par jour, semaine ou mois.',
+          'Attribuez chaque rendez-vous à la bonne cliente et au membre de l’équipe désigné.',
+          'Envoyez des rappels de confirmation automatiques sur WhatsApp.'
+        ],
+        tips: 'Une bonne gestion des réservations réduit les absences et retards de plus de 80%.',
+        detailedSteps: [
+          { number: 1, title: 'Ouvrir le Calendrier', description: 'Accédez au menu Rendez-vous pour visualiser le planning de réservation.' },
+          { number: 2, title: 'Planifier un RDV', description: 'Sélectionnez la date, la plage horaire, la prestation et l’employé en charge.' },
+          { number: 3, title: 'Rappel WhatsApp', description: 'Déclenchez la confirmation WhatsApp en un clic pour valider la présence de la cliente.' }
+        ]
+      },
+      {
+        id: 'step-5',
+        title: 'Étape 5 : Enregistrer un Soin / Service Effectué',
+        shortDesc: 'Comptabilisez vos prestations réalisées et créditez les points de fidélité.',
+        icon: CheckCircle2,
+        color: 'text-indigo-500',
+        bgColor: 'bg-indigo-500/10',
+        borderColor: 'border-indigo-500/30',
+        route: '/prestations',
+        routeLabel: 'Enregistrer une Prestation',
+        completed: isStep5Done,
+        notes: [
+          'Sélectionnez la cliente, le soin et l’employé qui a réalisé la prestation.',
           'Le chiffre d’affaires et le bilan financier se mettent automatiquement à jour.',
           'La cliente accumule immédiatement ses points de fidélité !'
         ],
@@ -214,8 +247,54 @@ export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?
         ]
       },
       {
-        id: 'step-5',
-        title: 'Étape 5 : Gérer votre Stock & Produits',
+        id: 'step-6',
+        title: 'Étape 6 : Enregistrer une Vente & Suivi Financier',
+        shortDesc: 'Suivez vos entrées de caisse (soins, produits) et maîtrisez vos dépenses.',
+        icon: TrendingUp,
+        color: 'text-cyan-500',
+        bgColor: 'bg-cyan-500/10',
+        borderColor: 'border-cyan-500/30',
+        route: '/finances',
+        routeLabel: 'Gestion des Finances',
+        completed: isStep6Done,
+        notes: [
+          'Enregistrez les ventes globales (combinaisons de produits de soins et de prestations).',
+          'Spécifiez le mode de règlement (Espèces, Mobile Money, Carte, Mixte).',
+          'Ajoutez les dépenses du salon (loyer, stock, salaires) pour calculer votre bénéfice net.'
+        ],
+        tips: 'Un suivi rigoureux des recettes et dépenses assure un bilan financier clair chaque fin de mois.',
+        detailedSteps: [
+          { number: 1, title: 'Accéder aux Finances', description: 'Rendez-vous dans la rubrique Finances pour consulter le tableau de bord financier.' },
+          { number: 2, title: 'Nouvelle Vente', description: 'Cliquez sur "Enregistrer une Vente", sélectionnez les articles et choisissez le moyen de paiement.' },
+          { number: 3, title: 'Saisir une Dépense', description: 'Ajoutez vos achats de matériel ou frais de gestion dans l’onglet Dépenses.' }
+        ]
+      },
+      {
+        id: 'step-7',
+        title: 'Étape 7 : Générer & Imprimer une Facture après Vente',
+        shortDesc: 'Émettez un reçu imprimable ou un lien de facture WhatsApp en 1 clic.',
+        icon: FileText,
+        color: 'text-teal-600',
+        bgColor: 'bg-teal-500/10',
+        borderColor: 'border-teal-500/30',
+        route: '/finances',
+        routeLabel: 'Facturation & Reçus',
+        completed: isStep7Done,
+        notes: [
+          'Chaque vente générée vous permet d’accéder instantanément au bouton "Facture".',
+          'Prévisualisez le reçu professionnel personnalisé avec le nom, logo et contact du salon.',
+          'Imprimez sur imprimante thermique/standard, téléchargez le PDF ou envoyez directement sur WhatsApp.'
+        ],
+        tips: 'Fournir une facture officielle renforce le professionnalisme de votre établissement et rassure vos client(e)s.',
+        detailedSteps: [
+          { number: 1, title: 'Sélectionner la Vente', description: 'Dans l’historique des ventes (rubrique Finances), repérez la transaction effectuée.' },
+          { number: 2, title: 'Cliquer sur Facture', description: 'Cliquez sur l’icône de document pour ouvrir le Générateur de Facture / Reçu.' },
+          { number: 3, title: 'Imprimer ou Partager', description: 'Choisissez "Imprimer le Reçu", "Télécharger PDF" ou "Partager sur WhatsApp" avec le message pré-rempli.' }
+        ]
+      },
+      {
+        id: 'step-8',
+        title: 'Étape 8 : Gérer votre Stock & Produits',
         shortDesc: 'Ajoutez vos produits de vente ou d’usage et configurez les alertes de réapprovisionnement.',
         icon: Package,
         color: 'text-emerald-500',
@@ -223,7 +302,7 @@ export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?
         borderColor: 'border-emerald-500/30',
         route: '/stock',
         routeLabel: 'Gérer le Stock',
-        completed: isStep5Done,
+        completed: isStep8Done,
         notes: [
           'Distinguez les produits destinés à la vente directe de ceux réservés au soin interne.',
           'Indiquez le seuil d’alerte (ex: 3 unités restantes).',
@@ -237,8 +316,8 @@ export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?
         ]
       },
       {
-        id: 'step-6',
-        title: 'Étape 6 : Activer la Fidélité & les Rappels WhatsApp',
+        id: 'step-9',
+        title: 'Étape 9 : Activer la Fidélité & les Rappels WhatsApp',
         shortDesc: 'Récompensez la fidélité de vos client(e)s et relancez les inactifs.',
         icon: Gift,
         color: 'text-rose-600',
@@ -246,7 +325,7 @@ export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?
         borderColor: 'border-rose-500/30',
         route: '/fidelite',
         routeLabel: 'Activer la Fidélité',
-        completed: isStep6Done,
+        completed: isStep9Done,
         notes: [
           'Définissez les règles de conversion (ex: 10 000 FCFA = 100 points).',
           'Associez des récompenses motivantes (ex: Un soin offert après 1 000 points).',
@@ -260,7 +339,7 @@ export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?
         ]
       }
     ];
-  }, [salon, clients, typesPrestations, prestations, rendezVous, produits, manualChecks]);
+  }, [salon, clients, typesPrestations, prestations, rendezVous, ventes, depenses, produits, manualChecks]);
 
   const completedCount = useMemo(() => {
     return steps.filter(s => s.completed).length;

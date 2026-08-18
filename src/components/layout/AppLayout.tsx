@@ -121,7 +121,7 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   );
 }
 
-function Sidebar({ className, onItemClick, onUpgradeClick }: { className?: string; onItemClick?: () => void; onUpgradeClick?: () => void }) {
+function Sidebar({ className, onItemClick, onUpgradeClick, onOpenGuide }: { className?: string; onItemClick?: () => void; onUpgradeClick?: () => void; onOpenGuide?: () => void }) {
   const { logout, session } = useAuth();
   const { salon } = useSalon();
   const { t } = useLanguage();
@@ -172,6 +172,19 @@ function Sidebar({ className, onItemClick, onUpgradeClick }: { className?: strin
 
       {/* Footer */}
       <div className="p-4 border-t border-sidebar-border space-y-2">
+        {onOpenGuide && (
+          <Button
+            variant="outline"
+            className="w-full justify-start text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 font-semibold"
+            onClick={() => {
+              if (onOpenGuide) onOpenGuide();
+              if (onItemClick) onItemClick();
+            }}
+          >
+            <BookOpen className="h-4 w-4 mr-2 text-amber-500 shrink-0" />
+            <span>Guide Premiers Pas 💡</span>
+          </Button>
+        )}
         {nextPlan && (
           <Button
             variant="outline"
@@ -229,14 +242,14 @@ export default function AppLayout() {
       {/* Desktop Sidebar - hidden on mobile devices */}
       {!isMobile && (
         <div className="hidden lg:block w-64 border-r border-border fixed inset-y-0 left-0 z-30">
-          <Sidebar onUpgradeClick={() => setIsUpgradeModalOpen(true)} />
+          <Sidebar onUpgradeClick={() => setIsUpgradeModalOpen(true)} onOpenGuide={() => openTourModal(0)} />
         </div>
       )}
 
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-card border-b border-border ios-header-pt shadow-xs">
-        <div className="flex items-center justify-between p-3.5 sm:p-4">
-          <Link to="/" className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center justify-between p-2.5 sm:p-4 gap-2">
+          <Link to="/" className="flex items-center gap-2 shrink-0 min-w-0">
             {salon?.logoUrl ? (
               <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center overflow-hidden border border-border/60 bg-card">
                 <img src={salon.logoUrl} alt={salonName} className="h-full w-full object-cover" />
@@ -246,38 +259,47 @@ export default function AppLayout() {
             )}
           </Link>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <Button
               size="sm"
               variant="outline"
-              className="text-amber-600 border-amber-500/30 hover:bg-amber-500/10 h-8 text-[11px] font-bold rounded-full px-2.5 shadow-xs"
+              className="text-amber-600 border-amber-500/30 hover:bg-amber-500/10 h-8 text-[11px] font-bold rounded-full px-2 sm:px-2.5 shadow-xs shrink-0"
               onClick={() => openTourModal(0)}
               title="Ouvrir le guide Premiers Pas"
             >
-              <BookOpen className="h-3 w-3 mr-1 text-amber-500 shrink-0" />
-              <span>Guide 💡</span>
+              <BookOpen className="h-3.5 w-3.5 sm:mr-1 text-amber-500 shrink-0" />
+              <span className="hidden sm:inline">Guide 💡</span>
             </Button>
             {nextPlan && (
               <Button
                 size="sm"
                 variant="outline"
-                className="text-primary border-primary/30 hover:bg-primary/10 h-8 text-[11px] font-bold rounded-full px-2.5 shadow-sm mr-1"
+                className="text-primary border-primary/30 hover:bg-primary/10 h-8 text-[11px] font-bold rounded-full px-2 sm:px-2.5 shadow-sm shrink-0"
                 onClick={() => setIsUpgradeModalOpen(true)}
+                title={upgradeLabel}
               >
-                <Sparkles className="h-3 w-3 mr-1 text-primary shrink-0" />
-                <span className="truncate">{upgradeLabel}</span>
+                <Sparkles className="h-3.5 w-3.5 sm:mr-1 text-primary shrink-0" />
+                <span className="hidden md:inline truncate max-w-[120px]">{upgradeLabel}</span>
               </Button>
             )}
-            <LanguageToggle />
-            <NotificationCenter />
+            <div className="shrink-0">
+              <LanguageToggle />
+            </div>
+            <div className="shrink-0">
+              <NotificationCenter />
+            </div>
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
+                <Button variant="ghost" size="icon" className="shrink-0 flex-shrink-0 h-9 w-9 ml-0.5" aria-label="Ouvrir le menu">
+                  <Menu className="h-6 w-6 shrink-0 text-foreground" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-0">
-                <Sidebar onItemClick={() => setMobileMenuOpen(false)} onUpgradeClick={() => setIsUpgradeModalOpen(true)} />
+              <SheetContent side="left" className="w-[85vw] max-w-[320px] sm:w-[320px] p-0">
+                <Sidebar
+                  onItemClick={() => setMobileMenuOpen(false)}
+                  onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                  onOpenGuide={() => openTourModal(0)}
+                />
               </SheetContent>
             </Sheet>
           </div>

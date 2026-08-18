@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Receipt, Wallet, Download, FileText, Trash2, AlertTriangle, Calendar, Tag, FileSignature, Banknote, CreditCard, Layers, LayoutList, CheckCircle2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Receipt, Wallet, Download, FileText, Trash2, AlertTriangle, Calendar, Tag, FileSignature, Banknote, CreditCard, Layers, LayoutList, CheckCircle2, Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,15 +44,29 @@ const modePaiementLabels: Record<string, string> = {
   mixte: 'Mixte',
 };
 
-function DepenseForm({ onSubmit, onCancel }: { onSubmit: (d: z.infer<typeof depenseSchema>) => void; onCancel: () => void }) {
+function DepenseForm({ onSubmit, onCancel }: { onSubmit: (d: z.infer<typeof depenseSchema>) => Promise<void> | void; onCancel: () => void }) {
   const { t } = useLanguage();
+  const [isSaving, setIsSaving] = useState(false);
   const form = useForm<z.infer<typeof depenseSchema>>({
     resolver: zodResolver(depenseSchema),
     defaultValues: { date: new Date().toISOString().split('T')[0], categorie: '', description: '', montant: 0 },
   });
+
+  const handleFormSubmit = async (data: z.infer<typeof depenseSchema>) => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await onSubmit(data);
+    } catch (err) {
+      console.error('Erreur soumission dépense:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 sm:space-y-6">
         <FormField control={form.control} name="date" render={({ field }) => (
           <FormItem><FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Calendar className="h-3.5 w-3.5 text-primary" />{t('finances.date')}</FormLabel><FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base" type="date" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
@@ -73,16 +87,25 @@ function DepenseForm({ onSubmit, onCancel }: { onSubmit: (d: z.infer<typeof depe
         <FormField control={form.control} name="montant" render={({ field }) => (
           <FormItem><FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Banknote className="h-3.5 w-3.5 text-primary" />{t('finances.amount')} (FCFA)</FormLabel><FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base font-semibold" type="number" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6">
-          <Button type="button" variant="ghost" onClick={onCancel} className="flex-1 h-12 sm:h-14 rounded-2xl font-bold text-muted-foreground hover:bg-muted transition-all order-2 sm:order-1">{t('common.cancel')}</Button>
-          <Button type="submit" className="flex-1 h-12 sm:h-14 rounded-2xl font-bold bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all order-1 sm:order-2">{t('finances.saveExpense')}</Button>
+        <div className="sticky bottom-0 bg-background/95 backdrop-blur-md pt-3 pb-3 border-t border-border/40 z-10 flex flex-col sm:flex-row gap-3 sm:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <Button type="button" variant="ghost" disabled={isSaving} onClick={onCancel} className="flex-1 h-12 rounded-xl font-bold text-muted-foreground hover:bg-muted transition-all order-2 sm:order-1">{t('common.cancel')}</Button>
+          <Button type="submit" disabled={isSaving || form.formState.isSubmitting} className="flex-1 h-12 rounded-xl font-bold bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all order-1 sm:order-2 disabled:opacity-50">
+            {isSaving || form.formState.isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t('common.saving') || 'Enregistrement...'}
+              </span>
+            ) : (
+              t('finances.saveExpense')
+            )}
+          </Button>
         </div>
       </form>
     </Form>
   );
 }
 
-function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) => void; onCancel: () => void }) {
+function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) => Promise<void> | void; onCancel: () => void }) {
   const { t } = useLanguage();
   const { formatCurrency } = useTranslations();
   const { clients } = useClients();
@@ -96,6 +119,7 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
   const [itemQty, setItemQty] = useState(1);
   const [prixUnitaire, setPrixUnitaire] = useState(0);
   const [notes, setNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
 
   const modePaiementLabels: Record<string, string> = {
@@ -126,11 +150,19 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
   const removeItem = (idx: number) => setItems(prev => prev.filter((_, i) => i !== idx));
   const total = items.reduce((s, i) => s + i.montant, 0);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSaving) return;
     if (items.length === 0) { toast.error(t('finances.addAtLeastOne')); return; }
-    const resolvedClientId = (clientId && clientId !== 'none') ? clientId : undefined;
-    items.filter(i => i.type === 'produit').forEach(i => adjustStock(i.referenceId, -i.quantite));
-    onSubmit({ date: new Date().toISOString().split('T')[0], clientId: resolvedClientId, items, totalMontant: total, modePaiement, notes });
+    setIsSaving(true);
+    try {
+      const resolvedClientId = (clientId && clientId !== 'none') ? clientId : undefined;
+      items.filter(i => i.type === 'produit').forEach(i => adjustStock(i.referenceId, -i.quantite));
+      await onSubmit({ date: new Date().toISOString().split('T')[0], clientId: resolvedClientId, items, totalMontant: total, modePaiement, notes });
+    } catch (err) {
+      console.error('Erreur enregistrement vente:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const formatFCFA = (n: number) => n.toLocaleString('fr-FR') + ' FCFA';
@@ -245,11 +277,20 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
         />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6">
-        <Button type="button" variant="ghost" onClick={onCancel} className="flex-1 h-12 sm:h-14 rounded-2xl font-bold text-muted-foreground hover:bg-muted transition-all order-2 sm:order-1">{t('common.cancel')}</Button>
-        <Button type="button" onClick={handleSubmit} className="flex-1 h-12 sm:h-14 rounded-2xl font-bold bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all order-1 sm:order-2">
-          <CheckCircle2 className="h-5 w-5 mr-2" />
-          {t('finances.saveSale')}
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-md pt-3 pb-3 border-t border-border/40 z-10 flex flex-col sm:flex-row gap-3 sm:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <Button type="button" variant="ghost" disabled={isSaving} onClick={onCancel} className="flex-1 h-12 rounded-xl font-bold text-muted-foreground hover:bg-muted transition-all order-2 sm:order-1">{t('common.cancel')}</Button>
+        <Button type="button" disabled={isSaving} onClick={handleSubmit} className="flex-1 h-12 rounded-xl font-bold bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all order-1 sm:order-2 disabled:opacity-50">
+          {isSaving ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {t('common.saving') || 'Enregistrement...'}
+            </span>
+          ) : (
+            <>
+              <CheckCircle2 className="h-5 w-5 mr-2" />
+              {t('finances.saveSale')}
+            </>
+          )}
         </Button>
       </div>
     </div>

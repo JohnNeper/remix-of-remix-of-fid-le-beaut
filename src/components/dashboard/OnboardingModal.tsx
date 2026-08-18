@@ -80,9 +80,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       case 'step-1': return '/parametres';
       case 'step-2': return '/clientes';
       case 'step-3': return '/prestations';
-      case 'step-4': return '/prestations';
-      case 'step-5': return '/stock';
-      case 'step-6': return '/fidelite';
+      case 'step-4': return '/rendez-vous';
+      case 'step-5': return '/prestations';
+      case 'step-6': return '/finances';
+      case 'step-7': return '/finances';
+      case 'step-8': return '/stock';
+      case 'step-9': return '/fidelite';
       default: return '/';
     }
   };

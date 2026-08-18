@@ -59,8 +59,22 @@ export const TOUR_STEPS: TourStepInfo[] = [
   {
     id: 'step-4',
     stepNumber: 4,
-    title: 'Étape 4 : Enregistrer un Service / RDV',
-    shortDesc: 'Comptabilisez vos encaissements et prestations effectuées.',
+    title: 'Étape 4 : Prise de Rendez-vous & Réservations',
+    shortDesc: 'Planifiez les créneaux, organisez l’agenda de l’équipe et gérez les réservations.',
+    route: '/rendez-vous',
+    routeLabel: 'Planning & Rendez-vous',
+    notes: [
+      'Consultez le calendrier interactif par jour, semaine ou mois.',
+      'Attribuez chaque rendez-vous à la bonne cliente et au membre de l’équipe désigné.',
+      'Envoyez des rappels de confirmation automatiques sur WhatsApp.'
+    ],
+    tips: 'Une bonne gestion des réservations réduit les absences et retards de plus de 80%.'
+  },
+  {
+    id: 'step-5',
+    stepNumber: 5,
+    title: 'Étape 5 : Enregistrer un Soin / Service Effectué',
+    shortDesc: 'Comptabilisez vos prestations réalisées et créditez les points de fidélité.',
     route: '/prestations',
     routeLabel: 'Enregistrer une Prestation',
     notes: [
@@ -71,9 +85,37 @@ export const TOUR_STEPS: TourStepInfo[] = [
     tips: 'Chaque encaissement enregistré met à jour votre bilan financier.'
   },
   {
-    id: 'step-5',
-    stepNumber: 5,
-    title: 'Étape 5 : Gérer le Stock & Produits',
+    id: 'step-6',
+    stepNumber: 6,
+    title: 'Étape 6 : Enregistrer une Vente & Suivi Financier',
+    shortDesc: 'Suivez vos entrées de caisse (soins, produits) et maîtrisez vos dépenses.',
+    route: '/finances',
+    routeLabel: 'Gestion des Finances',
+    notes: [
+      'Enregistrez les ventes globales (combinaisons de produits et de soins).',
+      'Spécifiez le mode de règlement (Espèces, Mobile Money, Carte, Mixte).',
+      'Ajoutez les dépenses du salon (loyer, stock, salaires) pour calculer votre bénéfice net.'
+    ],
+    tips: 'Un suivi rigoureux des recettes et dépenses assure un bilan financier clair chaque fin de mois.'
+  },
+  {
+    id: 'step-7',
+    stepNumber: 7,
+    title: 'Étape 7 : Générer & Imprimer une Facture après Vente',
+    shortDesc: 'Émettez un reçu imprimable ou un lien de facture WhatsApp en 1 clic.',
+    route: '/finances',
+    routeLabel: 'Facturation & Reçus',
+    notes: [
+      'Chaque vente générée vous permet d’accéder instantanément au bouton "Facture".',
+      'Prévisualisez le reçu professionnel personnalisé avec le nom, logo et contact du salon.',
+      'Imprimez sur imprimante thermique/standard, téléchargez le PDF ou envoyez directement sur WhatsApp.'
+    ],
+    tips: 'Fournir une facture officielle renforce le professionnalisme de votre établissement et rassure vos client(e)s.'
+  },
+  {
+    id: 'step-8',
+    stepNumber: 8,
+    title: 'Étape 8 : Gérer le Stock & Produits',
     shortDesc: 'Gérez vos produits de revente et de soins avec alertes.',
     route: '/stock',
     routeLabel: 'Gérer le Stock',
@@ -85,9 +127,9 @@ export const TOUR_STEPS: TourStepInfo[] = [
     tips: 'Consultez les alertes sur le dashboard pour réapprovisionner au bon moment.'
   },
   {
-    id: 'step-6',
-    stepNumber: 6,
-    title: 'Étape 6 : Activer la Fidélité & Relances',
+    id: 'step-9',
+    stepNumber: 9,
+    title: 'Étape 9 : Activer la Fidélité & Relances',
     shortDesc: 'Récompensez la fidélité et relancez les clientes sur WhatsApp.',
     route: '/fidelite',
     routeLabel: 'Fidélisation Client',
@@ -147,44 +189,86 @@ export function getTranslatedTourSteps(t: (key: string, arg2?: any, arg3?: any) 
     {
       id: 'step-4',
       stepNumber: 4,
-      title: t('tour.step4.title', 'Étape 4 : Enregistrer un Service / RDV'),
-      shortDesc: t('tour.step4.shortDesc', 'Comptabilisez vos encaissements et prestations effectuées.'),
-      route: '/prestations',
-      routeLabel: t('tour.step4.routeLabel', 'Enregistrer une Prestation'),
+      title: t('tour.step4.title', 'Étape 4 : Prise de Rendez-vous & Réservations'),
+      shortDesc: t('tour.step4.shortDesc', 'Planifiez les créneaux, organisez l’agenda de l’équipe et gérez les réservations.'),
+      route: '/rendez-vous',
+      routeLabel: t('tour.step4.routeLabel', 'Planning & Rendez-vous'),
       notes: [
-        t('tour.step4.note1', 'Sélectionnez la cliente, le soin et l’employé.'),
-        t('tour.step4.note2', 'Mettez à jour le chiffre d’affaires en temps réel.'),
-        t('tour.step4.note3', 'La cliente gagne ses points de fidélité !')
+        t('tour.step4.note1', 'Consultez le calendrier interactif par jour, semaine ou mois.'),
+        t('tour.step4.note2', 'Attribuez chaque rendez-vous à la bonne cliente et au membre de l’équipe désigné.'),
+        t('tour.step4.note3', 'Envoyez des rappels de confirmation automatiques sur WhatsApp.')
       ],
-      tips: t('tour.step4.tip', 'Chaque encaissement enregistré met à jour votre bilan financier.')
+      tips: t('tour.step4.tip', 'Une bonne gestion des réservations réduit les absences et retards de plus de 80%.')
     },
     {
       id: 'step-5',
       stepNumber: 5,
-      title: t('tour.step5.title', 'Étape 5 : Gérer le Stock & Produits'),
-      shortDesc: t('tour.step5.shortDesc', 'Gérez vos produits de revente et de soins avec alertes.'),
-      route: '/stock',
-      routeLabel: t('tour.step5.routeLabel', 'Gérer le Stock'),
+      title: t('tour.step5.title', 'Étape 5 : Enregistrer un Soin / Service Effectué'),
+      shortDesc: t('tour.step5.shortDesc', 'Comptabilisez vos prestations réalisées et créditez les points de fidélité.'),
+      route: '/prestations',
+      routeLabel: t('tour.step5.routeLabel', 'Enregistrer une Prestation'),
       notes: [
-        t('tour.step5.note1', 'Ajoutez vos produits de vente ou soins internes.'),
-        t('tour.step5.note2', 'Configurez le seuil d’alerte (ex: 3 unités restantes).'),
-        t('tour.step5.note3', 'Évitez les ruptures de stock impromptues.')
+        t('tour.step5.note1', 'Sélectionnez la cliente, le soin et l’employé.'),
+        t('tour.step5.note2', 'Mettez à jour le chiffre d’affaires en temps réel.'),
+        t('tour.step5.note3', 'La cliente gagne ses points de fidélité !')
       ],
-      tips: t('tour.step5.tip', 'Consultez les alertes sur le dashboard pour réapprovisionner au bon moment.')
+      tips: t('tour.step5.tip', 'Chaque encaissement enregistré met à jour votre bilan financier.')
     },
     {
       id: 'step-6',
       stepNumber: 6,
-      title: t('tour.step6.title', 'Étape 6 : Activer la Fidélité & Relances'),
-      shortDesc: t('tour.step6.shortDesc', 'Récompensez la fidélité et relancez les clientes sur WhatsApp.'),
-      route: '/fidelite',
-      routeLabel: t('tour.step6.routeLabel', 'Fidélisation Client'),
+      title: t('tour.step6.title', 'Étape 6 : Enregistrer une Vente & Suivi Financier'),
+      shortDesc: t('tour.step6.shortDesc', 'Suivez vos entrées de caisse (soins, produits) et maîtrisez vos dépenses.'),
+      route: '/finances',
+      routeLabel: t('tour.step6.routeLabel', 'Gestion des Finances'),
       notes: [
-        t('tour.step6.note1', 'Définissez la valeur des points (ex: 10 000 FCFA = 100 pts).'),
-        t('tour.step6.note2', 'Proposez des récompenses (remises, soins offerts).'),
-        t('tour.step6.note3', 'Relancez les clientes inactives via WhatsApp.')
+        t('tour.step6.note1', 'Enregistrez les ventes globales (combinaisons de produits et de soins).'),
+        t('tour.step6.note2', 'Spécifiez le mode de règlement (Espèces, Mobile Money, Carte, Mixte).'),
+        t('tour.step6.note3', 'Ajoutez les dépenses du salon (loyer, stock, salaires) pour calculer votre bénéfice net.')
       ],
-      tips: t('tour.step6.tip', 'Fidéliser vos client(e)s augmente vos revenus de 30% sans budget pub supplémentaire.')
+      tips: t('tour.step6.tip', 'Un suivi rigoureux des recettes et dépenses assure un bilan financier clair chaque fin de mois.')
+    },
+    {
+      id: 'step-7',
+      stepNumber: 7,
+      title: t('tour.step7.title', 'Étape 7 : Générer & Imprimer une Facture après Vente'),
+      shortDesc: t('tour.step7.shortDesc', 'Émettez un reçu imprimable ou un lien de facture WhatsApp en 1 clic.'),
+      route: '/finances',
+      routeLabel: t('tour.step7.routeLabel', 'Facturation & Reçus'),
+      notes: [
+        t('tour.step7.note1', 'Chaque vente générée vous permet d’accéder instantanément au bouton "Facture".'),
+        t('tour.step7.note2', 'Prévisualisez le reçu professionnel personnalisé avec le nom, logo et contact du salon.'),
+        t('tour.step7.note3', 'Imprimez sur imprimante thermique/standard, téléchargez le PDF ou envoyez directement sur WhatsApp.')
+      ],
+      tips: t('tour.step7.tip', 'Fournir une facture officielle renforce le professionnalisme de votre établissement et rassure vos client(e)s.')
+    },
+    {
+      id: 'step-8',
+      stepNumber: 8,
+      title: t('tour.step8.title', 'Étape 8 : Gérer le Stock & Produits'),
+      shortDesc: t('tour.step8.shortDesc', 'Gérez vos produits de revente et de soins avec alertes.'),
+      route: '/stock',
+      routeLabel: t('tour.step8.routeLabel', 'Gérer le Stock'),
+      notes: [
+        t('tour.step8.note1', 'Ajoutez vos produits de vente ou soins internes.'),
+        t('tour.step8.note2', 'Configurez le seuil d’alerte (ex: 3 unités restantes).'),
+        t('tour.step8.note3', 'Évitez les ruptures de stock impromptues.')
+      ],
+      tips: t('tour.step8.tip', 'Consultez les alertes sur le dashboard pour réapprovisionner au bon moment.')
+    },
+    {
+      id: 'step-9',
+      stepNumber: 9,
+      title: t('tour.step9.title', 'Étape 9 : Activer la Fidélité & Relances'),
+      shortDesc: t('tour.step9.shortDesc', 'Récompensez la fidélité et relancez les clientes sur WhatsApp.'),
+      route: '/fidelite',
+      routeLabel: t('tour.step9.routeLabel', 'Fidélisation Client'),
+      notes: [
+        t('tour.step9.note1', 'Définissez la valeur des points (ex: 10 000 FCFA = 100 pts).'),
+        t('tour.step9.note2', 'Proposez des récompenses (remises, soins offerts).'),
+        t('tour.step9.note3', 'Relancez les clientes inactives via WhatsApp.')
+      ],
+      tips: t('tour.step9.tip', 'Fidéliser vos client(e)s augmente vos revenus de 30% sans budget pub supplémentaire.')
     }
   ];
 }

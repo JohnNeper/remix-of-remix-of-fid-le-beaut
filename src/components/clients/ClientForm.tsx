@@ -269,7 +269,7 @@ export function ClientForm({ client, clients = [], onSubmit, onCancel }: ClientF
         />
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-2.5 pt-4">
+        <div className="sticky bottom-0 bg-background/95 backdrop-blur-md pt-3 pb-3 border-t border-slate-200 dark:border-slate-800 z-10 flex flex-col sm:flex-row gap-2.5 -mx-4 px-4 sm:mx-0 sm:px-0">
           <Button 
             type="button" 
             variant="outline" 

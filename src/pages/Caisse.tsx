@@ -301,14 +301,14 @@ function CaisseForm({ onSubmit, onCancel }: CaisseFormProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 pt-2">
-        <Button variant="outline" onClick={onCancel} className="flex-1">
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-md pt-3 pb-3 border-t border-border/40 z-10 flex gap-3 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <Button variant="outline" onClick={onCancel} className="flex-1 rounded-xl h-11">
           {t('common.cancel')}
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={loading || items.length === 0}
-          className="flex-1 gradient-primary text-white font-bold"
+          className="flex-1 gradient-primary text-white font-bold rounded-xl h-11 shadow-lg"
         >
           {loading ? 'Enregistrement...' : t('finances.saveSale')}
         </Button>
