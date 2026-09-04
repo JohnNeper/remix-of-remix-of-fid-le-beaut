@@ -11,6 +11,7 @@ import PublicBookingConfirmation from "@/pages/PublicBookingConfirmation";
 import PublicBookingNotFound from "@/pages/PublicBookingNotFound";
 import PublicExplorer from "@/pages/PublicExplorer";
 import BusinessSignup from "@/pages/BusinessSignup";
+import BeautyFlowAfrica from "@/pages/BeautyFlowAfrica";
 import ClientLogin from "@/pages/ClientLogin";
 import ClientAccount from "@/pages/ClientAccount";
 import { ClientAuthProvider } from "@/contexts/ClientAuthContext";
@@ -24,6 +25,8 @@ function AppRoutes() {
       <Route path="/" element={<PublicExplorer />} />
       <Route path="/explorer" element={<Navigate to="/" replace />} />
       <Route path="/pro" element={<BusinessSignup />} />
+      <Route path="/africa" element={<BeautyFlowAfrica />} />
+      <Route path="/investors" element={<Navigate to="/africa" replace />} />
       <Route path="/business" element={<Navigate to="/pro" replace />} />
       <Route path="/explorer/login" element={<ClientLogin />} />
       <Route path="/explorer/account" element={<ClientAccount />} />
