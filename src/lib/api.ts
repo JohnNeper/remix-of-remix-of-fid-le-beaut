@@ -234,14 +234,14 @@ class ApiService {
     return this.request<User[]>(`/salons/${salonId}/staff`);
   }
 
-  async createStaff(salonId: string, payload: { name: string; email: string; password?: string; telephone?: string }): Promise<User> {
+  async createStaff(salonId: string, payload: { name: string; email: string; password?: string; telephone?: string; role?: string; avatarUrl?: string; actif?: boolean }): Promise<User> {
     return this.request<User>(`/salons/${salonId}/staff`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   }
 
-  async updateStaff(salonId: string, userId: string, payload: { name?: string; email?: string; password?: string; telephone?: string }): Promise<User> {
+  async updateStaff(salonId: string, userId: string, payload: { name?: string; email?: string; password?: string; telephone?: string; role?: string; avatarUrl?: string; actif?: boolean }): Promise<User> {
     return this.request<User>(`/salons/${salonId}/staff/${userId}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
@@ -252,6 +252,14 @@ class ApiService {
     return this.request<void>(`/salons/${salonId}/staff/${userId}`, {
       method: 'DELETE',
     });
+  }
+
+  async getSalonAnalytics(salonId: string): Promise<any> {
+    try {
+      return await this.request<any>(`/salons/${salonId}/analytics`);
+    } catch {
+      return await this.request<any>(`/marketplace/salons/${salonId}/analytics`);
+    }
   }
 
   async updateMySalon(salonId: string, updates: Partial<Salon>): Promise<Salon> {
@@ -578,6 +586,19 @@ class ApiService {
     return this.request<Salon>(`/admin/salons/${salonId}/status`, {
       method: 'PUT',
       body: JSON.stringify(updates),
+    });
+  }
+
+  async adminUpdateSalon(salonId: string, updates: Record<string, any>): Promise<Salon> {
+    return this.request<Salon>(`/admin/salons/${salonId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async adminDeleteSalon(salonId: string): Promise<{ success: boolean; message: string }> {
+    return this.request<any>(`/admin/salons/${salonId}`, {
+      method: 'DELETE',
     });
   }
 

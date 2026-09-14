@@ -101,6 +101,7 @@ export default function Parametres() {
   const [newStaffPhone, setNewStaffPhone] = useState('');
   const [newStaffPassword, setNewStaffPassword] = useState('');
   const [newStaffAvatarUrl, setNewStaffAvatarUrl] = useState('');
+  const [newStaffRole, setNewStaffRole] = useState<'staff' | 'co_owner'>('staff');
   const [isAddingStaff, setIsAddingStaff] = useState(false);
 
   // Edit Staff Modal
@@ -109,6 +110,7 @@ export default function Parametres() {
   const [editStaffEmail, setEditStaffEmail] = useState('');
   const [editStaffPhone, setEditStaffPhone] = useState('');
   const [editStaffAvatarUrl, setEditStaffAvatarUrl] = useState('');
+  const [editStaffRole, setEditStaffRole] = useState<'staff' | 'co_owner' | 'owner'>('staff');
   const [isUpdatingStaff, setIsUpdatingStaff] = useState(false);
 
   // Staff Working Hours Modal
@@ -137,6 +139,7 @@ export default function Parametres() {
     setEditStaffEmail(staffMember.email || '');
     setEditStaffPhone(staffMember.telephone || '');
     setEditStaffAvatarUrl(staffMember.avatarUrl || (staffMember as any).photoUrl || (staffMember as any).avatar || '');
+    setEditStaffRole((staffMember.role as any) === 'co_owner' ? 'co_owner' : (staffMember.role as any) === 'owner' ? 'owner' : 'staff');
   };
 
   const handleAddStaffSubmit = async (e: React.FormEvent) => {
@@ -173,13 +176,14 @@ export default function Parametres() {
         password: newStaffPassword,
         telephone: newStaffPhone,
         avatarUrl: newStaffAvatarUrl,
+        role: newStaffRole,
       } as any);
 
       toast({
         title: '✅ ' + (t('common.success') || 'Succès'),
-        description: language === 'fr'
-          ? 'Collaborateur ajouté avec succès !'
-          : 'Team member added successfully!',
+        description: newStaffRole === 'co_owner'
+          ? (language === 'fr' ? 'Co-propriétaire ajouté avec succès !' : 'Co-owner added successfully!')
+          : (language === 'fr' ? 'Collaborateur ajouté avec succès !' : 'Team member added successfully!'),
       });
 
       setShowAddStaffModal(false);
@@ -188,6 +192,7 @@ export default function Parametres() {
       setNewStaffPhone('');
       setNewStaffPassword('');
       setNewStaffAvatarUrl('');
+      setNewStaffRole('staff');
       refetch();
     } catch (err: any) {
       toast({
@@ -211,12 +216,13 @@ export default function Parametres() {
         email: editStaffEmail,
         telephone: editStaffPhone,
         avatarUrl: editStaffAvatarUrl,
+        role: editStaffRole,
       } as any);
 
       toast({
         title: '✅ ' + (t('common.success') || 'Succès'),
         description: language === 'fr'
-          ? 'Collaborateur mis à jour avec succès !'
+          ? 'Membre d\'équipe mis à jour avec succès !'
           : 'Team member updated successfully!',
       });
 
@@ -467,16 +473,16 @@ export default function Parametres() {
             </div>
 
             {!useGlobalHours && (
-              <div className="divide-y divide-border/60">
+              <div className="space-y-2.5">
                 {daysOrder.map((day) => {
                   const dayAvailability = staffAvail[day] || { open: false, start: '08:00', end: '19:00' };
                   return (
                     <div
                       key={day}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between py-3.5 gap-4 first:pt-0 last:pb-0"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 gap-3"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-sm capitalize min-w-[100px] text-foreground">
+                      <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
+                        <span className="font-extrabold text-xs sm:text-sm capitalize min-w-[90px] text-slate-800 dark:text-slate-100">
                           {t(`settings.day.${day}`)}
                         </span>
                         <button
@@ -491,65 +497,67 @@ export default function Parametres() {
                             }));
                           }}
                           className={cn(
-                            "relative inline-flex h-7 w-20 shrink-0 cursor-pointer items-center justify-center rounded-full border border-transparent transition-all duration-300 font-bold text-[10px] uppercase tracking-wider shadow-inner",
+                            "relative inline-flex h-8 w-24 shrink-0 cursor-pointer items-center justify-center rounded-xl border transition-all duration-200 font-extrabold text-xs tracking-wider shadow-xs",
                             dayAvailability.open
-                              ? "bg-emerald-500 text-white shadow-emerald-500/20"
-                              : "bg-muted text-muted-foreground hover:bg-muted/80"
+                              ? "bg-emerald-600 dark:bg-emerald-500 text-white border-transparent shadow-emerald-500/20"
+                              : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-300 dark:hover:bg-slate-700"
                           )}
                         >
-                          {dayAvailability.open ? t('settings.open') : t('settings.closed')}
+                          {dayAvailability.open ? '🟢 ' + t('settings.open') : '🔴 ' + t('settings.closed')}
                         </button>
                       </div>
 
                       {dayAvailability.open && (
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={dayAvailability.start}
-                            onValueChange={(val) => {
-                              setStaffAvail(prev => ({
-                                ...prev,
-                                [day]: {
-                                  ...prev[day],
-                                  start: val
-                                }
-                              }));
-                            }}
-                          >
-                            <SelectTrigger className="h-9 w-24 rounded-xl bg-muted/30 border-none shadow-inner font-bold text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-60 rounded-xl border-none shadow-2xl bg-popover">
-                              {timeOptions.map((tOpt) => (
-                                <SelectItem key={tOpt} value={tOpt} className="rounded-lg text-xs font-semibold">{tOpt}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                        <div className="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-200 dark:border-slate-800">
+                          <div className="flex items-center gap-1.5">
+                            <Select
+                              value={dayAvailability.start}
+                              onValueChange={(val) => {
+                                setStaffAvail(prev => ({
+                                  ...prev,
+                                  [day]: {
+                                    ...prev[day],
+                                    start: val
+                                  }
+                                }));
+                              }}
+                            >
+                              <SelectTrigger className="h-9 w-24 rounded-xl bg-background dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-foreground dark:text-slate-100 font-extrabold text-xs shadow-xs focus:ring-2 focus:ring-rose-500/20">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-60 rounded-xl border-slate-200 dark:border-slate-800 shadow-2xl bg-popover text-foreground">
+                                {timeOptions.map((tOpt) => (
+                                  <SelectItem key={tOpt} value={tOpt} className="rounded-lg text-xs font-bold">{tOpt}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
 
-                          <span className="text-xs text-muted-foreground font-semibold px-0.5">
-                            {language === 'fr' ? 'à' : 'to'}
-                          </span>
+                            <span className="text-xs text-muted-foreground font-bold px-0.5">
+                              {language === 'fr' ? 'à' : 'to'}
+                            </span>
 
-                          <Select
-                            value={dayAvailability.end}
-                            onValueChange={(val) => {
-                              setStaffAvail(prev => ({
-                                ...prev,
-                                [day]: {
-                                  ...prev[day],
-                                  end: val
-                                }
-                              }));
-                            }}
-                          >
-                            <SelectTrigger className="h-9 w-24 rounded-xl bg-muted/30 border-none shadow-inner font-bold text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-60 rounded-xl border-none shadow-2xl bg-popover">
-                              {timeOptions.map((tOpt) => (
-                                <SelectItem key={tOpt} value={tOpt} className="rounded-lg text-xs font-semibold">{tOpt}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            <Select
+                              value={dayAvailability.end}
+                              onValueChange={(val) => {
+                                setStaffAvail(prev => ({
+                                  ...prev,
+                                  [day]: {
+                                    ...prev[day],
+                                    end: val
+                                  }
+                                }));
+                              }}
+                            >
+                              <SelectTrigger className="h-9 w-24 rounded-xl bg-background dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-foreground dark:text-slate-100 font-extrabold text-xs shadow-xs focus:ring-2 focus:ring-rose-500/20">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-60 rounded-xl border-slate-200 dark:border-slate-800 shadow-2xl bg-popover text-foreground">
+                                {timeOptions.map((tOpt) => (
+                                  <SelectItem key={tOpt} value={tOpt} className="rounded-lg text-xs font-bold">{tOpt}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
 
                           <Button
                             variant="ghost"
@@ -571,7 +579,7 @@ export default function Parametres() {
                                 return next;
                               });
                             }}
-                            className="rounded-xl text-primary hover:bg-primary/5 hover:text-primary gap-1 px-2.5 h-9"
+                            className="rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 gap-1 px-2.5 h-9 shrink-0 font-extrabold text-xs"
                             title={language === 'fr' ? "Copier ces horaires sur les autres jours ouverts" : "Copy these hours to other open days"}
                           >
                             <Copy className="h-3.5 w-3.5" />
@@ -731,6 +739,47 @@ export default function Parametres() {
                 />
               </div>
 
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">
+                  {t('team.roleLabel') || (language === 'fr' ? 'Rôle & Permissions *' : 'Role & Permissions *')}
+                </Label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setNewStaffRole('staff')}
+                    className={`p-3 rounded-2xl border text-left transition-all ${
+                      newStaffRole === 'staff'
+                        ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                        : 'border-border/60 bg-muted/20 hover:bg-muted/40'
+                    }`}
+                  >
+                    <div className="font-bold text-xs flex items-center gap-1 text-foreground">
+                      <span>👤</span> {t('team.roleStaff') || (language === 'fr' ? 'Collaborateur' : 'Staff')}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                      {language === 'fr' ? 'Soins & RDV uniquement' : 'Services & Bookings only'}
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewStaffRole('co_owner')}
+                    className={`p-3 rounded-2xl border text-left transition-all ${
+                      newStaffRole === 'co_owner'
+                        ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/20'
+                        : 'border-border/60 bg-muted/20 hover:bg-muted/40'
+                    }`}
+                  >
+                    <div className="font-bold text-xs flex items-center gap-1 text-purple-700 dark:text-purple-300">
+                      <span>👑</span> {t('team.roleCoOwner') || (language === 'fr' ? 'Co-propriétaire' : 'Co-owner')}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                      {language === 'fr' ? 'Accès complet d\'admin' : 'Full admin access'}
+                    </p>
+                  </button>
+                </div>
+              </div>
+
               <div className="space-y-1">
                 <Label className="text-xs font-semibold">
                   {language === 'fr' ? 'Photo du collaborateur (optionnel)' : 'Staff Photo (optional)'}
@@ -841,6 +890,49 @@ export default function Parametres() {
                   className="rounded-xl"
                 />
               </div>
+
+              {editStaffRole !== 'owner' && (
+                <div className="space-y-1.5 pt-1">
+                  <Label className="text-xs font-semibold">
+                    {t('team.roleLabel') || (language === 'fr' ? 'Rôle & Permissions *' : 'Role & Permissions *')}
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setEditStaffRole('staff')}
+                      className={`p-3 rounded-2xl border text-left transition-all ${
+                        editStaffRole === 'staff'
+                          ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                          : 'border-border/60 bg-muted/20 hover:bg-muted/40'
+                      }`}
+                    >
+                      <div className="font-bold text-xs flex items-center gap-1 text-foreground">
+                        <span>👤</span> {t('team.roleStaff') || (language === 'fr' ? 'Collaborateur' : 'Staff')}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                        {language === 'fr' ? 'Soins & RDV uniquement' : 'Services & Bookings only'}
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setEditStaffRole('co_owner')}
+                      className={`p-3 rounded-2xl border text-left transition-all ${
+                        editStaffRole === 'co_owner'
+                          ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/20'
+                          : 'border-border/60 bg-muted/20 hover:bg-muted/40'
+                      }`}
+                    >
+                      <div className="font-bold text-xs flex items-center gap-1 text-purple-700 dark:text-purple-300">
+                        <span>👑</span> {t('team.roleCoOwner') || (language === 'fr' ? 'Co-propriétaire' : 'Co-owner')}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                        {language === 'fr' ? 'Accès complet d\'admin' : 'Full admin access'}
+                      </p>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <DialogFooter className="pt-4 gap-2">
                 <Button

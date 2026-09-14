@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 // import { AppLayout } from "@/components/layout/AppLayout";
 
 import Dashboard from "@/pages/Dashboard";
+import Audience from "@/pages/Audience";
 import Clientes from "@/pages/Clientes";
 import Prestations from "@/pages/Prestations";
 import RendezVousPage from "@/pages/RendezVous";
@@ -65,6 +66,8 @@ function AppRoutes() {
       {/* Salon (protected) */}
       <Route element={<SalonGuard><AppLayout /></SalonGuard>}>
         <Route path="/" element={<Dashboard />} />
+        {/* <Route path="/audience" element={<Audience />} /> */}
+        {/* <Route path="/analytics" element={<Audience />} /> */}
         <Route path="/clientes" element={<Clientes />} />
         <Route path="/prestations" element={<Prestations />} />
         <Route path="/rendez-vous" element={<RendezVousPage />} />
@@ -85,11 +88,13 @@ function AppRoutes() {
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { OnboardingTourProvider } from "@/contexts/OnboardingTourContext";
+import { SplashScreen } from "@/components/layout/SplashScreen";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <TooltipProvider>
+        <SplashScreen minDuration={2800} />
         <Toaster />
         <Sonner />
         <PWAInstallPrompt />

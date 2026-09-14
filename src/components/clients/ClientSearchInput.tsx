@@ -86,7 +86,11 @@ export function ClientSearchInput({ onSelect, defaultValue, placeholder, isStaff
 
   const openList = () => {
     setIsOpen(true);
-    setTimeout(() => inputRef.current?.focus(), 50);
+    // On touch devices / mobile, do NOT force focus on mount to prevent keyboard from popping up automatically
+    const isTouch = typeof window !== 'undefined' && (('ontouchstart' in window) || navigator.maxTouchPoints > 0 || window.innerWidth < 768);
+    if (!isTouch) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
   };
 
   const handleOpenAddModal = (initialName: string = '') => {

@@ -62,6 +62,6 @@ export function isSlotTaken(
 }
 
 export function getBookingPublicUrl(slug: string): string {
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  return `${origin}/booking/${slug}`;
+  const cleanSlug = slug ? slug.trim() : '';
+  return `https://www.beautyflowafrica.com/booking/${cleanSlug}`;
 }

@@ -28,7 +28,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
   const { clients } = useClients();
   const { salon } = useSalon();
   const { session } = useAuth();
-  const isOwner = session?.userRole === 'owner' || session?.type === 'admin';
+  const isOwner = session?.userRole === 'owner' || session?.userRole === 'co_owner' || session?.type === 'admin';
   const prestations = getPrestationsClient(client.id);
   const [activeTab, setActiveTab] = useState<Tab>('info');
 

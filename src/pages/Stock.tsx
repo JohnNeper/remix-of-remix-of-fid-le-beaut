@@ -122,90 +122,92 @@ function ProduitForm({ isOwner, produit, onSubmit, onCancel }: { isOwner: boolea
 
     return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
-          <FormField control={form.control} name="nom" render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Package className="h-3.5 w-3.5 text-primary" />{t('stock.product')}</FormLabel>
-              <FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base font-semibold" placeholder={t('stock.productNamePlaceholder')} {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <FormField control={form.control} name="categorie" render={({ field }) => (
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 sm:space-y-6">
+            <FormField control={form.control} name="nom" render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Layers className="h-3.5 w-3.5 text-primary" />{t('stock.category')}</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20"><SelectValue placeholder={t('stock.category')} /></SelectTrigger></FormControl>
-                  <SelectContent className="rounded-xl border-none shadow-2xl">
-                    {PRODUCT_CATEGORIES.map(c => (
-                      <SelectItem key={c.value} value={c.value} className="rounded-lg m-1 font-medium">{c.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Package className="h-3.5 w-3.5 text-primary" />{t('stock.product')}</FormLabel>
+                <FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base font-semibold" placeholder={t('stock.productNamePlaceholder')} {...field} /></FormControl>
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="unite" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Scale className="h-3.5 w-3.5 text-primary" />{t('stock.unit')}</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20"><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent className="rounded-xl border-none shadow-2xl">
-                    {PRODUCT_UNITS.map(u => (
-                      <SelectItem key={u.value} value={u.value} className="rounded-lg m-1 font-medium">{u.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )} />
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:gap-6">
-            {isOwner && (
-              <FormField control={form.control} name="prixAchat" render={({ field }) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <FormField control={form.control} name="categorie" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Banknote className="h-3.5 w-3.5 text-primary" />{t('stock.buyPrice')} (FCFA)</FormLabel>
+                  <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Layers className="h-3.5 w-3.5 text-primary" />{t('stock.category')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl><SelectTrigger className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20"><SelectValue placeholder={t('stock.category')} /></SelectTrigger></FormControl>
+                    <SelectContent className="rounded-xl border-none shadow-2xl">
+                      {PRODUCT_CATEGORIES.map(c => (
+                        <SelectItem key={c.value} value={c.value} className="rounded-lg m-1 font-medium">{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="unite" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Scale className="h-3.5 w-3.5 text-primary" />{t('stock.unit')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl><SelectTrigger className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20"><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent className="rounded-xl border-none shadow-2xl">
+                      {PRODUCT_UNITS.map(u => (
+                        <SelectItem key={u.value} value={u.value} className="rounded-lg m-1 font-medium">{u.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+              {isOwner && (
+                <FormField control={form.control} name="prixAchat" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Banknote className="h-3.5 w-3.5 text-primary" />{t('stock.buyPrice')} (FCFA)</FormLabel>
+                    <FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base font-semibold" type="number" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              )}
+              <FormField control={form.control} name="prix" render={({ field }) => (
+                <FormItem className={!isOwner ? "col-span-2" : ""}>
+                  <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3.5 w-3.5 text-primary" />{t('stock.salePrice')} (FCFA)</FormLabel>
+                  <FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base font-bold text-primary" type="number" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+              <FormField control={form.control} name="quantite" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><List className="h-3.5 w-3.5 text-primary" />{t('stock.quantity')}</FormLabel>
                   <FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base font-semibold" type="number" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-            )}
-            <FormField control={form.control} name="prix" render={({ field }) => (
-              <FormItem className={!isOwner ? "col-span-2" : ""}>
-                <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3.5 w-3.5 text-primary" />{t('stock.salePrice')} (FCFA)</FormLabel>
-                <FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base font-bold text-primary" type="number" {...field} /></FormControl>
+              <FormField control={form.control} name="seuilAlerte" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><AlertTriangle className="h-3.5 w-3.5 text-destructive" />{t('stock.alertThreshold')}</FormLabel>
+                  <FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base font-semibold" type="number" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+            <FormField control={form.control} name="description" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                  <FileText className="h-3.5 w-3.5 text-primary" />{t('finances.description')} <span className="text-[10px] font-normal opacity-60 ml-1 lowercase">({t('common.optional')})</span>
+                </FormLabel>
+                <FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base" placeholder={t('finances.description') + '...'} {...field} /></FormControl>
                 <FormMessage />
               </FormItem>
             )} />
           </div>
-          <div className="grid grid-cols-2 gap-4 sm:gap-6">
-            <FormField control={form.control} name="quantite" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><List className="h-3.5 w-3.5 text-primary" />{t('stock.quantity')}</FormLabel>
-                <FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base font-semibold" type="number" {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="seuilAlerte" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground"><AlertTriangle className="h-3.5 w-3.5 text-destructive" />{t('stock.alertThreshold')}</FormLabel>
-                <FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base font-semibold" type="number" {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-          </div>
-          <FormField control={form.control} name="description" render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground">
-                <FileText className="h-3.5 w-3.5 text-primary" />{t('finances.description')} <span className="text-[10px] font-normal opacity-60 ml-1 lowercase">({t('common.optional')})</span>
-              </FormLabel>
-              <FormControl><Input className="h-12 rounded-xl bg-muted/30 border-none shadow-inner focus:ring-primary/20 text-base" placeholder={t('finances.description') + '...'} {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )} />
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6">
-            <Button type="button" variant="ghost" onClick={onCancel} className="flex-1 h-12 sm:h-14 rounded-2xl font-bold text-muted-foreground hover:bg-muted transition-all order-2 sm:order-1">{t('common.cancel')}</Button>
-            <Button type="submit" className="flex-1 h-12 sm:h-14 rounded-2xl font-bold bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all order-1 sm:order-2">{produit ? t('common.save') : t('common.add')}</Button>
+          <div className="shrink-0 bg-background/95 backdrop-blur-md p-4 sm:p-6 border-t border-border/60 flex flex-col sm:flex-row gap-3 sm:gap-4 z-10">
+            <Button type="button" variant="ghost" onClick={onCancel} className="flex-1 h-12 rounded-xl font-bold text-muted-foreground hover:bg-muted transition-all order-2 sm:order-1">{t('common.cancel')}</Button>
+            <Button type="submit" className="flex-1 h-12 rounded-xl font-bold bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all order-1 sm:order-2">{produit ? t('common.save') : t('common.add')}</Button>
           </div>
         </form>
       </Form>
@@ -245,7 +247,7 @@ function ProduitForm({ isOwner, produit, onSubmit, onCancel }: { isOwner: boolea
       const [restockLoading, setRestockLoading] = useState(false);
       const { session } = useAuth();
       const isMobile = useIsMobile();
-      const isOwner = session?.userRole === 'owner' || session?.type === 'admin';
+      const isOwner = session?.userRole === 'owner' || session?.userRole === 'co_owner' || session?.type === 'admin';
 
       const handleRestockModal = async (produitId: string, addedQty: number, createExpense?: boolean) => {
         if (!restockProduit) return;
@@ -617,8 +619,8 @@ function ProduitForm({ isOwner, produit, onSubmit, onCancel }: { isOwner: boolea
 
         {/* ── ADD/EDIT DIALOG/DRAWER ─────────────────────────────────────────────────── */}
         <FormWrapper open={showForm || !!editingProduit} onOpenChange={(open) => { if (!open) { setShowForm(false); setEditingProduit(null); } }}>
-          <FormContent className={isMobile ? "p-0 bg-background border-none rounded-t-[30px] overflow-hidden max-h-[92vh] outline-none" : "max-w-md rounded-[24px] p-0 overflow-hidden border-none shadow-2xl"}>
-            <div className="bg-primary/5 p-6 border-b border-border/50">
+          <FormContent className={isMobile ? "p-0 bg-background border-none rounded-t-[30px] overflow-hidden max-h-[92vh] outline-none flex flex-col" : "max-w-md w-[95vw] sm:w-full rounded-[24px] p-0 overflow-hidden border-none shadow-2xl flex flex-col max-h-[90vh]"}>
+            <div className="bg-primary/5 p-6 border-b border-border/50 shrink-0">
               <FormHeader className="p-0 text-left">
                 <FormTitle className="text-2xl font-bold flex items-center gap-2">
                   <Archive className="h-6 w-6 text-primary" />
@@ -629,9 +631,7 @@ function ProduitForm({ isOwner, produit, onSubmit, onCancel }: { isOwner: boolea
                 </FormDescription>
               </FormHeader>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[calc(92vh-100px)]">
-              <ProduitForm isOwner={isOwner} produit={editingProduit || undefined} onSubmit={handleSubmit} onCancel={() => { setShowForm(false); setEditingProduit(null); }} />
-            </div>
+            <ProduitForm isOwner={isOwner} produit={editingProduit || undefined} onSubmit={handleSubmit} onCancel={() => { setShowForm(false); setEditingProduit(null); }} />
           </FormContent>
         </FormWrapper>
 

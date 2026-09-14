@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useRendezVous } from '@/hooks/useRendezVous';
 import { usePrestations } from '@/hooks/usePrestations';
 import { useClients } from '@/hooks/useClients';
+import { useSubscriptionPlan } from '@/hooks/useSubscriptionPlan';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -15,6 +16,7 @@ export function PendingPublicBookings() {
   const { rendezVous, updateRendezVous, deleteRendezVous } = useRendezVous();
   const { getTypePrestation } = usePrestations();
   const { clients, addClient } = useClients();
+  const { canAddCustomer } = useSubscriptionPlan();
   const { t, language } = useLanguage();
   const locale = language === 'fr' ? fr : enUS;
 
@@ -25,6 +27,14 @@ export function PendingPublicBookings() {
   if (pending.length === 0) return null;
 
   const handleRegisterClient = async (r: any) => {
+    if (!canAddCustomer(clients.length)) {
+      toast({
+        title: 'Limite atteinte',
+        description: "Votre forfait actuel ne vous permet pas d'ajouter de nouvelles clientes à vos contacts.",
+        variant: 'destructive',
+      });
+      return;
+    }
     const name = r.customerName || 'Cliente En Ligne';
     const phone = r.customerPhone || '';
     try {

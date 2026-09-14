@@ -1,7 +1,7 @@
 // Types pour le système multi-tenant
 import type { PlanType } from '@/lib/plans';
 
-export type SalonUserRole = 'owner' | 'staff';
+export type SalonUserRole = 'owner' | 'co_owner' | 'staff';
 
 export interface SalonUser {
   id: string;
@@ -36,6 +36,11 @@ export interface SalonAccount {
   slug?: string; // unique URL identifier e.g. "neyohair"
   branding?: SalonBranding;
   bookingSettings?: SalonBookingSettings;
+  disponibilite?: any;
+  availability?: any;
+  name?: string;
+  isHidden?: boolean;
+  hidden?: boolean;
 }
 
 export interface SalonBranding {
@@ -61,6 +66,7 @@ export interface SalonStaff {
   photoUrl?: string;
   bio?: string;
   specialties?: string[];
+  actif?: boolean;
 }
 
 // ===== Client (public booking portal) accounts =====
@@ -83,13 +89,22 @@ export interface ClientAccount {
   avatarUrl?: string;
 }
 
+export interface DateOverride {
+  open: boolean;
+  start?: string;
+  end?: string;
+  reason?: string;
+}
+
 export interface SalonBookingSettings {
   autoConfirm: boolean;
   allowGuest: boolean;
   slotDurationMin: number; // default 30
-  openingHour: number; // 0-23, default 9
-  closingHour: number; // 0-23, default 19
+  openingHour: number; // 0-23, default 8
+  closingHour: number; // 0-23, default 20
   closedDays?: number[]; // 0=Sunday, 6=Saturday
+  minBookingNoticeMin?: number; // Minimum advance booking notice in minutes (ex: 90 min = 1h30)
+  customDates?: Record<string, DateOverride>; // Specific date overrides "YYYY-MM-DD"
 }
 
 export interface AdminUser {

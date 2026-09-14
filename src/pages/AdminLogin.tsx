@@ -13,6 +13,7 @@ export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { session, loginAdmin } = useAuth();
   const navigate = useNavigate();
 
@@ -22,13 +23,31 @@ export default function AdminLogin() {
     }
   }, [session, navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginAdmin(email, password)) {
-      toast({ title: 'Connecté en tant qu\'administrateur' });
-      navigate('/admin');
-    } else {
-      toast({ title: 'Identifiants incorrects', variant: 'destructive' });
+    if (!email || !password) return;
+
+    try {
+      setLoading(true);
+      const res = await loginAdmin(email.trim(), password);
+      if (res.success) {
+        toast({ title: '✅ Connecté en tant qu\'administrateur' });
+        navigate('/admin');
+      } else {
+        toast({
+          title: 'Connexion refusée',
+          description: res.reason || 'Identifiants incorrects ou droits administrateur manquants',
+          variant: 'destructive',
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Erreur',
+        description: err?.message || 'Une erreur est survenue lors de la connexion',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,7 +102,9 @@ export default function AdminLogin() {
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full h-11 sm:h-10 text-base sm:text-sm">Se connecter</Button>
+              <Button type="submit" disabled={loading} className="w-full h-11 sm:h-10 text-base sm:text-sm">
+                {loading ? 'Connexion en cours...' : 'Se connecter'}
+              </Button>
             </form>
           </CardContent>
         </Card>

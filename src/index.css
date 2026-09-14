@@ -5,6 +5,20 @@
 /* LeaderBright BeautyFlow Design System */
 
 @layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent automatic iOS Safari zoom-in on input focus by ensuring at least 16px font-size on mobile */
+  input, select, textarea {
+    font-size: 16px;
+  }
+  @media (min-width: 640px) {
+    input, select, textarea {
+      font-size: 0.875rem;
+    }
+  }
+
   :root {
     --background: 20 20% 98%;
     --foreground: 340 30% 15%;
@@ -237,21 +251,51 @@
     background-clip: text;
   }
 
+  /* Universal Safe Area Utilities for iOS & Android Devices */
+  .pt-safe {
+    padding-top: max(env(safe-area-inset-top, 0px), 1rem);
+  }
 
-  @supports (-webkit-touch-callout: none) {
+  .pt-safe-offset-2 {
+    padding-top: calc(max(env(safe-area-inset-top, 0px), 0.75rem) + 0.5rem);
+  }
 
-    /* Uniquement pour les devices Apple (iOS) */
-    .ios-header-pt {
-      padding-top: env(safe-area-inset-top);
-    }
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 1rem);
+  }
 
-    .ios-main-pt {
-      padding-top: calc(4rem + env(safe-area-inset-top));
-    }
+  .pb-safe-offset-2 {
+    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.75rem) + 0.5rem);
+  }
 
-    .ios-sidebar-logo-pt {
-      padding-top: calc(1.5rem + env(safe-area-inset-top));
-    }
+  .pl-safe {
+    padding-left: max(env(safe-area-inset-left, 0px), 1rem);
+  }
+
+  .pr-safe {
+    padding-right: max(env(safe-area-inset-right, 0px), 1rem);
+  }
+
+  .min-h-screen-safe {
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+  }
+
+  .h-screen-safe {
+    height: 100dvh;
+    height: -webkit-fill-available;
+  }
+
+  .ios-header-pt {
+    padding-top: max(env(safe-area-inset-top, 0px), 0.5rem);
+  }
+
+  .ios-main-pt {
+    padding-top: calc(3.75rem + max(env(safe-area-inset-top, 0px), 0px));
+  }
+
+  .ios-sidebar-logo-pt {
+    padding-top: calc(1.25rem + max(env(safe-area-inset-top, 0px), 0px));
   }
 }
 

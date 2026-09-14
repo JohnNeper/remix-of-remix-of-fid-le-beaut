@@ -1,4 +1,6 @@
 // Types pour LeaderBright BeautyFlow
+import type { SalonBookingSettings, SalonBranding, DateOverride, SalonStaff } from './auth';
+export * from './auth';
 
 export type ClientStatus = 'nouvelle' | 'reguliere' | 'vip';
 
@@ -94,6 +96,7 @@ export interface Rappel {
 }
 
 export interface ConfigFidelite {
+  actif?: boolean;
   visitesRequises: number;
   reductionPourcentage: number;
   visitesVIP: number;
@@ -126,6 +129,7 @@ export interface Salon {
   horaires?: string;
   availability?: any;
   disponibilite?: any;
+  bookingSettings?: SalonBookingSettings;
 
   joursRappelInactivite: number;
   joursRappelSuivi: number;
@@ -172,6 +176,9 @@ export interface Salon {
   nom?: string;
   telephone?: string;
   adresse?: string;
+  whatsappNumber?: string;
+  fideliteActive?: boolean;
+  programmeFidelite?: any;
 }
 
 export interface Utilisateur {
@@ -201,4 +208,6 @@ export interface User {
   salonId?: string;
   telephone?: string;
   avatarUrl?: string;
+  actif?: boolean;
+  availability?: any;
 }

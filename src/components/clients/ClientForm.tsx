@@ -63,22 +63,70 @@ export function ClientForm({ client, clients = [], onSubmit, onCancel }: ClientF
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 text-left font-sans">
-        
-        {/* Nom Complet & Téléphone */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0 overflow-hidden text-left font-sans">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+          {/* Nom Complet & Téléphone */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="nom"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    <User className="h-3.5 w-3.5 text-rose-500" />
+                    <span>{t('clients.name') || 'Nom complet'} *</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Ex: Marie Nguema" 
+                      className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold focus:ring-rose-500/20" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="telephone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    <Phone className="h-3.5 w-3.5 text-rose-500" />
+                    <span>{t('clients.phone') || 'Téléphone (WhatsApp)'} *</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="+237 6XX XXX XXX" 
+                      className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold focus:ring-rose-500/20" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Email */}
           <FormField
             control={form.control}
-            name="nom"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  <User className="h-3.5 w-3.5 text-rose-500" />
-                  <span>{t('clients.name') || 'Nom complet'} *</span>
+                <FormLabel className="flex items-center justify-between font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  <span className="flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 text-rose-500" />
+                    <span>Email</span>
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{t('common.optional') || 'optionnel'}</span>
                 </FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Ex: Marie Nguema" 
+                    type="email"
+                    placeholder="exemple@email.com" 
                     className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold focus:ring-rose-500/20" 
                     {...field} 
                   />
@@ -88,20 +136,131 @@ export function ClientForm({ client, clients = [], onSubmit, onCancel }: ClientF
             )}
           />
 
+          {/* Statut & Date Anniversaire */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="statut"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    <Star className="h-3.5 w-3.5 text-amber-500" />
+                    <span>{t('clients.status') || 'Statut'}</span>
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold">
+                        <SelectValue placeholder="Sélectionner un statut" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="nouvelle" className="font-semibold">✨ Nouvelle</SelectItem>
+                      <SelectItem value="reguliere" className="font-semibold">🌿 Régulière</SelectItem>
+                      <SelectItem value="vip" className="font-semibold">👑 VIP ✦</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dateAnniversaire"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center justify-between font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    <span className="flex items-center gap-1.5">
+                      <Gift className="h-3.5 w-3.5 text-rose-500" />
+                      <span>{t('clients.birthdayOptional') || "Date d'anniversaire"}</span>
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{t('common.optional') || 'optionnel'}</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="date" 
+                      className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Parrain & Groupe */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="parrainId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center justify-between font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    <span className="flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5 text-rose-500" />
+                      <span>{t('clients.selectReferrerPlaceholder') || 'Parrain / Marraine'}</span>
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{t('common.optional') || 'optionnel'}</span>
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || 'none'}>
+                    <FormControl>
+                      <SelectTrigger className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold">
+                        <SelectValue placeholder={t('clients.selectReferrer') || 'Sélectionner un parrain'} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="rounded-xl max-h-48">
+                      <SelectItem value="none" className="font-semibold">{t('clients.noReferrer') || 'Aucun parrain'}</SelectItem>
+                      {clients.filter(c => c.id !== client?.id).map(c => (
+                        <SelectItem key={c.id} value={c.id} className="font-semibold">{c.nom} ({c.telephone})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="groupe"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center justify-between font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    <span className="flex items-center gap-1.5">
+                      <Tag className="h-3.5 w-3.5 text-rose-500" />
+                      <span>{t('clients.group') || 'Groupe / Catégorie'}</span>
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{t('common.optional') || 'optionnel'}</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Ex: Coiffure, Onglerie, Soins..." 
+                      className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Notes */}
           <FormField
             control={form.control}
-            name="telephone"
+            name="notes"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  <Phone className="h-3.5 w-3.5 text-rose-500" />
-                  <span>{t('clients.phone') || 'Téléphone (WhatsApp)'} *</span>
+                  <FileText className="h-3.5 w-3.5 text-rose-500" />
+                  <span>{t('clients.notesOptional') || 'Notes & Préférences particulières'}</span>
                 </FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="+237 6XX XXX XXX" 
-                    className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold focus:ring-rose-500/20" 
-                    {...field} 
+                  <Textarea
+                    placeholder={t('clients.notesPlaceholder') || "Préférences de coiffure, allergies, soins habituels..."}
+                    className="resize-none min-h-[80px] rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold p-3"
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
@@ -109,167 +268,9 @@ export function ClientForm({ client, clients = [], onSubmit, onCancel }: ClientF
             )}
           />
         </div>
-
-        {/* Email */}
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center justify-between font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                <span className="flex items-center gap-1.5">
-                  <Mail className="h-3.5 w-3.5 text-rose-500" />
-                  <span>Email</span>
-                </span>
-                <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{t('common.optional') || 'optionnel'}</span>
-              </FormLabel>
-              <FormControl>
-                <Input 
-                  type="email"
-                  placeholder="exemple@email.com" 
-                  className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold focus:ring-rose-500/20" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Statut & Date Anniversaire */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="statut"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  <Star className="h-3.5 w-3.5 text-amber-500" />
-                  <span>{t('clients.status') || 'Statut'}</span>
-                </FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold">
-                      <SelectValue placeholder="Sélectionner un statut" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="rounded-xl">
-                    <SelectItem value="nouvelle" className="font-semibold">✨ Nouvelle</SelectItem>
-                    <SelectItem value="reguliere" className="font-semibold">🌿 Régulière</SelectItem>
-                    <SelectItem value="vip" className="font-semibold">👑 VIP ✦</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="dateAnniversaire"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center justify-between font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  <span className="flex items-center gap-1.5">
-                    <Gift className="h-3.5 w-3.5 text-rose-500" />
-                    <span>{t('clients.birthdayOptional') || "Date d'anniversaire"}</span>
-                  </span>
-                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{t('common.optional') || 'optionnel'}</span>
-                </FormLabel>
-                <FormControl>
-                  <Input 
-                    type="date" 
-                    className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Parrain & Groupe */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="parrainId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center justify-between font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  <span className="flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5 text-rose-500" />
-                    <span>{t('clients.selectReferrerPlaceholder') || 'Parrain / Marraine'}</span>
-                  </span>
-                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{t('common.optional') || 'optionnel'}</span>
-                </FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value || 'none'}>
-                  <FormControl>
-                    <SelectTrigger className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold">
-                      <SelectValue placeholder={t('clients.selectReferrer') || 'Sélectionner un parrain'} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="rounded-xl max-h-48">
-                    <SelectItem value="none" className="font-semibold">{t('clients.noReferrer') || 'Aucun parrain'}</SelectItem>
-                    {clients.filter(c => c.id !== client?.id).map(c => (
-                      <SelectItem key={c.id} value={c.id} className="font-semibold">{c.nom} ({c.telephone})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="groupe"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center justify-between font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  <span className="flex items-center gap-1.5">
-                    <Tag className="h-3.5 w-3.5 text-rose-500" />
-                    <span>{t('clients.group') || 'Groupe / Catégorie'}</span>
-                  </span>
-                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{t('common.optional') || 'optionnel'}</span>
-                </FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Ex: Coiffure, Onglerie, Soins..." 
-                    className="h-11 rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Notes */}
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                <FileText className="h-3.5 w-3.5 text-rose-500" />
-                <span>{t('clients.notesOptional') || 'Notes & Préférences particulières'}</span>
-              </FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder={t('clients.notesPlaceholder') || "Préférences de coiffure, allergies, soins habituels..."}
-                  className="resize-none min-h-[80px] rounded-xl bg-slate-50/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-sm font-semibold p-3"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         {/* Action Buttons */}
-        <div className="sticky bottom-0 bg-background/95 backdrop-blur-md pt-3 pb-3 border-t border-slate-200 dark:border-slate-800 z-10 flex flex-col sm:flex-row gap-2.5 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="shrink-0 bg-background/95 backdrop-blur-md p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 z-10 flex flex-col sm:flex-row gap-2.5">
           <Button 
             type="button" 
             variant="outline" 

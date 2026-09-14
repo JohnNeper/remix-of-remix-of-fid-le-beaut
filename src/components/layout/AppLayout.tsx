@@ -48,19 +48,17 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+  // { href: '/audience', labelKey: 'nav.audience', icon: BarChart3, roles: ['owner', 'co_owner', 'admin'] },
   { href: '/clientes', labelKey: 'nav.clients', icon: Users },
   { href: '/prestations', labelKey: 'nav.services', icon: Scissors },
   { href: '/rendez-vous', labelKey: 'nav.appointments', icon: CalendarDays, badgeKey: 'rdv' },
   { href: '/stock', labelKey: 'nav.stock', icon: Package, badgeKey: 'stock' },
-  // Caisse du jour — accessible au staff uniquement
-  { href: '/caisse', labelKey: 'nav.caisse', icon: ShoppingCart, roles: ['staff'] },
-  // Finances complètes — owner & admin uniquement
-  { href: '/finances', labelKey: 'nav.finances', icon: DollarSign, roles: ['owner', 'admin'] },
-  { href: '/bilan', labelKey: 'nav.bilan', icon: BarChart3, roles: ['owner', 'admin'] },
-  { href: '/fidelite', labelKey: 'nav.loyalty', icon: Gift, roles: ['owner', 'admin', 'staff'] },
+  // { href: '/caisse', labelKey: 'nav.caisse', icon: ShoppingCart },
+  { href: '/finances', labelKey: 'nav.finances', icon: DollarSign, roles: ['owner', 'co_owner', 'admin'] },
+  { href: '/bilan', labelKey: 'nav.bilan', icon: BarChart3, roles: ['owner', 'co_owner', 'admin'] },
+  { href: '/fidelite', labelKey: 'nav.loyalty', icon: Gift },
   { href: '/rappels', labelKey: 'nav.reminders', icon: Bell, badgeKey: 'inactive' },
-  // { href: '/campagnes', labelKey: 'nav.campaigns', icon: MessageSquare, roles: ['owner', 'staff', 'admin'] },
-  { href: '/parametres', labelKey: 'nav.settings', icon: Settings, roles: ['owner', 'admin'] },
+  { href: '/parametres', labelKey: 'nav.settings', icon: Settings, roles: ['owner', 'co_owner', 'admin'] },
 ];
 
 function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
@@ -81,10 +79,10 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   const stepNumberLabel = isTargetedStep
     ? currentStep.stepNumber === 1 ? '① Étape 1'
       : currentStep.stepNumber === 2 ? '② Étape 2'
-      : currentStep.stepNumber === 3 ? '③ Étape 3'
-      : currentStep.stepNumber === 4 ? '④ Étape 4'
-      : currentStep.stepNumber === 5 ? '⑤ Étape 5'
-      : '⑥ Étape 6'
+        : currentStep.stepNumber === 3 ? '③ Étape 3'
+          : currentStep.stepNumber === 4 ? '④ Étape 4'
+            : currentStep.stepNumber === 5 ? '⑤ Étape 5'
+              : '⑥ Étape 6'
     : null;
 
   return (
@@ -138,8 +136,8 @@ function Sidebar({ className, onItemClick, onUpgradeClick, onOpenGuide }: { clas
 
   return (
     <aside className={cn('flex flex-col h-full bg-sidebar', className)}>
-      {/* Logo */}
-      <div className="p-5 border-b border-sidebar-border ios-sidebar-logo-pt">
+      {/* Logo & Salon Info */}
+      <div className="p-4 sm:p-5 border-b border-sidebar-border ios-sidebar-logo-pt">
         <Link to="/" className="flex items-center gap-3 group">
           {salon?.logoUrl ? (
             <div className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center overflow-hidden border border-border/60 bg-background shadow-xs">
@@ -161,8 +159,39 @@ function Sidebar({ className, onItemClick, onUpgradeClick, onOpenGuide }: { clas
         </Link>
       </div>
 
+      {/* Integrated Guide Premiers Pas Widget */}
+      {onOpenGuide && (
+        <div className="px-3.5 pt-3 pb-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenGuide) onOpenGuide();
+              if (onItemClick) onItemClick();
+            }}
+            className="w-full p-2.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/25 transition-all text-left flex items-center justify-between group active:scale-[0.98] shadow-xs"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-7 w-7 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                <BookOpen className="h-3.5 w-3.5" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-amber-900 dark:text-amber-200 truncate">
+                  {t('onboarding.guideTitle', 'Guide Premiers Pas')}
+                </span>
+                <span className="text-[10px] font-medium text-amber-700/80 dark:text-amber-400/80 truncate">
+                  {t('onboarding.guideSubtitle', 'Configuration guidée 💡')}
+                </span>
+              </div>
+            </div>
+            <Badge className="bg-amber-400 text-slate-950 font-black text-[10px] px-1.5 py-0.5 rounded-full border-0 shrink-0 ml-1">
+              {t('onboarding.guideBadge', '6 étapes')}
+            </Badge>
+          </button>
+        </div>
+      )}
+
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-3.5 space-y-1 overflow-y-auto">
         {navItems
           .filter(item => !item.roles || (session?.userRole && item.roles.includes(session.userRole)))
           .map((item) => (
@@ -171,38 +200,25 @@ function Sidebar({ className, onItemClick, onUpgradeClick, onOpenGuide }: { clas
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border space-y-2">
-        {onOpenGuide && (
-          <Button
-            variant="outline"
-            className="w-full justify-start text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 font-semibold"
-            onClick={() => {
-              if (onOpenGuide) onOpenGuide();
-              if (onItemClick) onItemClick();
-            }}
-          >
-            <BookOpen className="h-4 w-4 mr-2 text-amber-500 shrink-0" />
-            <span>Guide Premiers Pas 💡</span>
-          </Button>
-        )}
+      <div className="p-4 border-t border-sidebar-border space-y-2 pb-safe shrink-0">
         {nextPlan && (
           <Button
             variant="outline"
-            className="w-full justify-start text-primary border-primary/20 hover:bg-primary/5 font-semibold"
+            className="w-full justify-start text-primary border-primary/20 hover:bg-primary/5 font-semibold text-xs h-9"
             onClick={() => {
               if (onUpgradeClick) onUpgradeClick();
               if (onItemClick) onItemClick();
             }}
           >
-            <Sparkles className="h-4 w-4 mr-2" />
-            {upgradeLabel}
+            <Sparkles className="h-4 w-4 mr-2 text-primary" />
+            <span className="truncate">{upgradeLabel}</span>
           </Button>
         )}
-        <Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={handleLogout}>
+        <Button variant="ghost" className="w-full justify-start text-muted-foreground text-xs h-9" onClick={handleLogout}>
           <LogOut className="h-4 w-4 mr-2" />
           {t('nav.logout')}
         </Button>
-        <p className="text-xs text-muted-foreground text-center">
+        <p className="text-[11px] text-muted-foreground text-center">
           Powered by BeautyFlow © 2026
         </p>
       </div>
@@ -260,16 +276,6 @@ export default function AppLayout() {
           </Link>
 
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-amber-600 border-amber-500/30 hover:bg-amber-500/10 h-8 text-[11px] font-bold rounded-full px-2 sm:px-2.5 shadow-xs shrink-0"
-              onClick={() => openTourModal(0)}
-              title="Ouvrir le guide Premiers Pas"
-            >
-              <BookOpen className="h-3.5 w-3.5 sm:mr-1 text-amber-500 shrink-0" />
-              <span className="hidden sm:inline">Guide 💡</span>
-            </Button>
             {nextPlan && (
               <Button
                 size="sm"
@@ -309,15 +315,6 @@ export default function AppLayout() {
       {/* Desktop top bar */}
       {!isMobile && (
         <div className="hidden lg:flex fixed top-0 left-64 right-0 z-20 h-14 bg-card border-b border-border items-center justify-end px-6 gap-3">
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 h-8 text-xs font-bold rounded-full px-3 shadow-xs flex items-center gap-1.5"
-            onClick={() => openTourModal(0)}
-          >
-            <BookOpen className="h-3.5 w-3.5 text-amber-500" />
-            <span>Premiers Pas 💡</span>
-          </Button>
           {nextPlan && (
             <Button
               size="sm"
@@ -365,7 +362,7 @@ export default function AppLayout() {
               </div>
             </div>
           )}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-4 sm:p-6 pb-safe">
             <Outlet />
           </div>
         </div>

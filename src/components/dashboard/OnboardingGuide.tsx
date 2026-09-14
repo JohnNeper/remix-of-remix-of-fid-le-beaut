@@ -120,7 +120,7 @@ export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?
 
   // Define steps dynamically with real app data status
   const steps: OnboardingStep[] = useMemo(() => {
-    const isStep1Done = Boolean(salon?.nom && (salon?.telephone || salon?.whatsappNumber) && salon?.adresse) || Boolean(manualChecks['step-1']);
+    const isStep1Done = Boolean((salon?.nom || salon?.name) && (salon?.telephone || salon?.phone || salon?.whatsappNumber) && (salon?.adresse || salon?.address)) || Boolean(manualChecks['step-1']);
     const isStep2Done = (clients && clients.length > 0) || Boolean(manualChecks['step-2']);
     const isStep3Done = (typesPrestations && typesPrestations.length > 0) || Boolean(manualChecks['step-3']);
     const isStep4Done = (rendezVous && rendezVous.length > 0) || Boolean(manualChecks['step-4']);
@@ -128,7 +128,7 @@ export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?
     const isStep6Done = (ventes && ventes.length > 0) || (depenses && depenses.length > 0) || Boolean(manualChecks['step-6']);
     const isStep7Done = (ventes && ventes.length > 0) || Boolean(manualChecks['step-7']);
     const isStep8Done = (produits && produits.length > 0) || Boolean(manualChecks['step-8']);
-    const isStep9Done = Boolean(salon?.fideliteActive || salon?.programmeFidelite?.actif) || Boolean(manualChecks['step-9']);
+    const isStep9Done = Boolean(salon?.fideliteActive || salon?.programmeFidelite?.actif || salon?.configFidelite?.actif || salon?.configFidelite?.reductionPourcentage) || Boolean(manualChecks['step-9']);
 
     return [
       {
@@ -352,11 +352,11 @@ export const OnboardingGuide: React.FC<{ forceOpenModal?: boolean; onCloseModal?
       <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/40 border border-border text-xs">
         <div className="flex items-center gap-2 text-muted-foreground font-medium">
           <BookOpen className="w-4 h-4 text-primary" />
-          <span>Guide Premiers Pas masqué ({completedCount}/{steps.length} étapes)</span>
+          <span>{t('onboarding.guideDismissed', { completed: completedCount, total: steps.length })}</span>
         </div>
         <Button variant="ghost" size="sm" onClick={handleReset} className="h-7 text-xs font-bold text-primary">
           <RotateCcw className="w-3.5 h-3.5 mr-1" />
-          Réafficher le Guide
+          {t('onboarding.showGuide', 'Réafficher le Guide')}
         </Button>
       </div>
     );

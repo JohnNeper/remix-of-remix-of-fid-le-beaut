@@ -596,8 +596,8 @@ export default function Fidelite() {
 
       {/* ── CONFIG LOYALTY RULES MODAL ─────────────────────────────────────── */}
       <Dialog open={showConfigModal} onOpenChange={setShowConfigModal}>
-        <DialogContent className="max-w-md rounded-3xl p-6">
-          <DialogHeader>
+        <DialogContent className="max-w-md w-[95vw] sm:w-full rounded-3xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
+          <DialogHeader className="shrink-0 p-5 border-b border-border/40">
             <DialogTitle className="text-xl font-black flex items-center gap-2">
               <Settings className="h-5 w-5 text-rose-500" />
               {t('loyalty.configTitle', 'Configurer le Programme Fidélité')}
@@ -607,7 +607,7 @@ export default function Fidelite() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 pt-3">
+          <div className="flex-1 overflow-y-auto p-5 space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-foreground">{t('loyalty.configVisitsLabel', 'Nombre de visites pour un cadeau / réduction')}</label>
               <Input
@@ -648,7 +648,7 @@ export default function Fidelite() {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-border/40">
+          <div className="shrink-0 flex gap-3 p-4 sm:p-5 border-t border-border/40 bg-background/95 backdrop-blur-md">
             <Button variant="outline" onClick={() => setShowConfigModal(false)} className="flex-1 rounded-xl h-10 font-bold text-xs">
               {t('common.cancel', 'Annuler')}
             </Button>

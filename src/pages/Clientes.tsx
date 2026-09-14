@@ -663,8 +663,8 @@ export default function Clientes() {
 
       {/* Add Client Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="sm:max-w-lg w-[95vw] sm:w-full rounded-2xl p-5 overflow-y-auto max-h-[90vh]">
-          <DialogHeader className="mb-2">
+        <DialogContent className="sm:max-w-lg w-[95vw] sm:w-full rounded-2xl sm:rounded-3xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
+          <DialogHeader className="shrink-0 p-4 sm:p-5 border-b border-border/40">
             <DialogTitle className="text-lg font-extrabold">{t('clients.new') || 'Nouvelle cliente'}</DialogTitle>
           </DialogHeader>
           <ClientForm clients={clients} onSubmit={handleAddClient} onCancel={() => setShowAddDialog(false)} />
@@ -673,8 +673,8 @@ export default function Clientes() {
 
       {/* Edit Client Dialog */}
       <Dialog open={!!editingClient} onOpenChange={() => setEditingClient(null)}>
-        <DialogContent className="sm:max-w-lg w-[95vw] sm:w-full rounded-2xl p-5 overflow-y-auto max-h-[90vh]">
-          <DialogHeader className="mb-2">
+        <DialogContent className="sm:max-w-lg w-[95vw] sm:w-full rounded-2xl sm:rounded-3xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
+          <DialogHeader className="shrink-0 p-4 sm:p-5 border-b border-border/40">
             <DialogTitle className="text-lg font-extrabold">{t('clients.editTitle') || 'Modifier la cliente'}</DialogTitle>
           </DialogHeader>
           {editingClient && (

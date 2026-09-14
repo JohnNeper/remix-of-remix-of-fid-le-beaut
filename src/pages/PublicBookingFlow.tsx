@@ -17,7 +17,7 @@ import {
   readPublicSalon, readServices, readRendezVous,
   addPublicRendezVous, makeReference, buildTimeSlots, isSlotTaken,
 } from '@/lib/booking';
-import type { TypePrestation } from '@/types';
+import type { TypePrestation, SalonBookingSettings, DateOverride } from '@/types';
 import type { SalonStaff } from '@/types/auth';
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -35,10 +35,23 @@ export default function PublicBookingFlow() {
   const salon = slug ? readPublicSalon(slug) : null;
   const { client } = useClientAuth();
   const services = salon ? readServices(salon.id) : [];
-  const settings = salon?.bookingSettings || { openingHour: '09:00', closingHour: '18:00', slotDurationMin: 30 };
-  const staffList: SalonStaff[] = salon?.branding?.staff || [];
+  const effectiveAvailability = salon?.availability || salon?.disponibilite || null;
+  const settings: SalonBookingSettings = salon?.bookingSettings || {
+    openingHour: 8,
+    closingHour: 20,
+    slotDurationMin: 30,
+    autoConfirm: true,
+    allowGuest: true,
+    minBookingNoticeMin: 90,
+    customDates: {}
+  };
+  const staffList: SalonStaff[] = (salon?.branding?.staff || []).filter(s => s.actif !== false);
   const slots = useMemo(
-    () => buildTimeSlots(settings.openingHour, settings.closingHour, settings.slotDurationMin),
+    () => buildTimeSlots(
+      typeof settings.openingHour === 'number' ? settings.openingHour : 8,
+      typeof settings.closingHour === 'number' ? settings.closingHour : 20,
+      settings.slotDurationMin || 30
+    ),
     [settings],
   );
 
@@ -327,7 +340,20 @@ export default function PublicBookingFlow() {
                 disabled={d => {
                   const today = new Date(); today.setHours(0, 0, 0, 0);
                   if (d < today) return true;
-                  if (settings.closedDays?.includes(d.getDay())) return true;
+
+                  const dStr = format(d, 'yyyy-MM-dd');
+                  const dCustom = settings.customDates?.[dStr] || (salon as any)?.disponibilite?.customDates?.[dStr] || (salon as any)?.availability?.customDates?.[dStr];
+                  if (dCustom !== undefined) {
+                    return !dCustom.open;
+                  }
+
+                  const dayKey = String(d.getDay());
+                  if (effectiveAvailability && effectiveAvailability[dayKey] !== undefined) {
+                    return !effectiveAvailability[dayKey]?.open;
+                  }
+                  if (settings.closedDays && Array.isArray(settings.closedDays)) {
+                    return settings.closedDays.includes(d.getDay());
+                  }
                   return false;
                 }}
                 locale={fr}
@@ -336,9 +362,38 @@ export default function PublicBookingFlow() {
             </Card>
             {date && (
               <div className="space-y-4">
+                {(settings.minBookingNoticeMin ?? 90) > 0 && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-semibold border border-amber-500/20">
+                    <span>ℹ️ Réservation possible au moins {Math.round((settings.minBookingNoticeMin ?? 90) / 60)}h{((settings.minBookingNoticeMin ?? 90) % 60) > 0 ? `${(settings.minBookingNoticeMin ?? 90) % 60}min` : ''} à l'avance.</span>
+                  </div>
+                )}
+
                 {slotGroups.map(g => {
                   const Icon = g.icon;
-                  const available = g.items.filter(t => !isSlotTaken(existing, dateStr, t));
+                  const available = g.items.filter(t => {
+                    const minNotice = typeof settings.minBookingNoticeMin === 'number' ? settings.minBookingNoticeMin : 90;
+                    const now = new Date();
+                    const [slotH, slotM] = t.split(':').map(Number);
+                    const slotDateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), slotH, slotM, 0, 0);
+                    
+                    // Minimum advance notice
+                    const diffMinutes = (slotDateTime.getTime() - now.getTime()) / (1000 * 60);
+                    if (diffMinutes < minNotice) return false;
+
+                    const dCustom = settings.customDates?.[dateStr] || (salon as any)?.disponibilite?.customDates?.[dateStr] || (salon as any)?.availability?.customDates?.[dateStr];
+                    const dayOfWeek = String(date ? date.getDay() : new Date().getDay());
+                    const salonSched = dCustom
+                      ? { open: dCustom.open, start: dCustom.start || '08:00', end: dCustom.end || '19:00' }
+                      : (effectiveAvailability?.[dayOfWeek] || { open: true, start: '08:00', end: '19:00' });
+
+                    if (!salonSched.open) return false;
+                    const startMin = (Number((salonSched.start || '08:00').split(':')[0]) * 60) + Number((salonSched.start || '08:00').split(':')[1]);
+                    const endMin = (Number((salonSched.end || '19:00').split(':')[0]) * 60) + Number((salonSched.end || '19:00').split(':')[1]);
+                    const slotStart = (slotH * 60) + slotM;
+                    if (slotStart < startMin || slotStart + (settings.slotDurationMin || 30) > endMin) return false;
+
+                    return !isSlotTaken(existing, dateStr, t);
+                  });
                   return (
                     <div key={g.label}>
                       <div className="flex items-center gap-2 mb-2 px-1">
@@ -352,7 +407,7 @@ export default function PublicBookingFlow() {
                       </div>
                       <div className="grid grid-cols-4 gap-2">
                         {g.items.map(t => {
-                          const taken = isSlotTaken(existing, dateStr, t);
+                          const taken = !available.includes(t);
                           return (
                             <button
                               key={t}

@@ -156,9 +156,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const notifications = useMemo(() => {
     const notifs: AppNotification[] = [];
 
-    // Filter backend notifications by dismissedIds
+    // Filter backend notifications by dismissedIds and read status
     backendNotifications.forEach(n => {
-      if (!dismissedIds.has(n.id)) {
+      if (!dismissedIds.has(n.id) && !readIds.has(n.id) && !n.read) {
         notifs.push(n);
       }
     });
@@ -166,13 +166,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     // Stock alerts
     (produitsEnAlerte || []).forEach(p => {
       const id = `stock-${p.id}`;
-      if (!dismissedIds.has(id)) {
+      if (!dismissedIds.has(id) && !readIds.has(id)) {
         notifs.push({
           id,
           type: 'stock',
           title: `Alerte Stock: ${p.nom}`,
           description: `Quantité restante: ${p.quantite} (Seuil d'alerte: ${p.seuilAlerte})`,
-          read: readIds.has(id),
+          read: false,
           timestamp: Date.now(),
         });
       }
@@ -181,13 +181,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     // Today's RDV
     if (rdvToday.length > 0) {
       const id = `rdv-today`;
-      if (!dismissedIds.has(id)) {
+      if (!dismissedIds.has(id) && !readIds.has(id)) {
         notifs.push({
           id,
           type: 'rdv',
           title: `${rdvToday.length} Rendez-vous aujourd'hui`,
           description: 'Consultez votre agenda pour les détails de la journée.',
-          read: readIds.has(id),
+          read: false,
           timestamp: Date.now(),
         });
       }
@@ -196,13 +196,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     // Inactive clients
     if (inactiveClients.length > 0) {
       const id = `inactive-clients`;
-      if (!dismissedIds.has(id)) {
+      if (!dismissedIds.has(id) && !readIds.has(id)) {
         notifs.push({
           id,
           type: 'inactive',
           title: `${inactiveClients.length} Clientes inactives`,
           description: `Aucune visite depuis plus de ${salon?.joursRappelInactivite || 30} jours.`,
-          read: readIds.has(id),
+          read: false,
           timestamp: Date.now(),
         });
       }

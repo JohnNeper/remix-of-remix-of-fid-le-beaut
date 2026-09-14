@@ -52,7 +52,7 @@ export default function Prestations() {
 
   const { addRendezVous } = useRendezVous();
   const { session } = useAuth();
-  const isOwner = session?.userRole === 'owner' || session?.type === 'admin';
+  const isOwner = session?.userRole === 'owner' || session?.userRole === 'co_owner' || session?.type === 'admin';
 
   const getCategoryLabel = (cat: string) => {
     if (!cat) return '';
@@ -385,6 +385,7 @@ export default function Prestations() {
               <div className="p-4 overflow-y-auto pb-10">
                 <NouvellePrestation
                   onClose={() => setShowNouvellePrestation(false)}
+                  onAddNewType={() => { setShowNouvellePrestation(false); setShowAddType(true); }}
                   defaultPrestationId={selectedPrestation || undefined}
                 />
               </div>
@@ -394,8 +395,8 @@ export default function Prestations() {
       ) : (
         <>
           <Dialog open={showAddType} onOpenChange={setShowAddType}>
-            <DialogContent className="sm:max-w-md w-[95vw] sm:w-full rounded-3xl p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
-              <DialogHeader className="mb-4">
+            <DialogContent className="sm:max-w-md w-[95vw] sm:w-full rounded-3xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
+              <DialogHeader className="shrink-0 p-4 sm:p-6 border-b border-border/40">
                 <DialogTitle className="text-xl sm:text-2xl">{t('services.newTypeTitle')}</DialogTitle>
               </DialogHeader>
               <TypePrestationForm onSubmit={handleAddType} onCancel={() => setShowAddType(false)} />
@@ -403,8 +404,8 @@ export default function Prestations() {
           </Dialog>
 
           <Dialog open={!!editingType} onOpenChange={() => setEditingType(null)}>
-            <DialogContent className="sm:max-w-md w-[95vw] sm:w-full rounded-3xl p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
-              <DialogHeader className="mb-4">
+            <DialogContent className="sm:max-w-md w-[95vw] sm:w-full rounded-3xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
+              <DialogHeader className="shrink-0 p-4 sm:p-6 border-b border-border/40">
                 <DialogTitle className="text-xl sm:text-2xl">{t('services.editTypeTitle')}</DialogTitle>
               </DialogHeader>
               {editingType && (
@@ -418,18 +419,19 @@ export default function Prestations() {
           </Dialog>
 
           <Dialog open={showNouvellePrestation} onOpenChange={setShowNouvellePrestation}>
-            <DialogContent className="sm:max-w-lg w-[95vw] sm:w-full p-0 rounded-3xl overflow-hidden max-h-[90vh] bg-background border-none shadow-2xl">
+            <DialogContent className="sm:max-w-lg w-[95vw] sm:w-full p-0 rounded-3xl overflow-hidden max-h-[90vh] flex flex-col bg-background border-none shadow-2xl">
               <div className="bg-primary p-6 text-primary-foreground relative overflow-hidden shrink-0">
                 <div className="absolute top-0 right-0 p-6 opacity-10 rotate-12 pointer-events-none">
                   <Scissors className="h-24 w-24" />
                 </div>
-                <DialogHeader className="relative z-10 text-left p-0">
+                <DialogHeader className="relative z-10 text-left p-0 border-none">
                   <DialogTitle className="text-2xl font-black tracking-tight">{t('services.registerTitle')}</DialogTitle>
                 </DialogHeader>
               </div>
-              <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
+              <div className="p-6 overflow-y-auto flex-1 min-h-0">
                 <NouvellePrestation
                   onClose={() => setShowNouvellePrestation(false)}
+                  onAddNewType={() => { setShowNouvellePrestation(false); setShowAddType(true); }}
                   defaultPrestationId={selectedPrestation || undefined}
                 />
               </div>
@@ -440,42 +442,38 @@ export default function Prestations() {
 
       {isMobile ? (
         <Drawer open={showAddRdv} onOpenChange={setShowAddRdv}>
-          <DrawerContent className="p-0 bg-background border-none rounded-t-[30px] overflow-hidden max-h-[92vh] outline-none">
+          <DrawerContent className="p-0 bg-background border-none rounded-t-[30px] overflow-hidden max-h-[92vh] flex flex-col outline-none">
             <div className="bg-primary p-6 text-primary-foreground relative overflow-hidden shrink-0">
               <div className="absolute top-0 right-0 p-6 opacity-10 rotate-12 pointer-events-none">
                 <Plus className="h-24 w-24" />
               </div>
-              <DrawerHeader className="relative z-10 text-left p-0">
+              <DrawerHeader className="relative z-10 text-left p-0 border-none">
                 <DrawerTitle className="text-xl font-black tracking-tight">{t('appointments.newRdvTitle')}</DrawerTitle>
               </DrawerHeader>
             </div>
-            <div className="p-4 overflow-y-auto pb-10">
-              <RendezVousForm
-                defaultPrestationId={selectedPrestation || undefined}
-                onSubmit={handleAddRdv}
-                onCancel={() => setShowAddRdv(false)}
-              />
-            </div>
+            <RendezVousForm
+              defaultPrestationId={selectedPrestation || undefined}
+              onSubmit={handleAddRdv}
+              onCancel={() => setShowAddRdv(false)}
+            />
           </DrawerContent>
         </Drawer>
       ) : (
         <Dialog open={showAddRdv} onOpenChange={setShowAddRdv}>
-          <DialogContent className="sm:max-w-xl w-[95vw] sm:w-full p-0 overflow-hidden rounded-3xl border-none shadow-3xl bg-background/95 backdrop-blur-xl max-h-[95vh] overflow-y-auto">
-            <div className="bg-primary p-6 sm:p-12 text-primary-foreground relative overflow-hidden">
+          <DialogContent className="sm:max-w-xl w-[95vw] sm:w-full p-0 overflow-hidden rounded-3xl border-none shadow-3xl bg-background/95 backdrop-blur-xl max-h-[90vh] flex flex-col">
+            <div className="bg-primary p-6 sm:p-8 text-primary-foreground relative overflow-hidden shrink-0">
               <div className="absolute top-0 right-0 p-4 sm:p-8 opacity-10 rotate-12">
-                <Plus className="h-16 w-16 sm:h-32 sm:w-32" />
+                <Plus className="h-16 w-16 sm:h-24 sm:w-24" />
               </div>
-              <DialogHeader className="relative z-10 text-left">
+              <DialogHeader className="relative z-10 text-left p-0 border-none">
                 <DialogTitle className="text-xl sm:text-3xl font-black tracking-tight">{t('appointments.newRdvTitle')}</DialogTitle>
               </DialogHeader>
             </div>
-            <div className="p-4 sm:p-8 pt-4">
-              <RendezVousForm
-                defaultPrestationId={selectedPrestation || undefined}
-                onSubmit={handleAddRdv}
-                onCancel={() => setShowAddRdv(false)}
-              />
-            </div>
+            <RendezVousForm
+              defaultPrestationId={selectedPrestation || undefined}
+              onSubmit={handleAddRdv}
+              onCancel={() => setShowAddRdv(false)}
+            />
           </DialogContent>
         </Dialog>
       )}

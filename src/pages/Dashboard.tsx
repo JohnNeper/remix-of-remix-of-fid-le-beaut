@@ -55,7 +55,7 @@ export default function Dashboard() {
   const { produits } = useStock();
   const { rendezVous } = useRendezVous();
   
-  const isOwner = session?.userRole === 'owner' || session?.type === 'admin';
+  const isOwner = session?.userRole === 'owner' || session?.userRole === 'co_owner' || session?.type === 'admin';
 
   // Format today's date nicely
   const formattedTodayDate = useMemo(() => {

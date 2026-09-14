@@ -46,14 +46,33 @@ export function MediaSettingsTab({ salon, updateSalon, language, t }: MediaSetti
   const handleGalleryChange = async (urls: string | string[]) => {
     try {
       const finalUrls = Array.isArray(urls) ? urls : [urls];
-      await updateSalon({
+      const updates: any = {
         galleryUrls: finalUrls,
         branding: { ...(salon.branding || {}), gallery: finalUrls }
-      } as any);
-      toast({ 
-        title: '✅ ' + (t('common.success') || 'Succès'), 
-        description: language === 'fr' ? 'Galerie photos mise à jour' : 'Gallery updated' 
-      });
+      };
+
+      // Si le salon n'a pas encore de bannière, on définit la 1ère photo de la galerie par défaut
+      const hadNoBanner = !salon.bannerUrl && !salon.branding?.bannerUrl;
+      if (hadNoBanner && finalUrls.length > 0) {
+        updates.bannerUrl = finalUrls[0];
+        updates.branding.bannerUrl = finalUrls[0];
+      }
+
+      await updateSalon(updates);
+
+      if (hadNoBanner && finalUrls.length > 0) {
+        toast({ 
+          title: '✨ ' + (t('common.success') || 'Succès'), 
+          description: language === 'fr' 
+            ? 'Galerie mise à jour & 1ère photo définie comme bannière pour attirer vos clients !' 
+            : 'Gallery updated & 1st photo set as default cover banner!' 
+        });
+      } else {
+        toast({ 
+          title: '✅ ' + (t('common.success') || 'Succès'), 
+          description: language === 'fr' ? 'Galerie photos mise à jour' : 'Gallery updated' 
+        });
+      }
     } catch (err) {
       toast({ title: '❌ Erreur', description: 'Échec de la mise à jour', variant: 'destructive' });
     }

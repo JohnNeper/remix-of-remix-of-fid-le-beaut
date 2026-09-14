@@ -40,12 +40,12 @@ export const FloatingTourButton: React.FC = () => {
   }, []);
 
   const steps: OnboardingStep[] = useMemo(() => {
-    const isStep1Done = Boolean(salon?.nom && (salon?.telephone || salon?.whatsappNumber) && salon?.adresse) || Boolean(manualChecks['step-1']);
+    const isStep1Done = Boolean((salon?.name || (salon as any)?.nom) && (salon?.phone || (salon as any)?.telephone || (salon as any)?.whatsappNumber) && (salon?.address || (salon as any)?.adresse)) || Boolean(manualChecks['step-1']);
     const isStep2Done = (clients && clients.length > 0) || Boolean(manualChecks['step-2']);
     const isStep3Done = (typesPrestations && typesPrestations.length > 0) || Boolean(manualChecks['step-3']);
     const isStep4Done = (prestations && prestations.length > 0) || (rendezVous && rendezVous.length > 0) || Boolean(manualChecks['step-4']);
     const isStep5Done = (produits && produits.length > 0) || Boolean(manualChecks['step-5']);
-    const isStep6Done = Boolean(salon?.fideliteActive || salon?.programmeFidelite?.actif) || Boolean(manualChecks['step-6']);
+    const isStep6Done = Boolean((salon as any)?.fideliteActive || (salon as any)?.programmeFidelite?.actif || salon?.configFidelite?.actif) || Boolean(manualChecks['step-6']);
 
     return [
       {
@@ -199,41 +199,17 @@ export const FloatingTourButton: React.FC = () => {
   };
 
   return (
-    <>
-      <div className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-50 animate-in fade-in duration-300">
-        <Button
-          onClick={() => openTourModal(0)}
-          className="h-12 px-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-950 dark:border dark:border-amber-400/40 shadow-2xl flex items-center gap-2.5 font-sans border-2 border-amber-400/60 transition-transform active:scale-95 group"
-        >
-          <div className="w-7 h-7 rounded-full bg-gradient-to-r from-amber-400 to-rose-500 flex items-center justify-center text-slate-950 font-black text-xs shrink-0 shadow-sm group-hover:scale-110 transition-transform">
-            <Sparkles className="w-3.5 h-3.5" />
-          </div>
-          <div className="text-left hidden sm:block">
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
-              {t('tour.floatingBtnLabel', 'Guide 1ers pas')}
-            </div>
-            <div className="text-xs font-black text-white flex items-center gap-1.5">
-              <span>{completedCount}/{steps.length} {t('tour.completedTag', 'Terminées')}</span>
-            </div>
-          </div>
-          <Badge className="bg-amber-400 text-slate-950 font-black text-[11px] px-2 py-0.5 rounded-full border-0 ml-1">
-            {completedCount}/{steps.length}
-          </Badge>
-        </Button>
-      </div>
-
-      <OnboardingModal
-        open={isTourModalOpen}
-        onOpenChange={handleModalOpenChange}
-        steps={steps.map(step => ({
-          ...step,
-          // Override route handler to activate tour pointer on navigation!
-          route: '#',
-          routeLabel: step.routeLabel,
-        }))}
-        completedCount={completedCount}
-        initialStepIndex={initialStepIndex}
-      />
-    </>
+    <OnboardingModal
+      open={isTourModalOpen}
+      onOpenChange={handleModalOpenChange}
+      steps={steps.map(step => ({
+        ...step,
+        // Override route handler to activate tour pointer on navigation!
+        route: '#',
+        routeLabel: step.routeLabel,
+      }))}
+      completedCount={completedCount}
+      initialStepIndex={initialStepIndex}
+    />
   );
 };

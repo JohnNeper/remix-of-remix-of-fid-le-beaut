@@ -162,7 +162,7 @@ export function createSalonAccount(data: Omit<SalonAccount, 'id' | 'dateCreation
 }
 
 // ===== Staff management =====
-export function addStaffToSalon(salonId: string, staffData: { nom: string; email: string; motDePasse: string; telephone?: string }): SalonUser | null {
+export function addStaffToSalon(salonId: string, staffData: { nom: string; email: string; motDePasse: string; telephone?: string; role?: SalonUserRole }): SalonUser | null {
   const salons = getSalonAccounts();
   const index = salons.findIndex(s => s.id === salonId);
   if (index < 0) return null;
@@ -177,7 +177,7 @@ export function addStaffToSalon(salonId: string, staffData: { nom: string; email
     nom: staffData.nom,
     email: staffData.email,
     motDePasse: simpleHash(staffData.motDePasse),
-    role: 'staff',
+    role: staffData.role || 'staff',
     telephone: staffData.telephone,
     dateCreation: new Date().toISOString().split('T')[0],
   };

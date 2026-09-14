@@ -1,27 +1,35 @@
 import React, { useState } from 'react';
-import { Building2, RefreshCw, Users, UserPlus, Trash2, Crown, User, Edit2 } from 'lucide-react';
+import { Building2, RefreshCw, Users, UserPlus, Trash2, Crown, User, Edit2, MapPin, Sparkles, EyeOff, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { api } from '@/lib/api';
-import { Salon } from '@/types/auth';
 import { toast } from '@/hooks/use-toast';
 import { PLANS, PlanType, getPlanColor, formatPlanPrice, getPlan } from '@/lib/plans';
+import EditSalonModal from '@/components/admin/EditSalonModal';
 
 interface Props {
-  salon: SalonAccount;
+  salon: any;
   onRenew: (id: string) => void;
-  onToggle: (salon: Salon) => Promise<void>;
+  onToggle: (salon: any) => Promise<void>;
   onRefresh?: () => void;
 }
 
-function daysRemaining(salon: SalonAccount): number {
-  const expiry = new Date(salon.dernierPaiement);
-  expiry.setDate(expiry.getDate() + salon.joursAbonnement);
-  const diff = expiry.getTime() - Date.now();
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+function daysRemaining(salon: any): number {
+  if (salon.abonnement?.dateFin) {
+    const expiry = new Date(salon.abonnement.dateFin);
+    const diff = expiry.getTime() - Date.now();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }
+  if (salon.dernierPaiement) {
+    const expiry = new Date(salon.dernierPaiement);
+    expiry.setDate(expiry.getDate() + (salon.joursAbonnement || 30));
+    const diff = expiry.getTime() - Date.now();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }
+  return 30;
 }
 
 const formatDateForInput = (dateString?: string | Date) => {
@@ -32,9 +40,15 @@ const formatDateForInput = (dateString?: string | Date) => {
 };
 
 export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props) {
-  const active = isSalonSubscriptionActive(salon);
+  const active = salon.isActive !== false && (salon.abonnement?.statut !== 'expire' && salon.abonnement?.statut !== 'suspendu');
+  const isSponsored = !!(salon.isSponsored || salon.branding?.isSponsored);
+  const isHidden = !!(salon.isHidden || salon.hidden);
+  const hasGps = !!(salon.location?.lat && salon.location?.lng);
   const days = daysRemaining(salon);
   const currentPlan = getPlan(salon.plan || 'basic');
+
+  // Edit Salon modal state
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Collapsible sections
   const [showUsers, setShowUsers] = useState(false);
@@ -81,7 +95,7 @@ export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props
   const fetchStaff = async () => {
     try {
       setLoadingStaff(true);
-      const data = await api.getStaff(salon._id || '');
+      const data = await api.getStaff(salon._id || salon.id || '');
       setStaffList(data);
     } catch (err) {
       toast({ title: 'Erreur', description: 'Impossible de charger le personnel', variant: 'destructive' });
@@ -97,6 +111,43 @@ export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props
     setShowUsers(!showUsers);
   };
 
+  const handleToggleSponsor = async () => {
+    const salonId = salon._id || salon.id;
+    try {
+      const nextSponsored = !isSponsored;
+      await api.adminUpdateSalon(salonId, {
+        isSponsored: nextSponsored,
+        branding: {
+          ...(salon.branding || {}),
+          isSponsored: nextSponsored
+        }
+      });
+      toast({
+        title: nextSponsored ? '⭐ Salon mis en avant (Sponsorisé)' : 'Mise en avant retirée',
+        description: `Le statut sponsorisé de "${salon.name || salon.nom}" a été mis à jour.`
+      });
+      onRefresh?.();
+    } catch (err: any) {
+      toast({ title: 'Erreur', description: err.message || 'Impossible de mettre à jour le statut sponsorisé', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteSalon = async () => {
+    const salonId = salon._id || salon.id;
+    const salonName = salon.name || salon.nom || 'ce salon';
+    if (!window.confirm(`Êtes-vous ABSOLUMENT certain de vouloir supprimer le salon "${salonName}" ? Cette action est irréversible et supprimera toutes les données associées.`)) {
+      return;
+    }
+
+    try {
+      await api.adminDeleteSalon(salonId);
+      toast({ title: 'Salon supprimé', description: `Le salon "${salonName}" a été supprimé avec succès.` });
+      onRefresh?.();
+    } catch (err: any) {
+      toast({ title: 'Erreur de suppression', description: err.message || 'Impossible de supprimer ce salon', variant: 'destructive' });
+    }
+  };
+
   const handleAddStaff = async () => {
     if (!staffNom || !staffEmail || !staffPwd) {
       toast({ title: 'Erreur', description: 'Veuillez remplir tous les champs obligatoires', variant: 'destructive' });
@@ -104,7 +155,7 @@ export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props
     }
 
     try {
-      await api.createStaff(salon._id || '', {
+      await api.createStaff(salon._id || salon.id || '', {
         name: staffNom,
         email: staffEmail,
         password: staffPwd,
@@ -117,7 +168,7 @@ export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props
       setStaffTel('');
       setShowAddStaff(false);
       fetchStaff();
-      onRefresh?.(); // refresh salon stats
+      onRefresh?.();
     } catch (error: any) {
       toast({
         title: 'Erreur',
@@ -142,7 +193,7 @@ export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props
     }
 
     try {
-      await api.updateStaff(salon._id || '', userId, {
+      await api.updateStaff(salon._id || salon.id || '', userId, {
         name: editNom,
         email: editEmail,
         telephone: editTel,
@@ -160,7 +211,7 @@ export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props
     if (!window.confirm(`Voulez-vous vraiment supprimer ${name} du personnel ?`)) return;
 
     try {
-      await api.deleteStaff(salon._id || '', userId);
+      await api.deleteStaff(salon._id || salon.id || '', userId);
       toast({ title: `${name} a été supprimé` });
       fetchStaff();
       onRefresh?.();
@@ -171,7 +222,7 @@ export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props
 
   const handleChangePlan = async (newPlan: PlanType) => {
     try {
-      await api.adminUpdateSalonStatus(salon._id || '', { plan: newPlan, statutAbonnement: 'actif' });
+      await api.adminUpdateSalonStatus(salon._id || salon.id || '', { plan: newPlan, statutAbonnement: 'actif' });
       toast({ title: `Plan mis à jour` });
       onRefresh?.();
     } catch (err) {
@@ -183,7 +234,7 @@ export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props
   const handleSaveSubscription = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.adminUpdateSalonStatus(salon._id || '', {
+      await api.adminUpdateSalonStatus(salon._id || salon.id || '', {
         plan: subPlan,
         abonnement: {
           statut: subStatut,
@@ -225,53 +276,178 @@ export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props
   const staffCount = staffList.length;
 
   return (
-    <div className={`p-3 sm:p-4 rounded-xl border ${active ? 'border-border bg-card' : 'border-destructive/30 bg-destructive/5'}`}>
+    <div className={`p-3 sm:p-4 rounded-xl border transition-all ${
+      isSponsored ? 'border-amber-500/50 bg-amber-500/5 shadow-sm' :
+      active ? 'border-border bg-card' : 'border-destructive/30 bg-destructive/5'
+    }`}>
       <div className="flex flex-col gap-3">
         {/* Salon info */}
         <div className="flex items-start gap-3">
-          <div className={`h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center shrink-0 ${active ? 'bg-primary/20' : 'bg-destructive/20'}`}>
-            <Building2 className={`h-4 w-4 sm:h-5 sm:w-5 ${active ? 'text-primary' : 'text-destructive'}`} />
+          <div className="relative shrink-0">
+            {salon.logoUrl || salon.logo ? (
+              <img
+                src={salon.logoUrl || salon.logo}
+                alt={salon.name || salon.nom}
+                className="h-11 w-11 sm:h-12 sm:w-12 rounded-xl object-cover border border-border"
+              />
+            ) : (
+              <div className={`h-11 w-11 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center ${active ? 'bg-primary/20' : 'bg-destructive/20'}`}>
+                <Building2 className={`h-5 w-5 ${active ? 'text-primary' : 'text-destructive'}`} />
+              </div>
+            )}
+            {isSponsored && (
+              <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-black text-[9px] font-black px-1 rounded-full shadow">
+                ★
+              </span>
+            )}
           </div>
+
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-sm sm:text-base text-foreground">{salon.nom}</h3>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1">
+              <h3 className="font-semibold text-sm sm:text-base text-foreground flex items-center gap-1.5">
+                {salon.name || salon.nom}
+              </h3>
+
+              {isSponsored && (
+                <Badge className="bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 border-amber-500/40 text-[10px] font-semibold flex items-center gap-1">
+                  <Sparkles className="h-2.5 w-2.5" /> Sponsorisé
+                </Badge>
+              )}
+
               <Badge className={`${getPlanColor(salon.plan || 'basic')} text-[10px] sm:text-xs`}>
                 {currentPlan.label}
               </Badge>
-              <Badge className={`text-[10px] sm:text-xs ${active ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>
-                {active ? `${days}j restants` : 'Expiré'}
+
+              <Badge className={`text-[10px] sm:text-xs ${active ? 'bg-emerald-500/20 text-emerald-500' : 'bg-destructive/20 text-destructive'}`}>
+                {active ? `${days}j restants` : 'Expiré / Inactif'}
               </Badge>
+
+              {hasGps ? (
+                <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-500 bg-emerald-500/5 flex items-center gap-1" title={`${salon.location.lat}, ${salon.location.lng}`}>
+                  <MapPin className="h-2.5 w-2.5" /> GPS OK
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-500 bg-amber-500/5 flex items-center gap-1" title="Aucune coordonnée GPS enregistrée">
+                  <MapPin className="h-2.5 w-2.5" /> Sans GPS
+                </Badge>
+              )}
+
+              {isHidden && (
+                <Badge variant="secondary" className="text-[10px] bg-muted text-muted-foreground flex items-center gap-1">
+                  <EyeOff className="h-2.5 w-2.5" /> Masqué Explorer
+                </Badge>
+              )}
+
               <Badge variant="secondary" className="text-[10px]">
                 <Users className="h-3 w-3 mr-1" />
                 {staffCount} staff(s){maxStaff < Infinity ? `/${maxStaff}` : ''}
               </Badge>
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground truncate">{(salon.proprietaire as any)?.name || (salon.owner as any)?.name || 'N/A'} · {salon.phone || (salon.proprietaire as any)?.telephone || (salon.owner as any)?.telephone}</p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{salon.email} · {formatPlanPrice(salon.abonnement?.montant || currentPlan.price)}</p>
+
+            {/* Address & City */}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+              <span className="font-medium text-foreground">
+                {(salon.proprietaire as any)?.name || (salon.owner as any)?.name || 'Propriétaire'}
+              </span>
+              <span>·</span>
+              <span>{salon.phone || (salon.proprietaire as any)?.telephone || (salon.owner as any)?.telephone || 'Sans tél'}</span>
+              <span>·</span>
+              <span>{salon.email}</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5 truncate">
+              <MapPin className="h-3 w-3 shrink-0 text-primary" />
+              <span className="truncate">
+                {salon.address || salon.adresse || 'Adresse non spécifiée'}
+                {salon.ville ? `, ${salon.ville}` : ''}
+                {salon.pays ? ` (${salon.pays})` : ''}
+              </span>
+              {salon.slug && (
+                <span className="text-[10px] bg-muted/60 px-1.5 py-0.5 rounded text-muted-foreground ml-1 shrink-0 font-mono">
+                  /{salon.slug}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2 ml-12 sm:ml-[52px] flex-wrap">
-          <Button size="sm" variant="outline" onClick={() => setShowSubDialog(true)} className="text-xs h-8">
-            <RefreshCw className="h-3 w-3 mr-1" />
-            Abonnement
-          </Button>
-          <Button size="sm" variant={active ? 'destructive' : 'default'} onClick={() => onToggle(salon)} className="text-xs h-8">
-            {active ? 'Désactiver' : 'Activer'}
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => setShowPlanChange(!showPlanChange)} className="text-xs h-8">
-            Plan
-          </Button>
-          <Button size="sm" variant="outline" onClick={handleToggleUsers} className="text-xs h-8">
-            <Users className="h-3 w-3 mr-1" />
-            {showUsers ? 'Masquer' : 'Utilisateurs'}
-          </Button>
+        {/* Actions Bar */}
+        <div className="flex items-center justify-between pt-2 border-t border-border flex-wrap gap-2">
+          {/* Left quick actions */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Full Edit Modal Trigger */}
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => setShowEditModal(true)}
+              className="text-xs h-8 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+            >
+              <Edit2 className="h-3.5 w-3.5 mr-1.5" />
+              Modifier le Salon & GPS
+            </Button>
+
+            {/* Sponsor Toggle */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleToggleSponsor}
+              className={`text-xs h-8 border ${
+                isSponsored
+                  ? 'bg-amber-500/15 border-amber-500 text-amber-500 hover:bg-amber-500/25'
+                  : 'hover:border-amber-500/50 hover:text-amber-500'
+              }`}
+              title="Activer ou désactiver la mise en avant en tête de liste sur Explorer"
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1 text-amber-500" />
+              {isSponsored ? 'Sponsorisé (Actif)' : 'Mettre en avant'}
+            </Button>
+
+            {/* Active / Deactivate Toggle */}
+            <Button
+              size="sm"
+              variant={active ? 'outline' : 'default'}
+              onClick={() => onToggle(salon)}
+              className={`text-xs h-8 ${active ? 'border-destructive/40 text-destructive hover:bg-destructive/10' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+            >
+              {active ? 'Désactiver' : 'Activer'}
+            </Button>
+
+            {/* Subscription dialog button */}
+            <Button size="sm" variant="outline" onClick={() => setShowSubDialog(true)} className="text-xs h-8">
+              <RefreshCw className="h-3 w-3 mr-1" />
+              Abonnement
+            </Button>
+
+            {/* Plan Button */}
+            <Button size="sm" variant="outline" onClick={() => setShowPlanChange(!showPlanChange)} className="text-xs h-8">
+              Plan
+            </Button>
+
+            {/* Users / Staff Button */}
+            <Button size="sm" variant="outline" onClick={handleToggleUsers} className="text-xs h-8">
+              <Users className="h-3 w-3 mr-1" />
+              {showUsers ? 'Masquer' : 'Staff'}
+            </Button>
+          </div>
+
+          {/* Delete Button */}
+          <div>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleDeleteSalon}
+              className="text-xs h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              title="Supprimer définitivement ce salon"
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1" />
+              Supprimer
+            </Button>
+          </div>
         </div>
 
-        {/* Plan change */}
+        {/* Plan change dropdown */}
         {showPlanChange && (
-          <div className="ml-12 sm:ml-[52px] pt-2 border-t border-border">
+          <div className="pt-2 border-t border-border">
             <p className="text-xs font-medium mb-2 text-muted-foreground">Changer le plan :</p>
             <div className="grid grid-cols-3 gap-2">
               {(Object.keys(PLANS) as PlanType[]).map((planKey) => {
@@ -297,9 +473,9 @@ export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props
           </div>
         )}
 
-        {/* Users panel */}
+        {/* Users / Staff panel */}
         {showUsers && (
-          <div className="ml-12 sm:ml-[52px] space-y-2 pt-2 border-t border-border">
+          <div className="space-y-2 pt-2 border-t border-border">
             {loadingStaff ? (
               <p className="text-xs text-muted-foreground text-center py-2 animate-pulse">Chargement du personnel...</p>
             ) : (
@@ -401,13 +577,24 @@ export default function SalonCard({ salon, onRenew, onToggle, onRefresh }: Props
         )}
       </div>
 
+      {/* Edit Full Salon Modal (GPS, Info, Branding, Sponsor) */}
+      <EditSalonModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        salon={salon}
+        onSaved={() => {
+          setShowEditModal(false);
+          onRefresh?.();
+        }}
+      />
+
       {/* Dialog Gérer Abonnement */}
       <Dialog open={showSubDialog} onOpenChange={setShowSubDialog}>
         <DialogContent className="max-w-[95vw] sm:max-w-md mx-auto max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
               <RefreshCw className="h-5 w-5 text-primary" />
-              Gérer l'abonnement de {salon.name}
+              Gérer l'abonnement de {salon.name || salon.nom}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveSubscription} className="space-y-4">

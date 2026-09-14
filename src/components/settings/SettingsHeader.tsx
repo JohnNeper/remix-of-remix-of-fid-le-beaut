@@ -28,7 +28,7 @@ export function SettingsHeader({
 
   // Generate public booking URL
   const bookingSlug = salon.slug || (salon as any)._id || salon.id;
-  const bookingUrl = `${window.location.origin}/book/${bookingSlug}`;
+  const bookingUrl = `https://www.beautyflowafrica.com/booking/${bookingSlug}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(bookingUrl);

@@ -17,7 +17,7 @@ interface AuthContextType {
   currentSalon: SalonAccount | null;
   currentUser: SalonUser | null;
   isSubscriptionValid: boolean;
-  loginAdmin: (email: string, password: string) => boolean;
+  loginAdmin: (email: string, password: string) => Promise<{ success: boolean; reason?: string }>;
   loginSalon: (email: string, password: string) => Promise<{ success: boolean; reason?: string; isSubscriptionExpired?: boolean }>;
   loginGoogle: () => void;
   loginGoogleWithToken: (token: string, role?: string) => Promise<{ success: boolean; reason?: string }>;
@@ -186,14 +186,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return isSalonSubscriptionActive(currentSalon);
   })();
 
-  const loginAdmin = useCallback((email: string, password: string): boolean => {
+  const loginAdmin = useCallback(async (email: string, password: string): Promise<{ success: boolean; reason?: string }> => {
+    // 1. Try real REST API backend admin-login first
+    try {
+      const apiSession = await api.loginAdmin({ email, password });
+      if (apiSession) {
+        saveSession(apiSession);
+        setSessionState(apiSession);
+        return { success: true };
+      }
+    } catch (apiError: any) {
+      console.warn('[AUTH] Backend admin-login attempt:', apiError?.message);
+      const msg: string = apiError?.message || '';
+      const isNetworkError = !msg || msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('ECONNREFUSED') || msg.includes('Network Error');
+
+      // If backend responded with invalid credentials / not admin and not offline
+      if (!isNetworkError && !verifyAdmin(email, password)) {
+        return { success: false, reason: msg || 'Identifiants incorrects' };
+      }
+    }
+
+    // 2. Fallback to local admin
     if (verifyAdmin(email, password)) {
       const s: AuthSession = { type: 'admin', email, timestamp: Date.now() };
       saveSession(s);
       setSessionState(s);
-      return true;
+      return { success: true };
     }
-    return false;
+
+    return { success: false, reason: 'Identifiants incorrects' };
   }, []);
 
   const loginSalon = useCallback(async (email: string, password: string): Promise<{ success: boolean; reason?: string; isSubscriptionExpired?: boolean }> => {

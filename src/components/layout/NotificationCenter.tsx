@@ -33,9 +33,6 @@ export function NotificationCenter() {
 
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
-    if (isOpen && unreadCount > 0) {
-      markAllAsRead();
-    }
   };
 
   const getNotifDisplay = (notif: typeof notifications[0]) => {

@@ -11,8 +11,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { User, Scissors, Banknote, CreditCard, Users, MessageSquare, Image as ImageIcon } from 'lucide-react';
-import { ImageUpload } from '@/components/ui/ImageUpload';
+import { User, Scissors, Banknote, CreditCard, Users, MessageSquare } from 'lucide-react';
 import { PrestationSelectInput } from '@/components/prestations/PrestationSelectInput';
 import { usePrestations } from '@/hooks/usePrestations';
 import { useClients } from '@/hooks/useClients';
@@ -31,6 +30,7 @@ import { useSalon } from '@/hooks/useSalon';
 interface NouvellePrestationProps {
   onClose: () => void;
   defaultPrestationId?: string;
+  onAddNewType?: () => void;
 }
 
 const modePaiementLabels: Record<string, string> = {
@@ -40,7 +40,7 @@ const modePaiementLabels: Record<string, string> = {
   mixte: 'Mixte',
 };
 
-export function NouvellePrestation({ onClose, defaultPrestationId }: NouvellePrestationProps) {
+export function NouvellePrestation({ onClose, defaultPrestationId, onAddNewType }: NouvellePrestationProps) {
   const { t } = useLanguage();
   const { session, currentSalon } = useAuth();
   const { salon, staff } = useSalon();
@@ -176,6 +176,7 @@ export function NouvellePrestation({ onClose, defaultPrestationId }: NouvellePre
             <PrestationSelectInput
               prestations={typesPrestations}
               value={field.value}
+              onAddNew={onAddNewType}
               onSelect={(type) => {
                 field.onChange(type.id);
                 form.setValue('prix', type.prix);
@@ -250,25 +251,6 @@ export function NouvellePrestation({ onClose, defaultPrestationId }: NouvellePre
           </FormItem>
         )} />
 
-        {/* ── Photo / Réalisation (optionnel) ── */}
-        <FormField control={form.control} name="imageUrl" render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-muted-foreground">
-              <ImageIcon className="h-3.5 w-3.5 text-primary" />
-              {t('services.imageLabel') || 'Photo avant/après ou réalisation'}
-              <span className="text-[10px] font-normal opacity-60 ml-1 lowercase">({t('common.optional') || 'optionnel'})</span>
-            </FormLabel>
-            <FormControl>
-              <ImageUpload
-                value={field.value || ''}
-                onChange={field.onChange}
-                label={t('services.addImage') || 'Ajouter une photo'}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )} />
-
         {/* ── Notes ── */}
         <FormField control={form.control} name="notes" render={({ field }) => (
           <FormItem>
@@ -289,18 +271,18 @@ export function NouvellePrestation({ onClose, defaultPrestationId }: NouvellePre
         )} />
 
         {/* ── Actions ── */}
-        <div className="sticky bottom-0 bg-background/95 backdrop-blur-md pt-3 pb-3 border-t border-border/40 z-10 flex flex-col sm:flex-row gap-3 sm:gap-4 -mx-4 px-4 sm:-mx-6 sm:px-6">
+        <div className="sticky bottom-0 bg-background/95 dark:bg-slate-900/95 backdrop-blur-md pt-3 pb-3 border-t border-border/60 dark:border-slate-800 z-10 flex flex-col sm:flex-row gap-3 sm:gap-4 -mx-4 px-4 sm:-mx-6 sm:px-6">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={onClose}
-            className="flex-1 h-12 sm:h-14 rounded-2xl font-bold text-muted-foreground hover:bg-muted transition-all order-2 sm:order-1"
+            className="flex-1 h-12 sm:h-14 rounded-2xl font-bold text-foreground dark:text-slate-100 bg-muted/60 dark:bg-slate-800 hover:bg-muted dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 transition-all order-2 sm:order-1"
           >
             {t('common.cancel')}
           </Button>
           <Button
             type="submit"
-            className="flex-1 h-12 sm:h-14 rounded-2xl font-bold bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all order-1 sm:order-2"
+            className="flex-1 h-12 sm:h-14 rounded-2xl font-extrabold bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-600/30 transition-all order-1 sm:order-2"
           >
             {t('services.saveAndInvoice')}
           </Button>

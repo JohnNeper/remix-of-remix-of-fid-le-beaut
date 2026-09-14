@@ -55,10 +55,10 @@ export function RestockModal({ produit, isOpen, onClose, onRestock, loading = fa
     <ModalWrapper open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <ModalContent className={cn(
         isMobile 
-          ? "p-0 bg-background border-none rounded-t-[30px] overflow-hidden max-h-[92vh] outline-none" 
-          : "max-w-md rounded-[24px] p-0 overflow-hidden border-none shadow-2xl"
+          ? "p-0 bg-background border-none rounded-t-[30px] overflow-hidden max-h-[92vh] outline-none flex flex-col" 
+          : "max-w-md w-[95vw] sm:w-full rounded-[24px] p-0 overflow-hidden border-none shadow-2xl flex flex-col max-h-[90vh]"
       )}>
-        <div className="bg-gradient-to-br from-amber-500/10 via-primary/5 to-transparent p-6 border-b border-border/50">
+        <div className="bg-gradient-to-br from-amber-500/10 via-primary/5 to-transparent p-6 border-b border-border/50 shrink-0">
           <ModalHeader className="p-0 text-left">
             <ModalTitle className="text-xl font-extrabold flex items-center gap-2 text-foreground">
               <Package className="h-5 w-5 text-amber-500" />
@@ -70,118 +70,120 @@ export function RestockModal({ produit, isOpen, onClose, onRestock, loading = fa
           </ModalHeader>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-5">
-          {/* Current vs New stock indicator */}
-          <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Stock actuel</p>
-              <div className="flex items-center gap-2">
-                <span className={cn(
-                  "text-xl font-black",
-                  currentQty <= produit.seuilAlerte ? "text-destructive" : "text-foreground"
-                )}>
-                  {currentQty} {produit.unite}
-                </span>
-                {currentQty <= produit.seuilAlerte && (
-                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                    Alerte ({produit.seuilAlerte})
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            <ArrowRight className="h-5 w-5 text-muted-foreground shrink-0" />
-
-            <div className="space-y-1 text-right">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Nouveau stock</p>
-              <div className="flex items-center justify-end gap-2">
-                <span className={cn(
-                  "text-xl font-black",
-                  isNowOk ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
-                )}>
-                  {newQty} {produit.unite}
-                </span>
-                {isNowOk && (
-                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Quick presets */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-              Présélections rapides
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {presets.map((preset) => (
-                <Button
-                  key={preset}
-                  type="button"
-                  variant={addedQty === preset ? "default" : "outline"}
-                  className={cn(
-                    "h-11 rounded-xl font-bold transition-all",
-                    addedQty === preset ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-muted"
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-5 space-y-5">
+            {/* Current vs New stock indicator */}
+            <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Stock actuel</p>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-xl font-black",
+                    currentQty <= produit.seuilAlerte ? "text-destructive" : "text-foreground"
+                  )}>
+                    {currentQty} {produit.unite}
+                  </span>
+                  {currentQty <= produit.seuilAlerte && (
+                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                      Alerte ({produit.seuilAlerte})
+                    </Badge>
                   )}
-                  onClick={() => setAddedQty(preset)}
-                >
-                  +{preset}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Custom quantity input */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-              Quantité à ajouter ({produit.unite})
-            </label>
-            <div className="relative">
-              <Input
-                type="number"
-                min="1"
-                value={addedQty || ''}
-                onChange={(e) => setAddedQty(parseInt(e.target.value) || 0)}
-                className="h-12 rounded-xl text-lg font-bold pl-4 pr-12 bg-muted/30 border-muted focus:ring-primary/20"
-                placeholder="Ex: 15"
-              />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
-                {produit.unite}
-              </div>
-            </div>
-          </div>
-
-          {/* Cost estimation & expense logging checkbox */}
-          {produit.prixAchat > 0 && (
-            <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-muted-foreground font-medium flex items-center gap-1.5">
-                  <Banknote className="h-4 w-4 text-primary" />
-                  Coût estimé du réapprovisionnement :
-                </span>
-                <span className="font-bold text-foreground text-sm">
-                  {formatCurrency(totalCost)}
-                </span>
+                </div>
               </div>
 
-              <div className="flex items-center space-x-2 pt-2 border-t border-border/40">
-                <Checkbox
-                  id="recordExpense"
-                  checked={recordExpense}
-                  onCheckedChange={(checked) => setRecordExpense(!!checked)}
+              <ArrowRight className="h-5 w-5 text-muted-foreground shrink-0" />
+
+              <div className="space-y-1 text-right">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Nouveau stock</p>
+                <div className="flex items-center justify-end gap-2">
+                  <span className={cn(
+                    "text-xl font-black",
+                    isNowOk ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                  )}>
+                    {newQty} {produit.unite}
+                  </span>
+                  {isNowOk && (
+                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Quick presets */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                Présélections rapides
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {presets.map((preset) => (
+                  <Button
+                    key={preset}
+                    type="button"
+                    variant={addedQty === preset ? "default" : "outline"}
+                    className={cn(
+                      "h-11 rounded-xl font-bold transition-all",
+                      addedQty === preset ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-muted"
+                    )}
+                    onClick={() => setAddedQty(preset)}
+                  >
+                    +{preset}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom quantity input */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                Quantité à ajouter ({produit.unite})
+              </label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  min="1"
+                  value={addedQty || ''}
+                  onChange={(e) => setAddedQty(parseInt(e.target.value) || 0)}
+                  className="h-12 rounded-xl text-lg font-bold pl-4 pr-12 bg-muted/30 border-muted focus:ring-primary/20"
+                  placeholder="Ex: 15"
                 />
-                <label
-                  htmlFor="recordExpense"
-                  className="text-xs font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none text-foreground"
-                >
-                  Enregistrer automatiquement cette dépense dans les finances
-                </label>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
+                  {produit.unite}
+                </div>
               </div>
             </div>
-          )}
+
+            {/* Cost estimation & expense logging checkbox */}
+            {produit.prixAchat > 0 && (
+              <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+                    <Banknote className="h-4 w-4 text-primary" />
+                    Coût estimé du réapprovisionnement :
+                  </span>
+                  <span className="font-bold text-foreground text-sm">
+                    {formatCurrency(totalCost)}
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-2 pt-2 border-t border-border/40">
+                  <Checkbox
+                    id="recordExpense"
+                    checked={recordExpense}
+                    onCheckedChange={(checked) => setRecordExpense(!!checked)}
+                  />
+                  <label
+                    htmlFor="recordExpense"
+                    className="text-xs font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none text-foreground"
+                  >
+                    Enregistrer automatiquement cette dépense dans les finances
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Footer buttons */}
-          <ModalFooter className="flex flex-col sm:flex-row gap-2 pt-2">
+          <div className="shrink-0 p-4 sm:p-5 border-t border-border/50 bg-background/95 backdrop-blur-md z-10 flex flex-col sm:flex-row gap-3">
             <Button
               type="button"
               variant="outline"
@@ -198,7 +200,7 @@ export function RestockModal({ produit, isOpen, onClose, onRestock, loading = fa
               <TrendingUp className="h-4 w-4 mr-2" />
               Valider (+{addedQty || 0})
             </Button>
-          </ModalFooter>
+          </div>
         </form>
       </ModalContent>
     </ModalWrapper>
