@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { sendNativeNotification } from '@/lib/webNotifications';
 
 function normalizeRendezVous(item: any): RendezVous {
+  const isTermine = item.statut === 'termine' || item.statut === 'completed';
+  const hasFinance = Boolean(item.financeValide || item.vente || item.venteId);
   return {
     ...item,
     id: item._id || item.id,
@@ -15,9 +17,14 @@ function normalizeRendezVous(item: any): RendezVous {
     heure: item.heure || '09:00',
     duree: item.duree || 60,
     employe: typeof item.employe === 'object' ? item.employe?.name || item.employe?._id : item.employe,
+    employeNom: typeof item.employe === 'object' ? item.employe?.name : (item.employeNom || item.employe),
     notes: item.notes || '',
     statut: item.statut || 'en_attente',
     source: item.source || 'salon',
+    nombrePersonnes: Number(item.nombrePersonnes) || 1,
+    montantTotal: item.montantTotal ? Number(item.montantTotal) : undefined,
+    financeValide: hasFinance || isTermine,
+    venteId: typeof item.vente === 'object' ? item.vente?._id || item.vente?.id : item.vente || item.venteId,
   };
 }
 
@@ -61,6 +68,8 @@ export function useRendezVous() {
           sendNativeNotification('📅 Nouveau Rendez-vous enregistré !', {
             body: `Rendez-vous programmé à ${newRdv.heure || 'l\'heure indiquée'}.`,
             tag: `rdv-created-${newRdv.id || Date.now()}`,
+            url: '/rendez-vous',
+            data: { url: '/rendez-vous' },
           });
         }
       } catch (e) {
@@ -76,11 +85,39 @@ export function useRendezVous() {
       const payload: any = { ...updates };
       if (updates.clientId) payload.client = updates.clientId;
       if (updates.typePrestationId) payload.typePrestation = updates.typePrestationId;
+      if (updates.venteId) {
+        payload.vente = updates.venteId;
+        payload.venteId = updates.venteId;
+      }
 
       const res = await api.updateRendezVous(salonId, id, payload);
       return normalizeRendezVous(res);
     },
-    onSuccess: () => {
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['rendezVous', salonId] });
+      const previous = queryClient.getQueryData<RendezVous[]>(['rendezVous', salonId]);
+      queryClient.setQueryData<RendezVous[]>(['rendezVous', salonId], (old = []) =>
+        old.map((r) => {
+          if (r.id === id) {
+            const isFinished = updates.statut === 'termine' || updates.statut === 'completed';
+            const isFinanced = updates.financeValide ?? (isFinished ? true : r.financeValide);
+            return {
+              ...r,
+              ...updates,
+              financeValide: isFinanced,
+            };
+          }
+          return r;
+        })
+      );
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['rendezVous', salonId], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['rendezVous', salonId] });
     },
   });
@@ -114,6 +151,13 @@ export function useRendezVous() {
     [updateRendezVousMutation]
   );
 
+  const updateRendezVousAsync = useCallback(
+    async (args: { id: string; updates: Partial<RendezVous> }) => {
+      return await updateRendezVousMutation.mutateAsync(args);
+    },
+    [updateRendezVousMutation]
+  );
+
   const deleteRendezVous = useCallback(
     (id: string) => {
       deleteRendezVousMutation.mutate(id);
@@ -142,6 +186,7 @@ export function useRendezVous() {
     loading,
     addRendezVous,
     updateRendezVous,
+    updateRendezVousAsync,
     deleteRendezVous,
     getRendezVousByDate,
     getRendezVousAujourdhui,

@@ -15,9 +15,17 @@ import {
 } from '@/components/ui/form';
 import { TypePrestation } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Scissors, Banknote, Tags, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { Scissors, Banknote, Tags, FileText, Image as ImageIcon, Loader2, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { ImageUpload } from '@/components/ui/ImageUpload';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { POPULAR_SERVICE_TEMPLATES } from '@/lib/popular-service-templates';
 
 export interface TypeFormData {
   nom: string;
@@ -29,12 +37,15 @@ export interface TypeFormData {
 
 interface TypePrestationFormProps {
   type?: TypePrestation;
+  initialValues?: Partial<TypeFormData>;
   onSubmit: (data: TypeFormData) => Promise<void> | void;
   onCancel: () => void;
 }
 
-export function TypePrestationForm({ type, onSubmit, onCancel }: TypePrestationFormProps) {
-  const { t } = useLanguage();
+export function TypePrestationForm({ type, initialValues, onSubmit, onCancel }: TypePrestationFormProps) {
+  const { t, language } = useLanguage();
+  const isEn = language === 'en';
+  const langKey = isEn ? 'en' : 'fr';
   const [isSaving, setIsSaving] = useState(false);
 
   const typeSchema = z.object({
@@ -48,13 +59,24 @@ export function TypePrestationForm({ type, onSubmit, onCancel }: TypePrestationF
   const form = useForm<TypeFormData>({
     resolver: zodResolver(typeSchema),
     defaultValues: {
-      nom: type?.nom || '',
-      prix: type?.prix || 0,
-      description: type?.description || '',
-      categorie: type?.categorie || '',
-      imageUrl: type?.imageUrl || '',
+      nom: initialValues?.nom || type?.nom || '',
+      prix: initialValues?.prix !== undefined ? initialValues.prix : (type?.prix || 0),
+      description: initialValues?.description !== undefined ? initialValues.description : (type?.description || ''),
+      categorie: initialValues?.categorie || type?.categorie || '',
+      imageUrl: initialValues?.imageUrl || type?.imageUrl || '',
     },
   });
+
+  // Re-apply if initialValues changes
+  useEffect(() => {
+    if (initialValues) {
+      if (initialValues.nom) form.setValue('nom', initialValues.nom);
+      if (initialValues.prix !== undefined) form.setValue('prix', initialValues.prix);
+      if (initialValues.description !== undefined) form.setValue('description', initialValues.description);
+      if (initialValues.categorie) form.setValue('categorie', initialValues.categorie);
+      if (initialValues.imageUrl) form.setValue('imageUrl', initialValues.imageUrl);
+    }
+  }, [initialValues, form]);
 
   const handleFormSubmit = async (data: TypeFormData) => {
     if (isSaving) return;
@@ -72,6 +94,46 @@ export function TypePrestationForm({ type, onSubmit, onCancel }: TypePrestationF
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 min-h-0 overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+          {!type && (
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-purple-500/10 border border-rose-500/25 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-black text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
+                  {isEn ? '⚡ Pre-fill from popular templates' : '⚡ Pré-remplir avec un modèle populaire'}
+                </span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">
+                  {POPULAR_SERVICE_TEMPLATES.length} {isEn ? 'models' : 'modèles'}
+                </span>
+              </div>
+              <Select
+                onValueChange={(val) => {
+                  const found = POPULAR_SERVICE_TEMPLATES.find((tpl) => tpl.id === val);
+                  if (found) {
+                    form.setValue('nom', found.nom[langKey], { shouldValidate: true });
+                    form.setValue('prix', found.prix, { shouldValidate: true });
+                    form.setValue('categorie', found.categorie[langKey], { shouldValidate: true });
+                    form.setValue('description', found.description[langKey]);
+                    form.setValue('imageUrl', found.imageUrl || found.fallbackImage);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-10 rounded-xl bg-white dark:bg-slate-900 border-rose-500/30 text-xs font-bold shadow-2xs">
+                  <SelectValue placeholder={isEn ? 'Choose a popular hairstyle / service...' : 'Choisir une coiffure ou un soin populaire...'} />
+                </SelectTrigger>
+                <SelectContent className="max-h-72 rounded-2xl">
+                  {POPULAR_SERVICE_TEMPLATES.map((tpl) => (
+                    <SelectItem key={tpl.id} value={tpl.id} className="text-xs font-medium py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-foreground">{tpl.nom[langKey]}</span>
+                        <span className="text-muted-foreground">({tpl.categorie[langKey]} · {tpl.prix.toLocaleString()} FCFA)</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <FormField
             control={form.control}
             name="nom"

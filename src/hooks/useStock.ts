@@ -19,6 +19,85 @@ const defaultProduits: Produit[] = [
   { id: '12', nom: 'Lame de rasoir', categorie: 'Homme', prix: 500, prixAchat: 200, quantite: 100, seuilAlerte: 20, unite: 'pièce' },
 ];
 
+export interface ExpirationStatusInfo {
+  status: 'expired' | 'warning' | 'ok' | 'none';
+  daysLeft: number | null;
+  label: string;
+  formattedDate: string;
+}
+
+export function getExpirationStatus(
+  datePeremption?: string,
+  t?: (key: string, params?: Record<string, string | number>) => string
+): ExpirationStatusInfo {
+  if (!datePeremption) {
+    return {
+      status: 'none',
+      daysLeft: null,
+      label: t ? t('stock.noExpiration') : 'Non renseignée',
+      formattedDate: ''
+    };
+  }
+
+  const rawDateStr = datePeremption.split('T')[0];
+  const parts = rawDateStr.split('-');
+  let formattedDate = rawDateStr;
+  if (parts.length === 3) {
+    formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const expDate = new Date(rawDateStr + 'T00:00:00');
+  if (isNaN(expDate.getTime())) {
+    return {
+      status: 'none',
+      daysLeft: null,
+      label: t ? t('stock.noExpiration') : 'Date invalide',
+      formattedDate: rawDateStr
+    };
+  }
+
+  const diffMs = expDate.getTime() - today.getTime();
+  const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (daysLeft < 0) {
+    const expiredDays = Math.abs(daysLeft);
+    return {
+      status: 'expired',
+      daysLeft,
+      label: t ? t('stock.expiredDays', { count: expiredDays }) : (expiredDays === 1 ? 'Périmé hier' : `Périmé (${expiredDays}j)`),
+      formattedDate,
+    };
+  }
+
+  if (daysLeft === 0) {
+    return {
+      status: 'warning',
+      daysLeft: 0,
+      label: t ? t('stock.expiringInDays', { count: 0 }) : "Périme aujourd'hui",
+      formattedDate,
+    };
+  }
+
+  if (daysLeft <= 30) {
+    return {
+      status: 'warning',
+      daysLeft,
+      label: t ? t('stock.expiringInDays', { count: daysLeft }) : `Périme dans ${daysLeft}j`,
+      formattedDate,
+    };
+  }
+
+  return {
+    status: 'ok',
+    daysLeft,
+    label: t ? t('stock.validDays', { count: daysLeft }) : `Valide (${daysLeft}j)`,
+    formattedDate,
+  };
+}
+
 export function useStock() {
   const { session } = useAuth();
   const salonId = session?.salonId;
@@ -35,6 +114,9 @@ export function useStock() {
         prix: p.prixVente || p.prix || 0,
         quantite: p.stock !== undefined ? p.stock : p.quantite,
         seuilAlerte: p.stockMinimum !== undefined ? p.stockMinimum : p.seuilAlerte,
+        datePeremption: p.datePeremption
+          ? (typeof p.datePeremption === 'string' ? p.datePeremption.split('T')[0] : new Date(p.datePeremption).toISOString().split('T')[0])
+          : undefined,
       }));
     },
     enabled: !!salonId,
@@ -47,7 +129,8 @@ export function useStock() {
         ...produit,
         prixVente: (produit as any).prix,
         stock: (produit as any).quantite,
-        stockMinimum: (produit as any).seuilAlerte
+        stockMinimum: (produit as any).seuilAlerte,
+        datePeremption: produit.datePeremption ? produit.datePeremption : null,
       };
       // Supprimer les clés frontend pour éviter la confusion
       delete payload.prix;
@@ -76,6 +159,9 @@ export function useStock() {
         payload.stockMinimum = payload.seuilAlerte;
         delete payload.seuilAlerte;
       }
+      if ('datePeremption' in payload) {
+        payload.datePeremption = payload.datePeremption || null;
+      }
       return api.updateProduit(salonId!, id, payload);
     },
     onSuccess: () => {
@@ -102,6 +188,14 @@ export function useStock() {
   });
 
   const produitsEnAlerte = useMemo(() => produits.filter(p => p.quantite <= p.seuilAlerte), [produits]);
+  const produitsPerimes = useMemo(
+    () => produits.filter(p => getExpirationStatus(p.datePeremption).status === 'expired'),
+    [produits]
+  );
+  const produitsPerimentBientot = useMemo(
+    () => produits.filter(p => getExpirationStatus(p.datePeremption).status === 'warning'),
+    [produits]
+  );
   const categories = useMemo(() => [...new Set(produits.map(p => p.categorie))], [produits]);
   const valeurStock = useMemo(() => produits.reduce((sum, p) => sum + p.prixAchat * p.quantite, 0), [produits]);
 
@@ -114,7 +208,10 @@ export function useStock() {
     adjustStock: (id: string, quantiteChange: number) =>
       adjustStockMutation.mutateAsync({ id, quantiteChange }),
     produitsEnAlerte,
+    produitsPerimes,
+    produitsPerimentBientot,
     categories,
     valeurStock,
+    getExpirationStatus,
   };
 }

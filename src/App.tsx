@@ -19,6 +19,7 @@ import Campagnes from "@/pages/Campagnes";
 import Parametres from "@/pages/Parametres";
 import Stock from "@/pages/Stock";
 import Finances from "@/pages/Finances";
+import Caisse from "@/pages/Caisse";
 import Bilan from "@/pages/Bilan";
 import Login from "@/pages/Login";
 import AdminLogin from "@/pages/AdminLogin";
@@ -67,7 +68,7 @@ function AppRoutes() {
       <Route element={<SalonGuard><AppLayout /></SalonGuard>}>
         <Route path="/" element={<Dashboard />} />
         {/* <Route path="/audience" element={<Audience />} /> */}
-        {/* <Route path="/analytics" element={<Audience />} /> */}
+        <Route path="/analytics" element={<Audience />} />
         <Route path="/clientes" element={<Clientes />} />
         <Route path="/prestations" element={<Prestations />} />
         <Route path="/rendez-vous" element={<RendezVousPage />} />
@@ -75,6 +76,7 @@ function AppRoutes() {
         <Route path="/rappels" element={<Rappels />} />
         <Route path="/campagnes" element={<Campagnes />} />
         <Route path="/stock" element={<Stock />} />
+        <Route path="/caisse" element={<Caisse />} />
         <Route path="/finances" element={<Finances />} />
         <Route path="/bilan" element={<Bilan />} />
         <Route path="/parametres" element={<Parametres />} />

@@ -10,7 +10,14 @@ export function useSalon() {
   const { session } = useAuth();
   const salonId = session?.salonId;
 
-  const [salon, setSalon] = useState<Salon | null>(null);
+  const [salon, setSalon] = useState<Salon | null>(() => {
+    try {
+      const cached = localStorage.getItem('bf_active_salon');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [staff, setStaff] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +34,14 @@ export function useSalon() {
       ]);
       setSalon(salonData);
       setStaff(staffData);
+      if (salonData) {
+        try {
+          localStorage.setItem('bf_active_salon', JSON.stringify(salonData));
+          window.dispatchEvent(new CustomEvent('salon:updated', { detail: salonData }));
+        } catch (e) {
+          console.warn('Could not cache active salon:', e);
+        }
+      }
     } catch (err: any) {
       console.error('Error fetching salon/staff:', err);
     } finally {
@@ -40,15 +55,34 @@ export function useSalon() {
   const updateSalon = useCallback(async (updates: Partial<Salon>): Promise<Salon> => {
     if (!salonId) throw new Error('Non authentifié');
     const updated = await api.updateMySalon(salonId, updates);
-    setSalon(prevSalon => prevSalon ? { ...prevSalon, ...updated } : updated as Salon);
+    setSalon(prevSalon => {
+      const merged = prevSalon ? { ...prevSalon, ...updated } : updated as Salon;
+      try {
+        localStorage.setItem('bf_active_salon', JSON.stringify(merged));
+        window.dispatchEvent(new CustomEvent('salon:updated', { detail: merged }));
+      } catch (e) {
+        console.warn('Could not cache updated salon:', e);
+      }
+      return merged;
+    });
     return updated;
   }, [salonId]);
 
   const updateConfigFidelite = useCallback((updates: Partial<Salon['configFidelite']>) => {
-    setSalon(prev => ({
-      ...prev,
-      configFidelite: { ...prev.configFidelite, ...updates },
-    }));
+    setSalon(prev => {
+      if (!prev) return null;
+      const updated = {
+        ...prev,
+        configFidelite: { ...prev.configFidelite, ...updates },
+      };
+      try {
+        localStorage.setItem('bf_active_salon', JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent('salon:updated', { detail: updated }));
+      } catch (e) {
+        console.warn('Could not cache updated salon fidelite:', e);
+      }
+      return updated;
+    });
   }, []);
 
   return { salon, staff, loading, error, updateSalon, updateConfigFidelite, refetch: fetchSalon };

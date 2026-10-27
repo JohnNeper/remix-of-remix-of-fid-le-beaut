@@ -58,7 +58,7 @@ export function usePrestations() {
   const typesPrestations = rawTypes.length > 0 ? rawTypes : defaultTypesPrestations;
 
   // Query: Prestations effectuées (Historique)
-  const { data: prestations = [], isLoading: loadingPrestations } = useQuery<Prestation[]>({
+  const { data: prestations = [], isLoading: loadingPrestations, refetch: refetchPrestations } = useQuery<Prestation[]>({
     queryKey: ['prestations', salonId],
     queryFn: async () => {
       if (!salonId) return [];
@@ -122,6 +122,8 @@ export function usePrestations() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prestations', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['ventes', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['clients', salonId] });
     },
   });
 
@@ -204,5 +206,6 @@ export function usePrestations() {
     getPrestationsCeMois,
     getRevenusCeMois,
     getPrestationsPopulaires,
+    refetchPrestations,
   };
 }

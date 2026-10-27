@@ -45,6 +45,7 @@ export interface NativeNotificationOptions {
   badge?: string;
   tag?: string;
   data?: any;
+  url?: string;
   silent?: boolean;
   vibrate?: number[];
 }
@@ -62,11 +63,18 @@ export async function sendNativeNotification(
     return false;
   }
 
+  const targetUrl = options.url || options.data?.url || '/';
+  const notificationData = {
+    ...options.data,
+    url: targetUrl,
+  };
+
   const defaultOptions: NativeNotificationOptions = {
     icon: '/pwa-icon-192.png',
     badge: '/favicon.ico',
     vibrate: [100, 50, 100],
     ...options,
+    data: notificationData,
   };
 
   try {
@@ -98,12 +106,29 @@ export async function sendNativeNotification(
         silent: defaultOptions.silent,
       });
 
-      // Auto close after 6 seconds if supported
+      // Rendre la notification cliquable pour ramener l'utilisateur sur la partie concernée
+      notif.onclick = function (event) {
+        event.preventDefault();
+        try {
+          window.focus();
+        } catch (e) {}
+
+        if (targetUrl) {
+          if (window.location.pathname !== targetUrl) {
+            window.location.href = targetUrl;
+          }
+        }
+        try {
+          notif.close();
+        } catch (e) {}
+      };
+
+      // Auto close after 7 seconds if not clicked
       setTimeout(() => {
         try {
           notif.close();
         } catch (e) {}
-      }, 6000);
+      }, 7000);
 
       return true;
     }

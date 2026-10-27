@@ -12,6 +12,7 @@ import {
   Gift,
   MessageSquare,
   Sparkles,
+  Crown,
   CalendarDays,
   Package,
   DollarSign,
@@ -48,12 +49,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard },
-  // { href: '/audience', labelKey: 'nav.audience', icon: BarChart3, roles: ['owner', 'co_owner', 'admin'] },
+  { href: '/analytics', labelKey: 'nav.audience', icon: BarChart3, roles: ['owner', 'co_owner', 'admin'] },
   { href: '/clientes', labelKey: 'nav.clients', icon: Users },
   { href: '/prestations', labelKey: 'nav.services', icon: Scissors },
   { href: '/rendez-vous', labelKey: 'nav.appointments', icon: CalendarDays, badgeKey: 'rdv' },
   { href: '/stock', labelKey: 'nav.stock', icon: Package, badgeKey: 'stock' },
-  // { href: '/caisse', labelKey: 'nav.caisse', icon: ShoppingCart },
+  { href: '/caisse', labelKey: 'nav.caisse', icon: ShoppingCart },
   { href: '/finances', labelKey: 'nav.finances', icon: DollarSign, roles: ['owner', 'co_owner', 'admin'] },
   { href: '/bilan', labelKey: 'nav.bilan', icon: BarChart3, roles: ['owner', 'co_owner', 'admin'] },
   { href: '/fidelite', labelKey: 'nav.loyalty', icon: Gift },
@@ -124,7 +125,7 @@ function Sidebar({ className, onItemClick, onUpgradeClick, onOpenGuide }: { clas
   const { salon } = useSalon();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { getUpgradePlan } = useSubscriptionPlan();
+  const { plan, getUpgradePlan } = useSubscriptionPlan();
 
   const nextPlan = getUpgradePlan();
   const upgradeLabel = nextPlan?.name === 'premium' ? t('nav.upgradeToPremium') : t('nav.upgradeToPro');
@@ -150,11 +151,26 @@ function Sidebar({ className, onItemClick, onUpgradeClick, onOpenGuide }: { clas
             <h1 className="font-extrabold text-base text-sidebar-foreground leading-tight truncate group-hover:text-primary transition-colors">
               {salon?.nom || (salon as any)?.name || 'Mon Salon'}
             </h1>
-            {salon?.slogan ? (
-              <p className="text-[10px] text-muted-foreground truncate">{salon.slogan}</p>
-            ) : (
-              <p className="text-[10px] font-bold text-rose-500">BeautyFlow Pro</p>
-            )}
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              {salon?.slogan && (
+                <p className="text-[10px] text-muted-foreground truncate w-full">{salon.slogan}</p>
+              )}
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-[9px] font-black uppercase tracking-wider px-1.5 py-0 rounded-full border shadow-2xs inline-flex items-center gap-1",
+                  plan.name === 'premium'
+                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                    : plan.name === 'pro'
+                      ? "bg-primary/15 text-primary border-primary/30"
+                      : "bg-muted text-muted-foreground border-border"
+                )}
+              >
+                {plan.name === 'premium' && <Crown className="h-2.5 w-2.5 text-amber-500" />}
+                {plan.name === 'pro' && <Sparkles className="h-2.5 w-2.5 text-primary" />}
+                Plan {plan.label || (plan.name.charAt(0).toUpperCase() + plan.name.slice(1))}
+              </Badge>
+            </div>
           </div>
         </Link>
       </div>
@@ -230,7 +246,7 @@ export default function AppLayout() {
   const { currentSalon, session } = useAuth();
   const { salon } = useSalon();
   const { language, t } = useLanguage();
-  const { getUpgradePlan } = useSubscriptionPlan();
+  const { plan, getUpgradePlan } = useSubscriptionPlan();
   const nextPlan = getUpgradePlan();
   const upgradeLabel = nextPlan?.name === 'premium' ? t('nav.upgradeToPremium') : t('nav.upgradeToPro');
 
@@ -265,15 +281,32 @@ export default function AppLayout() {
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-card border-b border-border ios-header-pt shadow-xs">
         <div className="flex items-center justify-between p-2.5 sm:p-4 gap-2">
-          <Link to="/" className="flex items-center gap-2 shrink-0 min-w-0">
-            {salon?.logoUrl ? (
-              <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center overflow-hidden border border-border/60 bg-card">
-                <img src={salon.logoUrl} alt={salonName} className="h-full w-full object-cover" />
-              </div>
-            ) : (
-              <img src={bfLogo} alt="BeautyFlow" className="h-7 object-contain shrink-0" />
-            )}
-          </Link>
+          <div className="flex items-center gap-2 min-w-0">
+            <Link to="/" className="flex items-center gap-2 shrink-0 min-w-0">
+              {salon?.logoUrl ? (
+                <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center overflow-hidden border border-border/60 bg-card">
+                  <img src={salon.logoUrl} alt={salonName} className="h-full w-full object-cover" />
+                </div>
+              ) : (
+                <img src={bfLogo} alt="BeautyFlow" className="h-7 object-contain shrink-0" />
+              )}
+            </Link>
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-[9px] font-black uppercase tracking-wider px-1.5 py-0 rounded-full border shrink-0 inline-flex items-center gap-1",
+                plan.name === 'premium'
+                  ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                  : plan.name === 'pro'
+                    ? "bg-primary/15 text-primary border-primary/30"
+                    : "bg-muted text-muted-foreground border-border"
+              )}
+            >
+              {plan.name === 'premium' && <Crown className="h-2.5 w-2.5 text-amber-500" />}
+              {plan.name === 'pro' && <Sparkles className="h-2.5 w-2.5 text-primary" />}
+              {plan.name.toUpperCase()}
+            </Badge>
+          </div>
 
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             {nextPlan && (
@@ -315,6 +348,22 @@ export default function AppLayout() {
       {/* Desktop top bar */}
       {!isMobile && (
         <div className="hidden lg:flex fixed top-0 left-64 right-0 z-20 h-14 bg-card border-b border-border items-center justify-end px-6 gap-3">
+          <Badge
+            variant="outline"
+            className={cn(
+              "text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 shadow-2xs",
+              plan.name === 'premium'
+                ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                : plan.name === 'pro'
+                  ? "bg-primary/15 text-primary border-primary/30"
+                  : "bg-muted text-muted-foreground border-border"
+            )}
+          >
+            {plan.name === 'premium' && <Crown className="h-3.5 w-3.5 text-amber-500" />}
+            {plan.name === 'pro' && <Sparkles className="h-3.5 w-3.5 text-primary" />}
+            <span>Plan {plan.label || (plan.name.charAt(0).toUpperCase() + plan.name.slice(1))}</span>
+          </Badge>
+
           {nextPlan && (
             <Button
               size="sm"

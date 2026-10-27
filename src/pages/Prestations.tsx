@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Scissors, CalendarDays } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Scissors, CalendarDays, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,10 +26,11 @@ import { usePrestations } from '@/hooks/usePrestations';
 import { useClients } from '@/hooks/useClients';
 import { useRendezVous } from '@/hooks/useRendezVous';
 import { TypePrestation } from '@/types';
-import { TypePrestationForm } from '@/components/prestations/TypePrestationForm';
+import { TypePrestationForm, TypeFormData } from '@/components/prestations/TypePrestationForm';
 import { NouvellePrestation } from '@/components/prestations/NouvellePrestation';
 import { CalendrierRendezVous } from '@/components/prestations/CalendrierRendezVous';
 import { RendezVousForm } from '@/components/prestations/RendezVousForm';
+import { PopularTemplatesModal } from '@/components/prestations/PopularTemplatesModal';
 import { getCategoryImage } from '@/lib/category-images';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/hooks/useTranslations';
@@ -43,6 +44,8 @@ export default function Prestations() {
   const { t, formatCurrency } = useTranslations();
   const [showAddType, setShowAddType] = useState(false);
   const [editingType, setEditingType] = useState<TypePrestation | null>(null);
+  const [customizingTemplate, setCustomizingTemplate] = useState<Partial<TypeFormData> | null>(null);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [showNouvellePrestation, setShowNouvellePrestation] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategorie, setSelectedCategorie] = useState<string | null>(null);
@@ -72,6 +75,7 @@ export default function Prestations() {
   const handleAddType = (data: Omit<TypePrestation, 'id'>) => {
     addTypePrestation(data);
     setShowAddType(false);
+    setCustomizingTemplate(null);
   };
 
   const handleEditType = (data: Partial<TypePrestation>) => {
@@ -115,7 +119,15 @@ export default function Prestations() {
           <h1 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">{t('services.title')}</h1>
           <p className="text-muted-foreground mt-1 font-medium">{typesPrestations.length} {t('services.types')} disponibles</p>
         </div>
-        <div className="flex gap-2.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
+        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex gap-2.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
+          <Button
+            onClick={() => setShowTemplatesModal(true)}
+            className="rounded-xl bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:from-amber-600 hover:via-rose-600 hover:to-purple-700 text-white font-extrabold whitespace-nowrap shadow-md shadow-rose-500/20 active:scale-[0.98] transition-all"
+          >
+            <Sparkles className="h-4 w-4 mr-2 text-amber-200 animate-pulse" />
+            <span>{t('services.templatesBtn') || '⚡ Modèles Populaires'}</span>
+          </Button>
+
           <TourPointer stepId="step-3" title="Étape 3 : Créer votre catalogue" description="Ajoutez vos soins, catégories et tarifs">
             <Button onClick={() => setShowAddType(true)} variant="outline" className="rounded-xl border-primary/20 text-primary hover:bg-primary/5 whitespace-nowrap">
               <Plus className="h-4 w-4 mr-2" />
@@ -145,6 +157,40 @@ export default function Prestations() {
         </div>
 
         <TabsContent value="catalogue" className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+          {/* Trending & Popular Templates Discovery Banner */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-900/90 via-rose-950/80 to-amber-950/80 border border-rose-500/30 p-5 sm:p-6 text-white shadow-xl shadow-rose-950/20">
+            <div className="absolute -right-8 -bottom-8 w-48 h-48 bg-gradient-to-br from-rose-500/20 to-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1.5 max-w-2xl">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-gradient-to-r from-amber-400 to-rose-400 text-slate-950 font-black text-[10px] tracking-wider uppercase px-2.5 py-0.5 border-none shadow-sm">
+                    {t('services.bannerBadge') || 'Nouveau'}
+                  </Badge>
+                  <span className="text-xs font-bold text-amber-300/90 flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    {t('services.templatesTitle') || 'Bibliothèque de Coiffures'}
+                  </span>
+                </div>
+                <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">
+                  {t('services.bannerTitle') || 'Catalogue Prêt à l’Emploi & Coiffures Tendances'}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  {t('services.bannerDesc') || 'Ajoutez en 1 clic les coiffures et soins les plus demandés (Knotless, Tissages, Silk Press, Dégradés) avec photos.'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0">
+                <Button
+                  onClick={() => setShowTemplatesModal(true)}
+                  className="w-full md:w-auto rounded-2xl bg-white text-slate-950 hover:bg-slate-100 font-black px-5 py-2.5 text-xs sm:text-sm shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="h-4 w-4 text-rose-500" />
+                  <span>{t('services.browseTemplates') || 'Découvrir les modèles'}</span>
+                  <ArrowRight className="h-4 w-4 text-slate-700 ml-0.5" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Categories Pills */}
           <div className="relative -mx-4 px-4 sm:mx-0 sm:px-0">
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 snap-x">
@@ -264,12 +310,19 @@ export default function Prestations() {
             ))}
           </div>
           {filteredTypes.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4">
-                <Scissors className="h-8 w-8 text-muted-foreground/50" />
+            <div className="flex flex-col items-center justify-center py-16 text-center max-w-md mx-auto">
+              <div className="h-20 w-20 rounded-full bg-rose-500/10 flex items-center justify-center mb-4 text-rose-500">
+                <Scissors className="h-8 w-8" />
               </div>
               <h3 className="text-lg font-bold text-foreground mb-1">{t('services.notFound')}</h3>
-              <p className="text-muted-foreground text-sm">{t('services.notFoundHint') || 'Essayez de modifier vos filtres ou ajoutez une nouvelle prestation.'}</p>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-4">{t('services.notFoundHint') || 'Essayez de modifier vos filtres ou ajoutez une nouvelle prestation.'}</p>
+              <Button
+                onClick={() => setShowTemplatesModal(true)}
+                className="rounded-xl bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:from-amber-600 hover:via-rose-600 hover:to-purple-700 text-white font-extrabold shadow-md active:scale-[0.98] transition-all"
+              >
+                <Sparkles className="h-4 w-4 mr-2 text-amber-200 animate-pulse" />
+                <span>{t('services.browseTemplates') || 'Découvrir les modèles populaires'}</span>
+              </Button>
             </div>
           )}
         </TabsContent>
@@ -340,7 +393,13 @@ export default function Prestations() {
 
       {isMobile ? (
         <>
-          <Drawer open={showAddType} onOpenChange={setShowAddType}>
+          <Drawer
+            open={showAddType}
+            onOpenChange={(open) => {
+              setShowAddType(open);
+              if (!open) setCustomizingTemplate(null);
+            }}
+          >
             <DrawerContent className="p-0 bg-background border-none rounded-t-[30px] overflow-hidden max-h-[92vh] outline-none">
               <div className="bg-muted p-6 relative overflow-hidden shrink-0 border-b">
                 <DrawerHeader className="relative z-10 text-left p-0">
@@ -348,7 +407,14 @@ export default function Prestations() {
                 </DrawerHeader>
               </div>
               <div className="p-4 overflow-y-auto pb-10">
-                <TypePrestationForm onSubmit={handleAddType} onCancel={() => setShowAddType(false)} />
+                <TypePrestationForm
+                  initialValues={customizingTemplate || undefined}
+                  onSubmit={handleAddType}
+                  onCancel={() => {
+                    setShowAddType(false);
+                    setCustomizingTemplate(null);
+                  }}
+                />
               </div>
             </DrawerContent>
           </Drawer>
@@ -394,12 +460,25 @@ export default function Prestations() {
         </>
       ) : (
         <>
-          <Dialog open={showAddType} onOpenChange={setShowAddType}>
+          <Dialog
+            open={showAddType}
+            onOpenChange={(open) => {
+              setShowAddType(open);
+              if (!open) setCustomizingTemplate(null);
+            }}
+          >
             <DialogContent className="sm:max-w-md w-[95vw] sm:w-full rounded-3xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
               <DialogHeader className="shrink-0 p-4 sm:p-6 border-b border-border/40">
                 <DialogTitle className="text-xl sm:text-2xl">{t('services.newTypeTitle')}</DialogTitle>
               </DialogHeader>
-              <TypePrestationForm onSubmit={handleAddType} onCancel={() => setShowAddType(false)} />
+              <TypePrestationForm
+                initialValues={customizingTemplate || undefined}
+                onSubmit={handleAddType}
+                onCancel={() => {
+                  setShowAddType(false);
+                  setCustomizingTemplate(null);
+                }}
+              />
             </DialogContent>
           </Dialog>
 
@@ -477,6 +556,22 @@ export default function Prestations() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Popular Hairstyles & Services Templates Library Modal */}
+      <PopularTemplatesModal
+        isOpen={showTemplatesModal}
+        onClose={() => setShowTemplatesModal(false)}
+        onCustomizeTemplate={(template) => {
+          setCustomizingTemplate({
+            nom: template.nom,
+            prix: template.prix,
+            description: template.description,
+            categorie: template.categorie,
+            imageUrl: template.imageUrl,
+          });
+          setShowAddType(true);
+        }}
+      />
     </div>
   );
 }

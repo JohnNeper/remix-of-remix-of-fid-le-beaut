@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { AuthSession, SalonAccount, SalonUser, buildSession } from '@/types/auth';
+import type { PlanType } from '@/lib/plans';
 import { api } from '@/lib/api';
 import {
   getSession,
@@ -28,10 +29,31 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSessionState] = useState<AuthSession | null>(() => getSession());
+  const [activeSalon, setActiveSalon] = useState<any>(() => {
+    try {
+      const cached = localStorage.getItem('bf_active_salon');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const logout = useCallback(() => {
     clearSession();
+    localStorage.removeItem('bf_active_salon');
+    setActiveSalon(null);
     setSessionState(null);
+  }, []);
+
+  // Listen for real-time salon updates (profile edit, plan upgrade, limits sync)
+  useEffect(() => {
+    const handleSalonUpdated = (e: any) => {
+      if (e?.detail) {
+        setActiveSalon(e.detail);
+      }
+    };
+    window.addEventListener('salon:updated', handleSalonUpdated);
+    return () => window.removeEventListener('salon:updated', handleSalonUpdated);
   }, []);
 
   // Listen for 401 Unauthorized API responses
@@ -87,6 +109,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (res && (res.user || res.data)) {
           const user = res.user || res.data?.user || res.data;
           const salon = res.salon || res.data?.salon || null;
+
+          if (salon) {
+            setActiveSalon(salon);
+            try {
+              localStorage.setItem('bf_active_salon', JSON.stringify(salon));
+            } catch {}
+          }
 
           const isSalonMissing = user?.role !== 'admin' && user?.role !== 'superadmin' && !salon;
 
@@ -144,19 +173,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const currentSalon = session?.type === 'salon' && session.salonId
-    ? getSalonAccounts().find(s => s.id === session.salonId) || ({
-        id: session.salonId,
-        nom: session.userName || 'Mon Salon',
-        name: session.userName || 'Mon Salon',
-        email: session.email || '',
-        telephone: '',
-        statutAbonnement: 'actif',
-        planAbonnement: 'pro',
-        branding: { nom: session.userName || 'Mon Salon' },
-        configFidelite: { nombreVisitesSeuil: 10, reductionPourcentage: 20, recompenseDescription: '-20%' }
-      } as unknown as SalonAccount)
-    : null;
+  const currentSalon = useMemo<SalonAccount | null>(() => {
+    if (!session || session.type !== 'salon' || !session.salonId) return null;
+    const local = getSalonAccounts().find(s => s.id === session.salonId);
+    const source = activeSalon || local || null;
+
+    const rawPlan = (
+      source?.plan ||
+      source?.abonnement?.plan ||
+      source?.planAbonnement ||
+      source?.subscriptionPlan ||
+      'basic'
+    ).toString().toLowerCase().trim();
+
+    const normalizedPlan: PlanType = rawPlan.includes('premium')
+      ? 'premium'
+      : rawPlan.includes('pro')
+        ? 'pro'
+        : 'basic';
+
+    return {
+      id: session.salonId,
+      nom: source?.name || source?.nom || session.userName || 'Mon Salon',
+      name: source?.name || source?.nom || session.userName || 'Mon Salon',
+      email: source?.email || session.email || '',
+      telephone: source?.phone || source?.telephone || '',
+      statutAbonnement: source?.abonnement?.statut || source?.statutAbonnement || 'actif',
+      abonnement: source?.abonnement || { statut: 'actif', plan: normalizedPlan },
+      limits: source?.limits || {},
+      branding: source?.branding || { nom: source?.name || session.userName || 'Mon Salon' },
+      configFidelite: source?.configFidelite || { nombreVisitesSeuil: 10, reductionPourcentage: 20, recompenseDescription: '-20%' },
+      users: source?.users || [],
+      ...source,
+      plan: normalizedPlan,
+      planAbonnement: normalizedPlan,
+    } as unknown as SalonAccount;
+  }, [session, activeSalon]);
 
   const currentUser = session?.userId
     ? ((currentSalon?.users || []).find(u => u.id === session.userId) || {

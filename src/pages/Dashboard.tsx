@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Users,
   UserPlus,
@@ -21,7 +21,8 @@ import {
   Building2,
   Lightbulb,
   ShoppingBag,
-  TrendingDown
+  TrendingDown,
+  RefreshCw
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -35,27 +36,55 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useClients } from '@/hooks/useClients';
 import { usePrestations } from '@/hooks/usePrestations';
+import { useFinances } from '@/hooks/useFinances';
 import { useSalon } from '@/hooks/useSalon';
 import { useRendezVous } from '@/hooks/useRendezVous';
-import { useStock } from '@/hooks/useStock';
+import { useStock, getExpirationStatus } from '@/hooks/useStock';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import heroSalon from '@/assets/hero-salon.jpg';
 import { OnboardingGuide } from '@/components/dashboard/OnboardingGuide';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function Dashboard() {
   const { clients, loading: loadingClients } = useClients();
-  const { typesPrestations, prestations } = usePrestations();
+  const { typesPrestations, prestations, getTypePrestation } = usePrestations();
+  const { ventes, depenses, loadingVentes } = useFinances();
   const { salon } = useSalon();
   const { session } = useAuth();
   const { t, language } = useLanguage();
   const { formatCurrency } = useTranslations();
   const { produits } = useStock();
   const { rendezVous } = useRendezVous();
+  const queryClient = useQueryClient();
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const isOwner = session?.userRole === 'owner' || session?.userRole === 'co_owner' || session?.type === 'admin';
+
+  // Manual refresh callback
+  const handleRefresh = async () => {
+    if (isRefreshing || !session?.salonId) return;
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['ventes', session.salonId] }),
+        queryClient.invalidateQueries({ queryKey: ['depenses', session.salonId] }),
+        queryClient.invalidateQueries({ queryKey: ['prestations', session.salonId] }),
+        queryClient.invalidateQueries({ queryKey: ['produits', session.salonId] }),
+        queryClient.invalidateQueries({ queryKey: ['rendezVous', session.salonId] }),
+        queryClient.invalidateQueries({ queryKey: ['clients', session.salonId] }),
+      ]);
+      toast.success(t('dashboard.refreshed') || 'Tableau de bord actualisé avec succès');
+    } catch (err) {
+      console.error('Erreur actualisation dashboard:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Format today's date nicely
   const formattedTodayDate = useMemo(() => {
@@ -80,44 +109,199 @@ export default function Dashboard() {
     const localTodayStr = `${year}-${month}-${day}`;
     const isoTodayStr = now.toISOString().split('T')[0];
 
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const currentMonthPrefix = `${year}-${month}`;
+    const firstDayOfMonth = new Date(year, now.getMonth(), 1);
 
-    const monthVisits = prestations.filter(p => new Date(p.date) >= firstDayOfMonth);
-    const monthRevenue = monthVisits.reduce((acc, p) => acc + (p.montant || 0), 0);
+    // ── 1. Toutes les ventes enregistrées ce mois (Caisse, Finances, Prestations) ──
+    const monthVentes = (ventes || []).filter(v => {
+      if (v.statut === 'annulee') return false;
+      if (!v.date) return false;
+      return v.date.startsWith(currentMonthPrefix);
+    });
 
+    const monthVentesRevenue = monthVentes.reduce((acc, v) => acc + (v.totalMontant || 0), 0);
+
+    // Ventilation par type d'élément dans les ventes
+    const monthPrestationsRevenueFromVentes = monthVentes.reduce((acc, v) => {
+      const prestItems = (v.items || []).filter(i => i.type === 'prestation');
+      return acc + prestItems.reduce((sum, i) => sum + (i.montant || 0), 0);
+    }, 0);
+
+    const monthProduitsRevenueFromVentes = monthVentes.reduce((acc, v) => {
+      const prodItems = (v.items || []).filter(i => i.type === 'produit');
+      return acc + prodItems.reduce((sum, i) => sum + (i.montant || 0), 0);
+    }, 0);
+
+    const otherCaisseRevenue = monthVentes.reduce((acc, v) => {
+      const otherItems = (v.items || []).filter(i => i.type !== 'prestation' && i.type !== 'produit');
+      if (otherItems.length > 0) {
+        return acc + otherItems.reduce((sum, i) => sum + (i.montant || 0), 0);
+      }
+      if (!v.items || v.items.length === 0) {
+        return acc + (v.totalMontant || 0);
+      }
+      return acc;
+    }, 0);
+
+    // ── 2. Prestations effectuées issues du module prestations ──
+    const monthPrestations = prestations.filter(p => {
+      if (!p.date) return false;
+      return new Date(p.date) >= firstDayOfMonth;
+    });
+
+    // Détecter d'éventuelles prestations orphelines (enregistrées sans vente liée)
+    const orphanPrestations = monthPrestations.filter(p => {
+      const isAlreadyInVentes = monthVentes.some(v => {
+        const sameDate = v.date === p.date;
+        const sameClient = !p.clientId || v.clientId === p.clientId || (v.clientId != null && typeof v.clientId === 'object' && (v.clientId as any)._id === p.clientId);
+        const hasMatchingPrestationItem = (v.items || []).some(item =>
+          item.type === 'prestation' &&
+          (String(item.referenceId) === String(p.typePrestationId) || item.nom.toLowerCase() === (getTypePrestation(p.typePrestationId)?.nom || '').toLowerCase()) &&
+          Math.abs((item.montant || 0) - (p.montant || 0)) < 1
+        );
+        return sameDate && (sameClient || hasMatchingPrestationItem);
+      });
+      return !isAlreadyInVentes;
+    });
+
+    const orphanPrestationsRevenue = orphanPrestations.reduce((acc, p) => acc + (p.montant || 0), 0);
+
+    // Chiffre d'affaires total consolidé (Soins + Produits vendus + Entrées caisse)
+    const monthRevenue = monthVentesRevenue + orphanPrestationsRevenue;
+    const monthRevenuePrestations = monthPrestationsRevenueFromVentes + orphanPrestationsRevenue;
+    const monthRevenueProduits = monthProduitsRevenueFromVentes;
+    const monthRevenueAutres = otherCaisseRevenue;
+
+    // Nombre de prestations / visites réalisées ce mois
+    const totalPrestationsCountInVentes = monthVentes.reduce((acc, v) => {
+      const count = (v.items || []).filter(i => i.type === 'prestation').reduce((s, i) => s + (i.quantite || 1), 0);
+      return acc + count;
+    }, 0);
+    const monthVisitsCount = totalPrestationsCountInVentes + orphanPrestations.length;
+
+    // ── 3. Rendez-vous du jour ──
     const todayRdv = rendezVous.filter(r => r.date === localTodayStr || r.date === isoTodayStr);
 
-    // Personal stats for staff
+    // ── 4. Statistiques personnelles Staff ──
     const myTodayRdv = todayRdv.filter(r => r.employe === session?.userId || r.employe === session?.userName);
-    const myTodayPrestations = prestations.filter(p => (p.employe === session?.userName || p.employe === session?.userId) && (p.date === localTodayStr || p.date === isoTodayStr));
-    const myMonthPrestations = prestations.filter(p => (p.employe === session?.userName || p.employe === session?.userId) && new Date(p.date) >= firstDayOfMonth);
+    
+    const myTodayPrestationsInVentes = (ventes || []).filter(v => {
+      if (v.statut === 'annulee') return false;
+      const isToday = v.date === localTodayStr || v.date === isoTodayStr;
+      const isMyStaff = v.employe === session?.userId || v.employe === session?.userName || (typeof v.employe === 'object' && ((v.employe as any)?._id === session?.userId || (v.employe as any)?.name === session?.userName));
+      return isToday && isMyStaff;
+    });
+    const myTodayPrestationsCount = myTodayPrestationsInVentes.length || prestations.filter(p => (p.employe === session?.userName || p.employe === session?.userId) && (p.date === localTodayStr || p.date === isoTodayStr)).length;
 
-    // Revenue by service type
+    const myMonthPrestationsInVentes = monthVentes.filter(v => {
+      const isMyStaff = v.employe === session?.userId || v.employe === session?.userName || (typeof v.employe === 'object' && ((v.employe as any)?._id === session?.userId || (v.employe as any)?.name === session?.userName));
+      return isMyStaff;
+    });
+    const myMonthPrestationsCount = myMonthPrestationsInVentes.length || prestations.filter(p => (p.employe === session?.userName || p.employe === session?.userId) && new Date(p.date) >= firstDayOfMonth).length;
+
+    // ── 5. Revenus par type de prestation (consolidant ventes caisse et prestations) ──
     const revByType = typesPrestations.map(type => {
-      const typePrestations = prestations.filter(p => p.typePrestationId === type.id);
+      let typeRev = 0;
+      let typeCount = 0;
+
+      monthVentes.forEach(v => {
+        (v.items || []).forEach(item => {
+          if (item.type === 'prestation' && (String(item.referenceId) === String(type.id) || item.nom.toLowerCase() === type.nom.toLowerCase())) {
+            typeRev += (item.montant || 0);
+            typeCount += (item.quantite || 1);
+          }
+        });
+      });
+
+      orphanPrestations.forEach(p => {
+        if (String(p.typePrestationId) === String(type.id)) {
+          typeRev += (p.montant || 0);
+          typeCount += 1;
+        }
+      });
+
       return {
         nom: type.nom,
-        revenue: typePrestations.reduce((acc, p) => acc + (p.montant || 0), 0),
-        count: typePrestations.length
+        revenue: typeRev,
+        count: typeCount
       };
-    }).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+    }).filter(t => t.count > 0 || t.revenue > 0)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+
+    const finalRevByType = revByType.length > 0 ? revByType : typesPrestations.slice(0, 5).map(type => ({
+      nom: type.nom,
+      revenue: 0,
+      count: 0
+    }));
+
+    // ── 6. Calcul dynamique de tendance vs mois précédent ──
+    const lastMonthYear = now.getMonth() === 0 ? year - 1 : year;
+    const lastMonthNum = now.getMonth() === 0 ? 12 : now.getMonth();
+    const lastMonthPrefix = `${lastMonthYear}-${String(lastMonthNum).padStart(2, '0')}`;
+    const lastMonthRevenue = (ventes || [])
+      .filter(v => v.statut !== 'annulee' && v.date && v.date.startsWith(lastMonthPrefix))
+      .reduce((sum, v) => sum + (v.totalMontant || 0), 0);
+
+    let trend: { value: number; positive: boolean } | undefined = undefined;
+    if (lastMonthRevenue > 0) {
+      const diffPct = Math.round(((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100);
+      trend = { value: Math.abs(diffPct), positive: diffPct >= 0 };
+    } else if (monthRevenue > 0) {
+      trend = { value: 100, positive: true };
+    }
+
+    // ── 7. Calcul des Dépenses du mois courant et précédent ──
+    const monthDepenses = (depenses || []).filter(d => {
+      if (!d.date) return false;
+      return d.date.startsWith(currentMonthPrefix);
+    });
+    const monthExpenses = monthDepenses.reduce((acc, d) => acc + (d.montant || 0), 0);
+    const monthExpensesCount = monthDepenses.length;
+
+    const lastMonthDepenses = (depenses || [])
+      .filter(d => d.date && d.date.startsWith(lastMonthPrefix))
+      .reduce((sum, d) => sum + (d.montant || 0), 0);
+
+    let expenseTrend: { value: number; positive: boolean } | undefined = undefined;
+    if (lastMonthDepenses > 0) {
+      const diffPct = Math.round(((monthExpenses - lastMonthDepenses) / lastMonthDepenses) * 100);
+      expenseTrend = { value: Math.abs(diffPct), positive: diffPct <= 0 };
+    } else if (monthExpenses > 0) {
+      expenseTrend = { value: 100, positive: false };
+    }
+
+    const monthNetProfit = monthRevenue - monthExpenses;
 
     return {
       activeClientsCount,
       monthRevenue,
-      monthVisitsCount: monthVisits.length,
+      monthExpenses,
+      monthExpensesCount,
+      expenseTrend,
+      monthNetProfit,
+      monthRevenuePrestations,
+      monthRevenueProduits,
+      monthRevenueAutres,
+      monthVisitsCount,
       todayRdvCount: todayRdv.length,
       todayRdv,
-      revByType,
+      revByType: finalRevByType,
+      trend,
       myTodayRdvCount: myTodayRdv.length,
-      myTodayPrestationsCount: myTodayPrestations.length,
-      myMonthPrestationsCount: myMonthPrestations.length,
+      myTodayPrestationsCount,
+      myMonthPrestationsCount,
       myTodayRdv
     };
-  }, [clients, prestations, rendezVous, typesPrestations, session]);
+  }, [clients, prestations, rendezVous, typesPrestations, session, ventes, depenses, getTypePrestation]);
 
   const alertProducts = useMemo(() => {
-    return produits.filter(p => p.quantite <= p.seuilAlerte);
+    return produits.filter(p => {
+      const isLowStock = p.quantite <= p.seuilAlerte;
+      const exp = getExpirationStatus(p.datePeremption);
+      const isExpiring = exp.status === 'expired' || exp.status === 'warning';
+      return isLowStock || isExpiring;
+    });
   }, [produits]);
 
   const openWhatsApp = (phone: string, name: string) => {
@@ -133,8 +317,8 @@ export default function Dashboard() {
     return (
       <div className="p-6 space-y-6 animate-pulse">
         <Skeleton className="h-64 w-full rounded-[32px]" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-40 rounded-[28px]" />)}
+        <div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4", isOwner ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
+          {(isOwner ? [1, 2, 3, 4, 5] : [1, 2, 3, 4]).map(i => <Skeleton key={i} className="h-40 rounded-[28px]" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Skeleton className="h-[450px] lg:col-span-2 rounded-[28px]" />
@@ -191,6 +375,17 @@ export default function Dashboard() {
 
           {/* Quick Action Toolbar */}
           <div className="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="w-full sm:w-auto h-10 px-3.5 rounded-xl border-white/30 bg-black/40 hover:bg-black/60 text-white font-bold text-xs backdrop-blur-md flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] active:scale-95 shadow-sm"
+              title="Actualiser les données"
+            >
+              <RefreshCw className={cn("h-4 w-4 text-slate-200", isRefreshing && "animate-spin text-primary")} />
+              <span>{isRefreshing ? 'Actualisation...' : 'Actualiser'}</span>
+            </Button>
+
             <Link to="/prestations" className="w-full sm:w-auto">
               <Button className="w-full sm:w-auto h-10 px-4 rounded-xl gradient-primary font-bold text-xs shadow-md flex items-center justify-center gap-2 border-0 transition-transform hover:scale-[1.01] active:scale-95">
                 <Scissors className="h-4 w-4" />
@@ -219,7 +414,7 @@ export default function Dashboard() {
       {/* ========================================================================= */}
       {/* STATS / KPI CARDS GRID */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+      <div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4", isOwner ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
         
         {/* KPI 1: Monthly Revenue or Staff Prestations */}
         {isOwner ? (
@@ -227,8 +422,12 @@ export default function Dashboard() {
             title={t('dashboard.monthRevenue')}
             value={formatCurrency(dashboardStats?.monthRevenue || 0)}
             icon={DollarSign}
-            trend={{ value: 12, positive: true }}
-            subtitle={t('dashboard.monthRevenueSub') || "Chiffre d'affaires enregistré ce mois"}
+            trend={dashboardStats?.trend}
+            subtitle={
+              dashboardStats && (dashboardStats.monthRevenueProduits > 0 || dashboardStats.monthRevenuePrestations > 0)
+                ? `${formatCurrency(dashboardStats.monthRevenuePrestations)} soins • ${formatCurrency(dashboardStats.monthRevenueProduits)} produits`
+                : (t('dashboard.monthRevenueSub') || "Chiffre d'affaires enregistré ce mois")
+            }
             variant="success"
           />
         ) : (
@@ -241,7 +440,23 @@ export default function Dashboard() {
           />
         )}
 
-        {/* KPI 2: Today's Appointments */}
+        {/* KPI 2: Monthly Expenses (Owner only) */}
+        {isOwner && (
+          <StatCard
+            title={t('dashboard.monthExpenses') || 'Dépenses du mois'}
+            value={formatCurrency(dashboardStats?.monthExpenses || 0)}
+            icon={TrendingDown}
+            trend={dashboardStats?.expenseTrend}
+            subtitle={
+              dashboardStats?.monthExpensesCount
+                ? `${dashboardStats.monthExpensesCount} opération(s) ce mois`
+                : (t('dashboard.monthExpensesSub') || "Charges enregistrées ce mois")
+            }
+            variant="danger"
+          />
+        )}
+
+        {/* KPI 3: Today's Appointments */}
         <StatCard
           title={isOwner ? t('dashboard.todayAppointments') : t('dashboard.myTodayRdv')}
           value={isOwner ? dashboardStats?.todayRdvCount.toString() || '0' : dashboardStats?.myTodayRdvCount.toString() || '0'}
@@ -250,7 +465,7 @@ export default function Dashboard() {
           variant="warning"
         />
 
-        {/* KPI 3: Monthly Visits / Services */}
+        {/* KPI 4: Monthly Visits / Services */}
         <StatCard
           title={isOwner ? t('dashboard.monthVisits') : t('dashboard.myMonthPrestations')}
           value={isOwner ? dashboardStats?.monthVisitsCount.toString() || '0' : dashboardStats?.myMonthPrestationsCount.toString() || '0'}
@@ -259,7 +474,7 @@ export default function Dashboard() {
           variant="purple"
         />
 
-        {/* KPI 4: Total Active Clients */}
+        {/* KPI 5: Total Active Clients */}
         <StatCard
           title={t('dashboard.totalClients')}
           value={clients.length.toString()}

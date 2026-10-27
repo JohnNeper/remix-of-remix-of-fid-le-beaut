@@ -33,18 +33,29 @@ export interface Produit {
   seuilAlerte: number;
   description?: string;
   unite: string;
+  datePeremption?: string;
 }
 
 // Ventes
 export interface Vente {
   id: string;
+  _id?: string;
   date: string;
-  clientId?: string;
-  employe?: string;
+  clientId?: string | null | any;
+  employe?: string | any;
+  employeNom?: string;
   items: VenteItem[];
   totalMontant: number;
   modePaiement: 'especes' | 'mobile_money' | 'carte' | 'mixte';
+  statut?: 'en_attente' | 'payee' | 'annulee' | string;
   notes?: string;
+  remise?: number;
+  remisePct?: number;
+  pointsAttribues?: number;
+  fideliteAppliquee?: boolean;
+  rendezVousId?: string;
+  rendezVousRef?: string;
+  nombrePersonnes?: number;
 }
 
 export interface VenteItem {

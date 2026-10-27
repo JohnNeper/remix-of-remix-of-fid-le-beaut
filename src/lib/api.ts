@@ -157,6 +157,13 @@ class ApiService {
 
     this.setToken(response.token);
 
+    if (response.salon) {
+      try {
+        localStorage.setItem('bf_active_salon', JSON.stringify(response.salon));
+        window.dispatchEvent(new CustomEvent('salon:updated', { detail: response.salon }));
+      } catch { }
+    }
+
     const session = buildSession(
       response.user,
       response.salon ?? null,
@@ -208,6 +215,12 @@ class ApiService {
     });
     if (response?.token) {
       this.setToken(response.token);
+    }
+    if (response?.salon) {
+      try {
+        localStorage.setItem('bf_active_salon', JSON.stringify(response.salon));
+        window.dispatchEvent(new CustomEvent('salon:updated', { detail: response.salon }));
+      } catch { }
     }
     return response;
   }

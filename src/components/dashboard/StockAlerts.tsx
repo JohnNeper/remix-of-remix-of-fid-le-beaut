@@ -12,12 +12,15 @@ import {
   PlusCircle,
   Sparkles,
   TrendingDown,
-  Layers
+  Layers,
+  Clock,
+  CalendarX,
+  Calendar
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Produit } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useStock } from '@/hooks/useStock';
+import { useStock, getExpirationStatus } from '@/hooks/useStock';
 import { useFinances } from '@/hooks/useFinances';
 import { RestockModal } from '@/components/stock/RestockModal';
 import { toast } from 'sonner';
@@ -34,7 +37,7 @@ export function StockAlerts({ produits }: StockAlertsProps) {
   const [selectedProduit, setSelectedProduit] = useState<Produit | null>(null);
   const [isRestockOpen, setIsRestockOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'out' | 'low'>('all');
+  const [filter, setFilter] = useState<'all' | 'out' | 'low' | 'expired' | 'expiring'>('all');
 
   const outOfStockCount = useMemo(() => {
     return produits.filter(p => p.quantite === 0).length;
@@ -44,12 +47,26 @@ export function StockAlerts({ produits }: StockAlertsProps) {
     return produits.filter(p => p.quantite > 0 && p.quantite <= p.seuilAlerte).length;
   }, [produits]);
 
+  const expiredCount = useMemo(() => {
+    return produits.filter(p => getExpirationStatus(p.datePeremption).status === 'expired').length;
+  }, [produits]);
+
+  const expiringCount = useMemo(() => {
+    return produits.filter(p => getExpirationStatus(p.datePeremption).status === 'warning').length;
+  }, [produits]);
+
   const filteredProduits = useMemo(() => {
     if (filter === 'out') {
       return produits.filter(p => p.quantite === 0);
     }
     if (filter === 'low') {
       return produits.filter(p => p.quantite > 0 && p.quantite <= p.seuilAlerte);
+    }
+    if (filter === 'expired') {
+      return produits.filter(p => getExpirationStatus(p.datePeremption).status === 'expired');
+    }
+    if (filter === 'expiring') {
+      return produits.filter(p => getExpirationStatus(p.datePeremption).status === 'warning');
     }
     return produits;
   }, [produits, filter]);
@@ -85,7 +102,7 @@ export function StockAlerts({ produits }: StockAlertsProps) {
     }
   };
 
-  const hasCriticalAlerts = outOfStockCount > 0;
+  const hasCriticalAlerts = outOfStockCount > 0 || expiredCount > 0;
 
   return (
     <>
@@ -105,6 +122,8 @@ export function StockAlerts({ produits }: StockAlertsProps) {
               >
                 {produits.length === 0 ? (
                   <CheckCircle2 className="h-4.5 w-4.5" />
+                ) : expiredCount > 0 ? (
+                  <CalendarX className="h-4.5 w-4.5" />
                 ) : hasCriticalAlerts ? (
                   <PackageX className="h-4.5 w-4.5" />
                 ) : (
@@ -154,7 +173,7 @@ export function StockAlerts({ produits }: StockAlertsProps) {
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700'
                 }`}
               >
-                <span>Tous</span>
+                <span>{t('stock.all') || "Tous"}</span>
                 <span className="opacity-80">({produits.length})</span>
               </button>
 
@@ -169,7 +188,7 @@ export function StockAlerts({ produits }: StockAlertsProps) {
                   }`}
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
-                  <span>Ruptures</span>
+                  <span>{t('stockAlerts.outOfStock') || "Ruptures"}</span>
                   <span>({outOfStockCount})</span>
                 </button>
               )}
@@ -185,8 +204,40 @@ export function StockAlerts({ produits }: StockAlertsProps) {
                   }`}
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                  <span>Seuils bas</span>
+                  <span>{t('stockAlerts.lowStock') || "Seuils bas"}</span>
                   <span>({lowStockCount})</span>
+                </button>
+              )}
+
+              {expiredCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFilter('expired')}
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 ${
+                    filter === 'expired'
+                      ? 'bg-rose-700 text-white shadow-xs'
+                      : 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 hover:bg-rose-500/20'
+                  }`}
+                >
+                  <CalendarX className="h-3 w-3" />
+                  <span>{t('stock.filterExpired') || "Périmés"}</span>
+                  <span>({expiredCount})</span>
+                </button>
+              )}
+
+              {expiringCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFilter('expiring')}
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 ${
+                    filter === 'expiring'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
+                  }`}
+                >
+                  <Clock className="h-3 w-3" />
+                  <span>{t('stock.filterExpiring') || "Sous 30j"}</span>
+                  <span>({expiringCount})</span>
                 </button>
               )}
             </div>
@@ -199,6 +250,10 @@ export function StockAlerts({ produits }: StockAlertsProps) {
             <div className="space-y-2.5">
               {filteredProduits.slice(0, 5).map(p => {
                 const isOut = p.quantite === 0;
+                const exp = getExpirationStatus(p.datePeremption, t);
+                const isExpired = exp.status === 'expired';
+                const isExpiring = exp.status === 'warning';
+
                 // Calculate stock percentage relative to threshold (0 to 100%)
                 const threshold = Math.max(1, p.seuilAlerte);
                 const percent = Math.min(100, Math.round((p.quantite / threshold) * 100));
@@ -208,8 +263,12 @@ export function StockAlerts({ produits }: StockAlertsProps) {
                     key={p.id}
                     onClick={(e) => handleOpenRestock(p, e)}
                     className={`group relative p-3 rounded-xl border transition-all duration-200 cursor-pointer ${
-                      isOut
+                      isExpired
+                        ? 'bg-rose-500/[0.06] dark:bg-rose-950/30 border-rose-300 dark:border-rose-900/60 hover:border-rose-500 hover:shadow-xs'
+                        : isOut
                         ? 'bg-rose-500/[0.04] dark:bg-rose-950/20 border-rose-200/80 dark:border-rose-900/40 hover:border-rose-400 hover:shadow-xs'
+                        : isExpiring
+                        ? 'bg-amber-500/[0.05] dark:bg-amber-950/25 border-amber-300/80 dark:border-amber-900/50 hover:border-amber-400 hover:shadow-xs'
                         : 'bg-amber-500/[0.04] dark:bg-amber-950/20 border-amber-200/80 dark:border-amber-900/40 hover:border-amber-400 hover:shadow-xs'
                     }`}
                   >
@@ -218,13 +277,21 @@ export function StockAlerts({ produits }: StockAlertsProps) {
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div
                           className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-xs ${
-                            isOut
+                            isExpired
+                              ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                              : isOut
                               ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                              : isExpiring
+                              ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
                               : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                           }`}
                         >
-                          {isOut ? (
+                          {isExpired ? (
+                            <CalendarX className="h-4.5 w-4.5" />
+                          ) : isOut ? (
                             <PackageX className="h-4.5 w-4.5" />
+                          ) : isExpiring ? (
+                            <Clock className="h-4.5 w-4.5" />
                           ) : (
                             <Package className="h-4.5 w-4.5" />
                           )}
@@ -253,15 +320,29 @@ export function StockAlerts({ produits }: StockAlertsProps) {
                       <Badge
                         variant="outline"
                         className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${
-                          isOut
+                          isExpired
+                            ? 'bg-rose-600 text-white border-rose-600'
+                            : isOut
                             ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
+                            : isExpiring
+                            ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40'
                             : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30'
                         }`}
                       >
-                        {isOut ? (
+                        {isExpired ? (
+                          <span className="flex items-center gap-1">
+                            <CalendarX className="h-2.5 w-2.5" />
+                            {exp.label}
+                          </span>
+                        ) : isOut ? (
                           <span className="flex items-center gap-1">
                             <AlertCircle className="h-2.5 w-2.5" />
                             {t('stockAlerts.outOfStock') || 'Rupture'}
+                          </span>
+                        ) : isExpiring ? (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-2.5 w-2.5" />
+                            {exp.label}
                           </span>
                         ) : (
                           <span className="flex items-center gap-1">

@@ -1,29 +1,29 @@
-// Image mapping for service categories
-import serviceCoiffure from '@/assets/service-coiffure.jpg';
-import serviceTresses from '@/assets/service-tresses.jpg';
+// Image mapping for service categories (Authentic African beauty & hair)
+import afroKnotlessBraids from '@/assets/afro-knotless-braids.jpg';
+import afroLaceFrontale from '@/assets/afro-lace-frontale.jpg';
+import afroSoinKarite from '@/assets/afro-soin-karite.jpg';
 import serviceOngles from '@/assets/service-ongles.jpg';
 import serviceMaquillage from '@/assets/service-makeup.jpg';
-import serviceSoins from '@/assets/service-soins.jpg';
 import serviceMassage from '@/assets/service-massage.jpg';
 import serviceHamam from '@/assets/service-hamam.jpg';
 import serviceHomme from '@/assets/service-homme.jpg';
-import serviceHair from '@/assets/service-hair.jpg';
+import afroTaperHomme from '@/assets/afro-taper-homme.jpg';
 
 const categoryImages: Record<string, string> = {
-  'Coiffure': serviceCoiffure,
-  'Tresses': serviceTresses,
+  'Coiffure': afroLaceFrontale,
+  'Tresses': afroKnotlessBraids,
   'Ongles': serviceOngles,
   'Maquillage': serviceMaquillage,
-  'Soins': serviceSoins,
+  'Soins': afroSoinKarite,
   'Massage': serviceMassage,
   'Hamam': serviceHamam,
-  'Homme': serviceHomme,
-  'Traitement': serviceHair,
+  'Homme': afroTaperHomme || serviceHomme,
+  'Traitement': afroSoinKarite,
 };
 
 export function getCategoryImage(categorie?: string): string {
-  if (!categorie) return serviceCoiffure;
-  return categoryImages[categorie] || serviceCoiffure;
+  if (!categorie) return afroKnotlessBraids;
+  return categoryImages[categorie] || afroKnotlessBraids;
 }
 
 export function getAllCategories(): string[] {

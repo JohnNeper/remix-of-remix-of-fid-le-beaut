@@ -6,8 +6,28 @@ export function useSubscriptionPlan() {
   const { currentSalon } = useAuth();
 
   const plan: Plan = useMemo(() => {
-    const planName = (currentSalon as any)?.plan as PlanType | undefined;
-    return getPlan(planName || 'basic');
+    let rawPlan: string | undefined = undefined;
+
+    if (currentSalon) {
+      rawPlan = (currentSalon as any)?.plan ||
+        (currentSalon as any)?.abonnement?.plan ||
+        (currentSalon as any)?.planAbonnement ||
+        (currentSalon as any)?.subscriptionPlan;
+    }
+
+    if (!rawPlan) {
+      try {
+        const cached = localStorage.getItem('bf_active_salon');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          rawPlan = parsed?.plan || parsed?.abonnement?.plan || parsed?.planAbonnement;
+        }
+      } catch {}
+    }
+
+    const normalized = (rawPlan || 'basic').toString().toLowerCase().trim();
+    const planType: PlanType = normalized.includes('premium') ? 'premium' : normalized.includes('pro') ? 'pro' : 'basic';
+    return getPlan(planType);
   }, [currentSalon]);
 
   const getCustomerLimit = (): number | null => {

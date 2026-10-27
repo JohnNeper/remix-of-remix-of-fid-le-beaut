@@ -14,4 +14,9 @@ export interface RendezVous {
   customerEmail?: string;
   reference?: string;
   createdAt?: string;
+  nombrePersonnes?: number; // Nombre de bénéficiaires / personnes
+  montantTotal?: number; // total montant facturé ou estimé
+  financeValide?: boolean; // true si validé et facturé par les finances
+  venteId?: string; // id de la vente / facture liée
+  employeNom?: string; // nom de l'employé en charge
 }

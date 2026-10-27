@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 function normalizeVente(item: any): Vente {
+  const empNom = item.employeNom || (typeof item.employe === 'object' ? item.employe?.name : undefined);
   return {
     ...item,
     id: item._id || item.id,
@@ -12,6 +13,7 @@ function normalizeVente(item: any): Vente {
     totalMontant: item.totalMontant !== undefined ? item.totalMontant : item.montant || 0,
     items: Array.isArray(item.items) ? item.items : [],
     modePaiement: item.modePaiement || 'especes',
+    employeNom: empNom,
   };
 }
 
@@ -32,7 +34,7 @@ export function useFinances() {
   const queryClient = useQueryClient();
 
   // Query Ventes
-  const { data: ventes = [], isLoading: loadingVentes } = useQuery<Vente[]>({
+  const { data: ventes = [], isLoading: loadingVentes, refetch: refetchVentes } = useQuery<Vente[]>({
     queryKey: ['ventes', salonId],
     queryFn: async () => {
       if (!salonId) return [];
@@ -48,7 +50,7 @@ export function useFinances() {
   });
 
   // Query Dépenses
-  const { data: depenses = [], isLoading: loadingDepenses } = useQuery<Depense[]>({
+  const { data: depenses = [], isLoading: loadingDepenses, refetch: refetchDepenses } = useQuery<Depense[]>({
     queryKey: ['depenses', salonId],
     queryFn: async () => {
       if (!salonId) return [];
@@ -72,6 +74,10 @@ export function useFinances() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ventes', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['produits', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['prestations', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['clients', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['rendezVous', salonId] });
     },
   });
 
@@ -83,6 +89,10 @@ export function useFinances() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ventes', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['produits', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['prestations', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['clients', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['rendezVous', salonId] });
     },
   });
 
@@ -159,6 +169,8 @@ export function useFinances() {
     addDepenseAsync: addDepenseMutation.mutateAsync,
     deleteDepense: deleteDepenseMutation.mutate,
     deleteDepenseAsync: deleteDepenseMutation.mutateAsync,
+    refetchVentes,
+    refetchDepenses,
     stats,
   };
 }

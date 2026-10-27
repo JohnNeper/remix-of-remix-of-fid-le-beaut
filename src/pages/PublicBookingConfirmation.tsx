@@ -11,7 +11,7 @@ import { toast } from '@/hooks/use-toast';
 export default function PublicBookingConfirmation() {
   const { slug, ref } = useParams<{ slug: string; ref: string }>();
   const navigate = useNavigate();
-  const location = useLocation() as { state?: { service?: string; date?: string; time?: string; salon?: string } };
+  const location = useLocation() as { state?: { service?: string; date?: string; time?: string; salon?: string; staff?: string; nombrePersonnes?: number; totalEstime?: number } };
   const salon = slug ? readPublicSalon(slug) : null;
   if (!salon) return <Navigate to="/booking/not-found" replace />;
 
@@ -25,7 +25,7 @@ export default function PublicBookingConfirmation() {
   };
 
   const shareBooking = async () => {
-    const text = `J'ai réservé chez ${salon.nom} (réf. ${ref})${info.date ? ` le ${info.date}` : ''}${info.time ? ` à ${info.time}` : ''}.`;
+    const text = `J'ai réservé chez ${salon.nom} (réf. ${ref})${info.date ? ` le ${info.date}` : ''}${info.time ? ` à ${info.time}` : ''}${info.nombrePersonnes && info.nombrePersonnes > 1 ? ` pour ${info.nombrePersonnes} personnes` : ''}.`;
     if (navigator.share) {
       try { await navigator.share({ title: salon.nom, text }); return; } catch (err) { console.error(err); }
     }
@@ -59,8 +59,15 @@ export default function PublicBookingConfirmation() {
 
         <Card className="p-5 mt-6 text-left space-y-3 border-primary/20 bg-gradient-to-br from-card to-primary/5">
           {info.service && <Row label="Prestation" value={info.service} />}
+          {info.nombrePersonnes && info.nombrePersonnes > 1 && (
+            <Row label="Bénéficiaires" value={`${info.nombrePersonnes} personnes`} />
+          )}
           {info.date && <Row label="Date" value={info.date} />}
           {info.time && <Row label="Heure" value={info.time} />}
+          {info.staff && <Row label="Intervenant·e" value={info.staff} />}
+          {info.totalEstime !== undefined && (
+            <Row label="Total estimé" value={`${info.totalEstime.toLocaleString('fr-FR')} FCFA`} />
+          )}
           <div className="border-t pt-3 flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Référence</span>
             <button onClick={copyRef} className="flex items-center gap-1.5 font-mono font-bold text-primary hover:underline">

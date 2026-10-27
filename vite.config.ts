@@ -38,9 +38,11 @@ export default defineConfig(({ mode }) => ({
         "pwa-icon-192.png",
         "pwa-icon-512.png",
         "robots.txt",
+        "sw-custom.js",
       ],
 
       workbox: {
+        importScripts: ['/sw-custom.js'],
         // Augmenter la limite de taille du cache pour les gros fichiers (ex: index.js avec jspdf/html2canvas)
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MiB
 

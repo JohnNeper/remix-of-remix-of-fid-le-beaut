@@ -642,8 +642,8 @@ export default function Parametres() {
 
       {/* --- DIALOG MODALE D'AJOUT COLLABORATEUR --- */}
       <Dialog open={showAddStaffModal} onOpenChange={setShowAddStaffModal}>
-        <DialogContent className="max-w-md bg-background rounded-3xl p-6">
-          <DialogHeader>
+        <DialogContent className="max-w-md bg-background rounded-3xl p-0 flex flex-col">
+          <DialogHeader className="shrink-0 p-5 pb-3 sm:p-6 sm:pb-3">
             <DialogTitle className="text-xl font-bold">
               {language === 'fr' ? 'Ajouter un collaborateur' : 'Add Team Member'}
             </DialogTitle>
@@ -655,7 +655,7 @@ export default function Parametres() {
           </DialogHeader>
 
           {limitReached ? (
-            <div className="space-y-4 py-4 text-center">
+            <div className="space-y-4 py-4 px-5 sm:px-6 text-center">
               <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
                 <AlertTriangle className="h-6 w-6" />
               </div>
@@ -681,119 +681,126 @@ export default function Parametres() {
               </Button>
             </div>
           ) : (
-            <form onSubmit={handleAddStaffSubmit} className="space-y-4 py-2">
-              <div className="space-y-1">
-                <Label htmlFor="staff-name" className="text-xs font-semibold">
-                  {language === 'fr' ? 'Nom complet *' : 'Full Name *'}
-                </Label>
-                <Input
-                  id="staff-name"
-                  placeholder={language === 'fr' ? 'Ex: Marie Dubois' : 'e.g. Jane Doe'}
-                  value={newStaffName}
-                  onChange={(e) => setNewStaffName(e.target.value)}
-                  required
-                  className="rounded-xl"
-                />
-              </div>
+            <form onSubmit={handleAddStaffSubmit} className="flex flex-col min-h-0 flex-1">
+              <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-2 space-y-4 scrollbar-none">
+                <div className="space-y-1">
+                  <Label htmlFor="staff-name" className="text-xs font-semibold">
+                    {language === 'fr' ? 'Nom complet *' : 'Full Name *'}
+                  </Label>
+                  <Input
+                    id="staff-name"
+                    placeholder={language === 'fr' ? 'Ex: Marie Dubois' : 'e.g. Jane Doe'}
+                    value={newStaffName}
+                    onChange={(e) => setNewStaffName(e.target.value)}
+                    required
+                    className="rounded-xl"
+                  />
+                </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="staff-email" className="text-xs font-semibold">
-                  {language === 'fr' ? 'Adresse e-mail *' : 'Email Address *'}
-                </Label>
-                <Input
-                  id="staff-email"
-                  type="email"
-                  placeholder={language === 'fr' ? 'Ex: marie@mon-salon.com' : 'e.g. jane@salon.com'}
-                  value={newStaffEmail}
-                  onChange={(e) => setNewStaffEmail(e.target.value)}
-                  required
-                  className="rounded-xl"
-                />
-              </div>
+                <div className="space-y-1">
+                  <Label htmlFor="staff-email" className="text-xs font-semibold">
+                    {language === 'fr' ? 'Adresse e-mail *' : 'Email Address *'}
+                  </Label>
+                  <Input
+                    id="staff-email"
+                    type="email"
+                    placeholder={language === 'fr' ? 'Ex: marie@mon-salon.com' : 'e.g. jane@salon.com'}
+                    value={newStaffEmail}
+                    onChange={(e) => setNewStaffEmail(e.target.value)}
+                    required
+                    className="rounded-xl"
+                  />
+                </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="staff-phone" className="text-xs font-semibold">
-                  {language === 'fr' ? 'Téléphone' : 'Phone'}
-                </Label>
-                <Input
-                  id="staff-phone"
-                  placeholder="Ex: +237 6..."
-                  value={newStaffPhone}
-                  onChange={(e) => setNewStaffPhone(e.target.value)}
-                  className="rounded-xl"
-                />
-              </div>
+                <div className="space-y-1">
+                  <Label htmlFor="staff-phone" className="text-xs font-semibold">
+                    {language === 'fr' ? 'Téléphone' : 'Phone'}
+                  </Label>
+                  <Input
+                    id="staff-phone"
+                    placeholder="Ex: +237 6..."
+                    value={newStaffPhone}
+                    onChange={(e) => setNewStaffPhone(e.target.value)}
+                    className="rounded-xl"
+                  />
+                </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="staff-password" className="text-xs font-semibold">
-                  {language === 'fr' ? 'Mot de passe *' : 'Password *'}
-                </Label>
-                <Input
-                  id="staff-password"
-                  type="password"
-                  placeholder={language === 'fr' ? 'Minimum 6 caractères' : 'Min 6 characters'}
-                  value={newStaffPassword}
-                  onChange={(e) => setNewStaffPassword(e.target.value)}
-                  required
-                  className="rounded-xl"
-                />
-              </div>
+                <div className="space-y-1">
+                  <Label htmlFor="staff-password" className="text-xs font-semibold">
+                    {language === 'fr' ? 'Mot de passe *' : 'Password *'}
+                  </Label>
+                  <Input
+                    id="staff-password"
+                    type="password"
+                    placeholder={language === 'fr' ? 'Minimum 6 caractères' : 'Min 6 characters'}
+                    value={newStaffPassword}
+                    onChange={(e) => setNewStaffPassword(e.target.value)}
+                    required
+                    className="rounded-xl"
+                  />
+                </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">
-                  {t('team.roleLabel') || (language === 'fr' ? 'Rôle & Permissions *' : 'Role & Permissions *')}
-                </Label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setNewStaffRole('staff')}
-                    className={`p-3 rounded-2xl border text-left transition-all ${
-                      newStaffRole === 'staff'
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">
+                    {t('team.roleLabel') || (language === 'fr' ? 'Rôle & Permissions *' : 'Role & Permissions *')}
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setNewStaffRole('staff')}
+                      className={`p-3 rounded-2xl border text-left transition-all ${newStaffRole === 'staff'
                         ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
                         : 'border-border/60 bg-muted/20 hover:bg-muted/40'
-                    }`}
-                  >
-                    <div className="font-bold text-xs flex items-center gap-1 text-foreground">
-                      <span>👤</span> {t('team.roleStaff') || (language === 'fr' ? 'Collaborateur' : 'Staff')}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                      {language === 'fr' ? 'Soins & RDV uniquement' : 'Services & Bookings only'}
-                    </p>
-                  </button>
+                        }`}
+                    >
+                      <div className="font-bold text-xs flex items-center gap-1 text-foreground">
+                        <span>👤</span> {t('team.roleStaff') || (language === 'fr' ? 'Collaborateur' : 'Staff')}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                        {language === 'fr' ? 'Soins & RDV uniquement' : 'Services & Bookings only'}
+                      </p>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setNewStaffRole('co_owner')}
-                    className={`p-3 rounded-2xl border text-left transition-all ${
-                      newStaffRole === 'co_owner'
+                    <button
+                      type="button"
+                      onClick={() => setNewStaffRole('co_owner')}
+                      className={`p-3 rounded-2xl border text-left transition-all ${newStaffRole === 'co_owner'
                         ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/20'
                         : 'border-border/60 bg-muted/20 hover:bg-muted/40'
-                    }`}
-                  >
-                    <div className="font-bold text-xs flex items-center gap-1 text-purple-700 dark:text-purple-300">
-                      <span>👑</span> {t('team.roleCoOwner') || (language === 'fr' ? 'Co-propriétaire' : 'Co-owner')}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                      {language === 'fr' ? 'Accès complet d\'admin' : 'Full admin access'}
+                        }`}
+                    >
+                      <div className="font-bold text-xs flex items-center gap-1 text-purple-700 dark:text-purple-300">
+                        <span>👑</span> {t('team.roleCoOwner') || (language === 'fr' ? 'Co-propriétaire' : 'Co-owner')}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                        {language === 'fr' ? 'Accès complet d\'admin' : 'Full admin access'}
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">
+                    {language === 'fr' ? 'Photo du collaborateur (optionnel)' : 'Staff Photo (optional)'}
+                  </Label>
+                  <div className="flex flex-col items-center gap-2 py-3 px-4 rounded-2xl bg-muted/30 border border-border/40">
+                    <ImageUpload
+                      value={newStaffAvatarUrl}
+                      onChange={(val) => setNewStaffAvatarUrl(Array.isArray(val) ? val[0] : val)}
+                      aspectRatio="square"
+                      label={language === 'fr' ? 'Ajouter une photo' : 'Add photo'}
+                      className="w-full h-full  border-2 border-dashed border-primary/30 shadow-sm"
+                    />
+                    <p className="text-[10px] text-muted-foreground text-center leading-tight">
+                      {language === 'fr'
+                        ? 'Cette photo sera visible par les clients lors de la réservation.'
+                        : 'This photo will be visible to clients when booking.'}
                     </p>
-                  </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">
-                  {language === 'fr' ? 'Photo du collaborateur (optionnel)' : 'Staff Photo (optional)'}
-                </Label>
-                <ImageUpload
-                  value={newStaffAvatarUrl}
-                  onChange={(val) => setNewStaffAvatarUrl(Array.isArray(val) ? val[0] : val)}
-                  aspectRatio="square"
-                  label={language === 'fr' ? 'Ajouter une photo' : 'Add photo'}
-                  className="w-28 h-28 mx-auto rounded-2xl border-2 border-dashed border-primary/30"
-                />
-              </div>
-
-              <DialogFooter className="pt-4 gap-2">
+              <DialogFooter className="shrink-0 pt-4 pb-5 px-5 sm:px-6 gap-2 border-t border-border/40">
                 <Button
                   type="button"
                   variant="outline"
@@ -825,8 +832,8 @@ export default function Parametres() {
 
       {/* --- DIALOG MODALE D'ÉDITION COLLABORATEUR --- */}
       <Dialog open={!!editingStaffDetails} onOpenChange={(open) => !open && setEditingStaffDetails(null)}>
-        <DialogContent className="max-w-md bg-background rounded-3xl p-6">
-          <DialogHeader>
+        <DialogContent className="max-w-md bg-background rounded-3xl p-0 flex flex-col">
+          <DialogHeader className="shrink-0 p-5 pb-3 sm:p-6 sm:pb-3">
             <DialogTitle className="text-xl font-bold">
               {language === 'fr' ? 'Modifier le collaborateur' : 'Edit Team Member'}
             </DialogTitle>
@@ -838,103 +845,110 @@ export default function Parametres() {
           </DialogHeader>
 
           {editingStaffDetails && (
-            <form onSubmit={handleEditStaffSubmit} className="space-y-4 py-2">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">
-                  {language === 'fr' ? 'Photo de profil' : 'Profile Photo'}
-                </Label>
-                <ImageUpload
-                  value={editStaffAvatarUrl}
-                  onChange={(val) => setEditStaffAvatarUrl(Array.isArray(val) ? val[0] : val)}
-                  aspectRatio="square"
-                  label={language === 'fr' ? 'Changer la photo' : 'Change photo'}
-                  className="w-28 h-28 mx-auto rounded-2xl border-2 border-dashed border-primary/30"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="edit-staff-name" className="text-xs font-semibold">
-                  {language === 'fr' ? 'Nom complet *' : 'Full Name *'}
-                </Label>
-                <Input
-                  id="edit-staff-name"
-                  value={editStaffName}
-                  onChange={(e) => setEditStaffName(e.target.value)}
-                  required
-                  className="rounded-xl"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="edit-staff-email" className="text-xs font-semibold">
-                  {language === 'fr' ? 'Adresse e-mail *' : 'Email Address *'}
-                </Label>
-                <Input
-                  id="edit-staff-email"
-                  type="email"
-                  value={editStaffEmail}
-                  onChange={(e) => setEditStaffEmail(e.target.value)}
-                  required
-                  className="rounded-xl"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="edit-staff-phone" className="text-xs font-semibold">
-                  {language === 'fr' ? 'Téléphone' : 'Phone'}
-                </Label>
-                <Input
-                  id="edit-staff-phone"
-                  value={editStaffPhone}
-                  onChange={(e) => setEditStaffPhone(e.target.value)}
-                  className="rounded-xl"
-                />
-              </div>
-
-              {editStaffRole !== 'owner' && (
-                <div className="space-y-1.5 pt-1">
+            <form onSubmit={handleEditStaffSubmit} className="flex flex-col min-h-0 flex-1">
+              <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-2 space-y-4 scrollbar-none">
+                <div className="space-y-2">
                   <Label className="text-xs font-semibold">
-                    {t('team.roleLabel') || (language === 'fr' ? 'Rôle & Permissions *' : 'Role & Permissions *')}
+                    {language === 'fr' ? 'Photo de profil' : 'Profile Photo'}
                   </Label>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setEditStaffRole('staff')}
-                      className={`p-3 rounded-2xl border text-left transition-all ${
-                        editStaffRole === 'staff'
-                          ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
-                          : 'border-border/60 bg-muted/20 hover:bg-muted/40'
-                      }`}
-                    >
-                      <div className="font-bold text-xs flex items-center gap-1 text-foreground">
-                        <span>👤</span> {t('team.roleStaff') || (language === 'fr' ? 'Collaborateur' : 'Staff')}
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                        {language === 'fr' ? 'Soins & RDV uniquement' : 'Services & Bookings only'}
-                      </p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setEditStaffRole('co_owner')}
-                      className={`p-3 rounded-2xl border text-left transition-all ${
-                        editStaffRole === 'co_owner'
-                          ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/20'
-                          : 'border-border/60 bg-muted/20 hover:bg-muted/40'
-                      }`}
-                    >
-                      <div className="font-bold text-xs flex items-center gap-1 text-purple-700 dark:text-purple-300">
-                        <span>👑</span> {t('team.roleCoOwner') || (language === 'fr' ? 'Co-propriétaire' : 'Co-owner')}
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                        {language === 'fr' ? 'Accès complet d\'admin' : 'Full admin access'}
-                      </p>
-                    </button>
+                  <div className="flex flex-col items-center gap-2 py-3 px-4 rounded-2xl bg-muted/30 border border-border/40">
+                    <ImageUpload
+                      value={editStaffAvatarUrl}
+                      onChange={(val) => setEditStaffAvatarUrl(Array.isArray(val) ? val[0] : val)}
+                      aspectRatio="square"
+                      label={language === 'fr' ? 'Changer la photo' : 'Change photo'}
+                      className="w-full h-full border-2 border-dashed border-primary/30 shadow-sm"
+                    />
+                    <p className="text-[10px] text-muted-foreground text-center leading-tight">
+                      {language === 'fr'
+                        ? 'Cette photo sera visible par les clients lors de la réservation.'
+                        : 'This photo will be visible to clients when booking.'}
+                    </p>
                   </div>
                 </div>
-              )}
 
-              <DialogFooter className="pt-4 gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="edit-staff-name" className="text-xs font-semibold">
+                    {language === 'fr' ? 'Nom complet *' : 'Full Name *'}
+                  </Label>
+                  <Input
+                    id="edit-staff-name"
+                    value={editStaffName}
+                    onChange={(e) => setEditStaffName(e.target.value)}
+                    required
+                    className="rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="edit-staff-email" className="text-xs font-semibold">
+                    {language === 'fr' ? 'Adresse e-mail *' : 'Email Address *'}
+                  </Label>
+                  <Input
+                    id="edit-staff-email"
+                    type="email"
+                    value={editStaffEmail}
+                    onChange={(e) => setEditStaffEmail(e.target.value)}
+                    required
+                    className="rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="edit-staff-phone" className="text-xs font-semibold">
+                    {language === 'fr' ? 'Téléphone' : 'Phone'}
+                  </Label>
+                  <Input
+                    id="edit-staff-phone"
+                    value={editStaffPhone}
+                    onChange={(e) => setEditStaffPhone(e.target.value)}
+                    className="rounded-xl"
+                  />
+                </div>
+
+                {editStaffRole !== 'owner' && (
+                  <div className="space-y-1.5 pt-1">
+                    <Label className="text-xs font-semibold">
+                      {t('team.roleLabel') || (language === 'fr' ? 'Rôle & Permissions *' : 'Role & Permissions *')}
+                    </Label>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setEditStaffRole('staff')}
+                        className={`p-3 rounded-2xl border text-left transition-all ${editStaffRole === 'staff'
+                          ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                          : 'border-border/60 bg-muted/20 hover:bg-muted/40'
+                          }`}
+                      >
+                        <div className="font-bold text-xs flex items-center gap-1 text-foreground">
+                          <span>👤</span> {t('team.roleStaff') || (language === 'fr' ? 'Collaborateur' : 'Staff')}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                          {language === 'fr' ? 'Soins & RDV uniquement' : 'Services & Bookings only'}
+                        </p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditStaffRole('co_owner')}
+                        className={`p-3 rounded-2xl border text-left transition-all ${editStaffRole === 'co_owner'
+                          ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/20'
+                          : 'border-border/60 bg-muted/20 hover:bg-muted/40'
+                          }`}
+                      >
+                        <div className="font-bold text-xs flex items-center gap-1 text-purple-700 dark:text-purple-300">
+                          <span>👑</span> {t('team.roleCoOwner') || (language === 'fr' ? 'Co-propriétaire' : 'Co-owner')}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                          {language === 'fr' ? 'Accès complet d\'admin' : 'Full admin access'}
+                        </p>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="shrink-0 pt-4 pb-5 px-5 sm:px-6 gap-2 border-t border-border/40">
                 <Button
                   type="button"
                   variant="outline"

@@ -263,10 +263,10 @@ export function seedDemoData(): void {
     ];
     setStorageItem(k(STORAGE_KEYS.RENDEZ_VOUS), rdvs);
     const produits: Produit[] = [
-    { id: crypto.randomUUID(), nom: 'Shampoing professionnel', categorie: 'Capillaire', prix: 7500, prixAchat: 4500, quantite: 12, seuilAlerte: 5, unite: 'flacon' },
-    { id: crypto.randomUUID(), nom: 'Huile de ricin', categorie: 'Capillaire', prix: 3500, prixAchat: 2000, quantite: 3, seuilAlerte: 5, unite: 'flacon' },
-    { id: crypto.randomUUID(), nom: 'Vernis à ongles', categorie: 'Ongles', prix: 2500, prixAchat: 1200, quantite: 25, seuilAlerte: 10, unite: 'unité' },
-    { id: crypto.randomUUID(), nom: 'Masque visage hydratant', categorie: 'Soins', prix: 4000, prixAchat: 2500, quantite: 8, seuilAlerte: 5, unite: 'sachet' },
+    { id: crypto.randomUUID(), nom: 'Shampoing professionnel', categorie: 'Capillaire', prix: 7500, prixAchat: 4500, quantite: 12, seuilAlerte: 5, unite: 'flacon', datePeremption: isoDaysFromNow(180) },
+    { id: crypto.randomUUID(), nom: 'Huile de ricin', categorie: 'Capillaire', prix: 3500, prixAchat: 2000, quantite: 3, seuilAlerte: 5, unite: 'flacon', datePeremption: isoDaysFromNow(-10) },
+    { id: crypto.randomUUID(), nom: 'Vernis à ongles', categorie: 'Ongles', prix: 2500, prixAchat: 1200, quantite: 25, seuilAlerte: 10, unite: 'unité', datePeremption: isoDaysFromNow(20) },
+    { id: crypto.randomUUID(), nom: 'Masque visage hydratant', categorie: 'Soins', prix: 4000, prixAchat: 2500, quantite: 8, seuilAlerte: 5, unite: 'sachet', datePeremption: isoDaysFromNow(365) },
     ];
     setStorageItem(k(STORAGE_KEYS.PRODUITS), produits);
     const ventes: Vente[] = [

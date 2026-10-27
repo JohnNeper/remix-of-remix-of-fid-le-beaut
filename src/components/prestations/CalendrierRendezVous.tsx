@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import {
   Clock,
   User,
+  Users,
   Scissors,
   Plus,
   CheckCircle2,
@@ -57,12 +58,14 @@ import { useClients } from '@/hooks/useClients';
 import { usePrestations } from '@/hooks/usePrestations';
 import { useFinances } from '@/hooks/useFinances';
 import { RendezVousForm, RdvFormData } from './RendezVousForm';
+import { ValidationFinanceModal } from './ValidationFinanceModal';
 import { InvoiceGenerator } from '@/components/finances/InvoiceGenerator';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/hooks/useTranslations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Vente } from '@/types';
+import { RendezVous } from '@/types/rendez-vous';
 import { getCategoryImage } from '@/lib/category-images';
 
 export function CalendrierRendezVous() {
@@ -76,13 +79,15 @@ export function CalendrierRendezVous() {
   const [filterSource, setFilterSource] = useState<'all' | 'salon' | 'en_ligne'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [pendingInvoiceVente, setPendingInvoiceVente] = useState<Vente | null>(null);
+  const [selectedRdvForFinance, setSelectedRdvForFinance] = useState<RendezVous | null>(null);
+  const [isFinanceModalOpen, setIsFinanceModalOpen] = useState(false);
 
   const isMobile = useIsMobile();
 
-  const { getRendezVousByDate, getDatesAvecRendezVous, addRendezVous, updateRendezVous, deleteRendezVous, loading } = useRendezVous();
+  const { rendezVous, getRendezVousByDate, getDatesAvecRendezVous, addRendezVous, updateRendezVous, deleteRendezVous, loading } = useRendezVous();
   const { clients, getClient, addClient } = useClients();
   const { getTypePrestation } = usePrestations();
-  const { addVenteAsync } = useFinances();
+  const { addVenteAsync, ventes } = useFinances();
   const { t, language } = useLanguage();
   const { formatCurrency } = useTranslations();
 
@@ -270,6 +275,7 @@ export function CalendrierRendezVous() {
       date: data.date,
       heure: data.heure,
       duree: data.duree,
+      nombrePersonnes: data.nombrePersonnes || 1,
       employe: data.employe,
       notes: data.notes,
       source: data.source || 'salon',
@@ -279,69 +285,101 @@ export function CalendrierRendezVous() {
     setPrefilledTimeSlot(undefined);
     toast({
       title: t('appointments.scheduled_toast', 'Rendez-vous planifié'),
-      description: `RDV ${data.heure}`,
+      description: `RDV ${data.heure}${data.nombrePersonnes && data.nombrePersonnes > 1 ? ` (${data.nombrePersonnes} pers.)` : ''}`,
     });
   };
 
   const handleStatutChange = (id: string, statut: string) => {
+    const existing = (rendezVous || []).find((r) => r.id === id);
+    if (existing?.financeValide && statut !== 'termine') {
+      toast({
+        title: t('appointments.alreadyInvoiced', 'Ce rendez-vous a déjà été validé et facturé.'),
+        description: t('appointments.cannotModifyStatus', 'Le statut d\'un rendez-vous déjà encaissé ne peut pas être réinitialisé.'),
+      });
+      return;
+    }
     updateRendezVous({ id, updates: { statut: statut as any } });
     const label = statutConfig[statut]?.label || statut;
     toast({ title: (t('appointments.toast.updated', 'Statut mis à jour : {status}')).replace('{status}', label) });
   };
 
-  const handleTerminer = async (rdv: any) => {
-    updateRendezVous({ id: rdv.id, updates: { statut: 'termine' } });
-    const label = statutConfig['termine']?.label || 'Terminé';
-    toast({ title: (t('appointments.toast.updated', 'Statut mis à jour : {status}')).replace('{status}', label) });
+  const isRdvValidated = useCallback(
+    (rdv: any) => {
+      if (!rdv) return false;
+      if (rdv.financeValide) return true;
+      if (rdv.venteId) return true;
+      if (rdv.statut === 'termine' || rdv.statut === 'completed') return true;
+      if (
+        ventes &&
+        ventes.some(
+          (v) =>
+            (rdv.venteId && (v.id === rdv.venteId || (v as any)._id === rdv.venteId)) ||
+            (v.rendezVousId && String(v.rendezVousId) === String(rdv.id)) ||
+            (rdv.reference && v.rendezVousRef && v.rendezVousRef === rdv.reference)
+        )
+      ) {
+        return true;
+      }
+      return false;
+    },
+    [ventes]
+  );
 
-    try {
-      const prestation = getTypePrestation(rdv.typePrestationId);
-      const prix = prestation?.prix || 0;
-      const nomPrestation = prestation?.nom || t('finances.invoice.service', 'Prestation');
-
-      const venteData: Omit<Vente, 'id'> = {
-        date: rdv.date || new Date().toISOString().split('T')[0],
-        clientId: rdv.clientId || undefined,
-        employe: rdv.employe || undefined,
-        modePaiement: 'especes',
-        notes: t('appointments.autoInvoiceNote', 'RDV terminé') + ` à ${rdv.heure}`,
-        totalMontant: prix,
-        items: [
-          {
-            type: 'prestation',
-            referenceId: rdv.typePrestationId || '',
-            nom: nomPrestation,
-            quantite: 1,
-            prixUnitaire: prix,
-            montant: prix,
-          },
-        ],
-      };
-
-      const createdVente = await addVenteAsync(venteData);
-      setPendingInvoiceVente(createdVente || ({ ...venteData, id: `rdv-${rdv.id}` } as Vente));
-    } catch (err) {
-      console.error('Erreur lors de la création de la vente:', err);
-      const prestation = getTypePrestation(rdv.typePrestationId);
-      const prix = prestation?.prix || 0;
-      setPendingInvoiceVente({
-        id: `rdv-${rdv.id}`,
-        date: rdv.date || new Date().toISOString().split('T')[0],
-        clientId: rdv.clientId,
-        modePaiement: 'especes',
-        totalMontant: prix,
-        items: [
-          {
-            type: 'prestation',
-            referenceId: rdv.typePrestationId || '',
-            nom: prestation?.nom || 'Prestation',
-            quantite: 1,
-            prixUnitaire: prix,
-            montant: prix,
-          },
-        ],
-      } as Vente);
+  const handleStartValidationFinance = (rdv: any) => {
+    if (isRdvValidated(rdv)) {
+      toast({
+        title: t('appointments.alreadyInvoiced', 'Ce rendez-vous a déjà été validé et facturé.'),
+        description: t('appointments.modal.alreadyValidatedDesc', 'La facture correspondante a déjà été générée.'),
+      });
+      handleOpenFacture(rdv);
+      return;
     }
+    setSelectedRdvForFinance(rdv);
+    setIsFinanceModalOpen(true);
+  };
+
+  const handleOpenFacture = (rdv: any) => {
+    const foundVente = (ventes || []).find(
+      (v) => (rdv.venteId && (v.id === rdv.venteId || (v as any)._id === rdv.venteId)) ||
+             v.rendezVousId === rdv.id ||
+             (v.rendezVousRef && v.rendezVousRef === rdv.reference)
+    );
+
+    if (foundVente) {
+      setPendingInvoiceVente(foundVente);
+      return;
+    }
+
+    const prestation = getTypePrestation(rdv.typePrestationId);
+    const prix = prestation?.prix || 0;
+    const nb = rdv.nombrePersonnes || 1;
+    const total = rdv.montantTotal || (prix * nb);
+
+    setPendingInvoiceVente({
+      id: rdv.venteId || `rdv-${rdv.id}`,
+      date: rdv.date || new Date().toISOString().split('T')[0],
+      clientId: rdv.clientId,
+      employe: rdv.employe,
+      modePaiement: 'especes',
+      rendezVousId: rdv.id,
+      rendezVousRef: rdv.reference,
+      nombrePersonnes: nb,
+      totalMontant: total,
+      items: [
+        {
+          type: 'prestation',
+          referenceId: rdv.typePrestationId || '',
+          nom: `${prestation?.nom || 'Prestation'}${nb > 1 ? ` (${nb} pers.)` : ''}`,
+          quantite: nb,
+          prixUnitaire: prix,
+          montant: total,
+        },
+      ],
+    } as Vente);
+  };
+
+  const handleTerminer = (rdv: any) => {
+    handleStartValidationFinance(rdv);
   };
 
   const handleDelete = (id: string) => {
@@ -686,8 +724,14 @@ export function CalendrierRendezVous() {
                                         </span>
                                         {type?.prix !== undefined && (
                                           <span className="text-[11px] font-black text-rose-600 dark:text-rose-400 px-2 py-0.5 bg-rose-500/10 rounded-lg shrink-0">
-                                            {formatCurrency(type.prix)}
+                                            {formatCurrency(rdv.montantTotal || (type.prix * (rdv.nombrePersonnes || 1)))}
                                           </span>
+                                        )}
+                                        {rdv.nombrePersonnes && rdv.nombrePersonnes > 1 && (
+                                          <Badge variant="outline" className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-2xs">
+                                            <Users className="h-3 w-3 mr-1 text-indigo-600 dark:text-indigo-400" />
+                                            {rdv.nombrePersonnes} pers.
+                                          </Badge>
                                         )}
                                       </div>
 
@@ -696,6 +740,13 @@ export function CalendrierRendezVous() {
                                           <User className="h-3.5 w-3.5 text-rose-500 shrink-0" />
                                           <span className="truncate">{clientNameDisplay}</span>
                                         </span>
+
+                                        {(rdv.employe || rdv.employeNom) && (
+                                          <span className="inline-flex items-center gap-1 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md text-[11px]">
+                                            <Scissors className="h-3 w-3 text-primary shrink-0" />
+                                            <span className="truncate">{rdv.employeNom || rdv.employe}</span>
+                                          </span>
+                                        )}
 
                                         {clientPhoneDisplay && (
                                           <button
@@ -717,6 +768,12 @@ export function CalendrierRendezVous() {
                                       <Badge variant="outline" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 font-extrabold text-[10px] px-2.5 py-1 rounded-lg shrink-0">
                                         <Globe className="h-3 w-3 mr-1 shrink-0 text-blue-500" />
                                         <span>En ligne</span>
+                                      </Badge>
+                                    )}
+
+                                    {isRdvValidated(rdv) && (
+                                      <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-[10px] font-extrabold px-2.5 py-1 rounded-lg shrink-0">
+                                        <CheckCircle2 className="h-3 w-3 mr-1 text-emerald-600" /> Facturé
                                       </Badge>
                                     )}
 
@@ -747,15 +804,36 @@ export function CalendrierRendezVous() {
                                       </Button>
                                     )}
 
-                                    {(rdv.statut === 'confirme' || rdv.statut === 'en_attente') && (
+                                    {isRdvValidated(rdv) ? (
+                                      <div className="flex items-center gap-1.5 shrink-0">
+                                        <Button
+                                          size="sm"
+                                          disabled
+                                          className="rounded-xl h-8 px-2.5 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed opacity-80 shadow-none shrink-0"
+                                          title={t('appointments.alreadyInvoiced', 'Ce rendez-vous a déjà été validé et facturé.')}
+                                        >
+                                          <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-emerald-500" />
+                                          <span>{t('appointments.alreadyValidatedBtn', 'Validé (Bloqué)')}</span>
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => handleOpenFacture(rdv)}
+                                          className="rounded-xl h-8 px-2.5 text-xs font-extrabold border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 shrink-0"
+                                        >
+                                          <Receipt className="h-3.5 w-3.5 mr-1 text-emerald-600" />
+                                          <span>{t('appointments.btn.invoice', 'Facture')}</span>
+                                        </Button>
+                                      </div>
+                                    ) : rdv.statut !== 'annule' ? (
                                       <Button
                                         size="sm"
-                                        onClick={() => handleTerminer(rdv)}
-                                        className="rounded-xl h-8 px-3 text-xs font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/20 shrink-0"
+                                        onClick={() => handleStartValidationFinance(rdv)}
+                                        className="rounded-xl h-8 px-3.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs shrink-0 transition-all active:scale-[0.98]"
                                       >
-                                        <Receipt className="h-3.5 w-3.5 mr-1.5" /> Facture
+                                        <Receipt className="h-3.5 w-3.5 mr-1.5" /> {t('appointments.btn.validateAndInvoice', 'Valider & Facturer')}
                                       </Button>
-                                    )}
+                                    ) : null}
 
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
@@ -851,8 +929,14 @@ export function CalendrierRendezVous() {
                             <span className="font-black text-slate-900 dark:text-white text-xs sm:text-sm truncate">{type?.nom || 'Prestation'}</span>
                             {type?.prix !== undefined && (
                               <span className="text-[11px] font-black text-rose-600 dark:text-rose-400 px-2 py-0.5 bg-rose-500/10 rounded-lg shrink-0">
-                                {formatCurrency(type.prix)}
+                                {formatCurrency(rdv.montantTotal || (type.prix * (rdv.nombrePersonnes || 1)))}
                               </span>
+                            )}
+                            {rdv.nombrePersonnes && rdv.nombrePersonnes > 1 && (
+                              <Badge variant="outline" className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 shadow-2xs">
+                                <Users className="h-3 w-3 mr-1 text-indigo-600 dark:text-indigo-400" />
+                                {rdv.nombrePersonnes} pers.
+                              </Badge>
                             )}
                           </div>
 
@@ -861,6 +945,13 @@ export function CalendrierRendezVous() {
                               <User className="h-3.5 w-3.5 text-rose-500 shrink-0" />
                               <span className="truncate">{clientNameDisplay}</span>
                             </span>
+
+                            {(rdv.employe || rdv.employeNom) && (
+                              <span className="inline-flex items-center gap-1 font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md text-[11px]">
+                                <Scissors className="h-3 w-3 text-primary shrink-0" />
+                                <span className="truncate">{rdv.employeNom || rdv.employe}</span>
+                              </span>
+                            )}
 
                             {clientPhoneDisplay && (
                               <button
@@ -884,20 +975,47 @@ export function CalendrierRendezVous() {
                           </Badge>
                         )}
 
+                        {isRdvValidated(rdv) && (
+                          <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-[10px] font-extrabold px-2.5 py-1 rounded-lg shrink-0">
+                            <CheckCircle2 className="h-3 w-3 mr-1 text-emerald-600" /> {t('appointments.status.facture', 'Facturé')}
+                          </Badge>
+                        )}
+
                         <Badge variant="outline" className={cn('rounded-lg px-2.5 py-1 font-extrabold text-[10px] shrink-0', config.className)}>
                           <StatutIcon className="h-3 w-3 mr-1 shrink-0" />
                           <span>{config.label}</span>
                         </Badge>
 
-                        {(rdv.statut === 'confirme' || rdv.statut === 'en_attente') && (
+                        {isRdvValidated(rdv) ? (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button
+                              size="sm"
+                              disabled
+                              className="rounded-xl h-8 px-2.5 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed opacity-80 shadow-none shrink-0"
+                              title={t('appointments.alreadyInvoiced', 'Ce rendez-vous a déjà été validé et facturé.')}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-emerald-500" />
+                              <span>{t('appointments.alreadyValidatedBtn', 'Validé (Bloqué)')}</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenFacture(rdv)}
+                              className="rounded-xl h-8 px-2.5 text-xs font-extrabold border-emerald-500/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 shrink-0"
+                            >
+                              <Receipt className="h-3.5 w-3.5 mr-1 text-emerald-600" />
+                              <span>{t('appointments.btn.invoice', 'Facture')}</span>
+                            </Button>
+                          </div>
+                        ) : rdv.statut !== 'annule' ? (
                           <Button
                             size="sm"
-                            onClick={() => handleTerminer(rdv)}
-                            className="rounded-xl h-8 px-3 text-xs font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/20 shrink-0"
+                            onClick={() => handleStartValidationFinance(rdv)}
+                            className="rounded-xl h-8 px-3.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs shrink-0 transition-all active:scale-[0.98]"
                           >
-                            <Receipt className="h-3.5 w-3.5 mr-1.5" /> Facture
+                            <Receipt className="h-3.5 w-3.5 mr-1.5" /> {t('appointments.btn.validateAndInvoice', 'Valider & Facturer')}
                           </Button>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   );
@@ -955,6 +1073,19 @@ export function CalendrierRendezVous() {
           onClose={() => setPendingInvoiceVente(null)}
         />
       )}
+
+      {/* Validation Finance Modal */}
+      <ValidationFinanceModal
+        isOpen={isFinanceModalOpen}
+        onClose={() => {
+          setIsFinanceModalOpen(false);
+          setSelectedRdvForFinance(null);
+        }}
+        rdv={selectedRdvForFinance}
+        onSuccess={(createdVente) => {
+          setPendingInvoiceVente(createdVente);
+        }}
+      />
 
       {/* Add RDV Dialog / Drawer */}
       {isMobile ? (

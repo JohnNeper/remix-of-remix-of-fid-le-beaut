@@ -158,7 +158,6 @@ function VenteForm({ onSubmit, onCancel }: { onSubmit: (v: Omit<Vente, 'id'>) =>
     setIsSaving(true);
     try {
       const resolvedClientId = (clientId && clientId !== 'none') ? clientId : undefined;
-      items.filter(i => i.type === 'produit').forEach(i => adjustStock(i.referenceId, -i.quantite));
       await onSubmit({ date: new Date().toISOString().split('T')[0], clientId: resolvedClientId, items, totalMontant: total, modePaiement, notes });
     } catch (err) {
       console.error('Erreur enregistrement vente:', err);

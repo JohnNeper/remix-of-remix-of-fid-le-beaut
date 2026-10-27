@@ -66,6 +66,15 @@ export function InvoiceGenerator({ vente, isOpen, onClose, onDeleteRequest }: In
     mixte: t('finances.paymentModes.mixte'),
   };
 
+  const employeNom = React.useMemo(() => {
+    if (!vente.employe) return null;
+    if (typeof vente.employe === 'object' && vente.employe?.name) return vente.employe.name;
+    const empId = String(vente.employe);
+    const staff = (salon?.branding?.staff || []);
+    const foundStaff = staff.find((s: any) => s._id === empId || s.id === empId || s.name === empId);
+    return foundStaff?.name || empId;
+  }, [vente.employe, salon]);
+
   const handleWhatsAppShare = () => {
     const filename = `Facture_${invoiceNum}.pdf`;
 
@@ -73,12 +82,16 @@ export function InvoiceGenerator({ vente, isOpen, onClose, onDeleteRequest }: In
       `🔸 ${item.nom} (x${item.quantite}) : ${formatCurrency(item.montant)}`
     ).join('\n');
 
+    const rdvRefLine = vente.rendezVousRef ? `📅 *Rendez-vous :* Réf. ${vente.rendezVousRef}\n` : '';
+    const groupLine = (vente.nombrePersonnes && vente.nombrePersonnes > 1) ? `👥 *Bénéficiaires :* ${vente.nombrePersonnes} personnes\n` : '';
+    const staffLine = employeNom ? `✂️ *Pris en charge par :* ${employeNom}\n` : '';
+
     const messageText = `✂️ *FACTURE - ${salon.name}* ✂️
 Ref: ${invoiceNum}
 Date: ${formatDate(dateSafe)}
 
 *Client:* ${client ? client.nom : t('finances.invoice.walkInClient')}
--------------------------
+${rdvRefLine}${groupLine}${staffLine}-------------------------
 *Détails :*
 ${itemList}
 -------------------------
@@ -165,6 +178,9 @@ Merci pour votre confiance ! 🌸`;
           <p class="party-label">${t('finances.invoice.client')}</p>
           <p class="party-name">${client ? client.nom : t('finances.invoice.walkInClient')}</p>
           ${client?.telephone ? `<p class="party-detail">${client.telephone}</p>` : ''}
+          ${vente.rendezVousRef ? `<p class="party-detail" style="color: #d6336c; font-weight: 600;">📅 Réf. RDV : ${vente.rendezVousRef}</p>` : ''}
+          ${vente.nombrePersonnes && vente.nombrePersonnes > 1 ? `<p class="party-detail" style="color: #6366f1; font-weight: 600;">👥 Bénéficiaires : ${vente.nombrePersonnes} personnes</p>` : ''}
+          ${employeNom ? `<p class="party-detail">✂️ Pris en charge par : ${employeNom}</p>` : ''}
         </div>
       </div>
 
@@ -287,6 +303,21 @@ Merci pour votre confiance ! 🌸`;
                 <div className="space-y-0.5">
                   <p className="font-bold text-sm text-primary">{getClientName(client?.id)}</p>
                   {client?.telephone && <p className="text-[11px] text-muted-foreground font-medium">{client.telephone}</p>}
+                  {vente.rendezVousRef && (
+                    <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 font-mono text-[10px] font-bold">
+                      RDV: {vente.rendezVousRef}
+                    </div>
+                  )}
+                  {vente.nombrePersonnes && vente.nombrePersonnes > 1 && (
+                    <p className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                      👥 {vente.nombrePersonnes} personnes
+                    </p>
+                  )}
+                  {employeNom && (
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                      ✂️ En charge: <span className="font-bold text-foreground">{employeNom}</span>
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

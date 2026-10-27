@@ -5,16 +5,26 @@ import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
 interface StatCardProps {
   title: string;
   value: string | number;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   icon: LucideIcon;
   trend?: {
     value: number;
     positive: boolean;
   };
-  variant?: 'default' | 'primary' | 'success' | 'warning' | 'accent' | 'purple';
+  variant?: 'default' | 'primary' | 'success' | 'warning' | 'accent' | 'purple' | 'danger';
 }
 
-export function StatCard({ title, value, subtitle, icon: Icon, trend }: StatCardProps) {
+export function StatCard({ title, value, subtitle, icon: Icon, trend, variant = 'default' }: StatCardProps) {
+  const iconVariants = {
+    default: 'bg-muted text-foreground border-border/40',
+    primary: 'bg-primary/10 text-primary border-primary/20',
+    success: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+    warning: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+    accent: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
+    purple: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+    danger: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+  };
+
   return (
     <div className="rounded-3xl p-5 border border-border/60 bg-card hover:border-primary/40 transition-all duration-300 relative overflow-hidden card-shadow group flex flex-col justify-between min-h-[130px]">
       <div className="flex items-start justify-between gap-3 relative z-10">
@@ -34,7 +44,7 @@ export function StatCard({ title, value, subtitle, icon: Icon, trend }: StatCard
           )}
         </div>
 
-        <div className="h-11 w-11 rounded-2xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 duration-200">
+        <div className={cn("h-11 w-11 rounded-2xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 duration-200", iconVariants[variant] || iconVariants.default)}>
           <Icon className="h-5 w-5" />
         </div>
       </div>

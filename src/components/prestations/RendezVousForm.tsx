@@ -48,6 +48,7 @@ export type RdvFormData = {
   date: string;
   heure: string;
   duree: number;
+  nombrePersonnes?: number;
   employe?: string;
   notes?: string;
   source?: 'salon' | 'en_ligne' | 'public';
@@ -75,6 +76,7 @@ export function RendezVousForm({ defaultDate, defaultHeure, defaultPrestationId,
     date: z.string().min(1, t('appointments.selectDate')),
     heure: z.string().min(1, t('appointments.selectTime')),
     duree: z.coerce.number().min(15, t('appointments.minDuration')),
+    nombrePersonnes: z.coerce.number().min(1, 'Au moins 1 personne').default(1),
     employe: z.string().optional(),
     notes: z.string().optional(),
     source: z.enum(['salon', 'en_ligne', 'public']).default('salon'),
@@ -88,6 +90,7 @@ export function RendezVousForm({ defaultDate, defaultHeure, defaultPrestationId,
       date: defaultDate || new Date().toISOString().split('T')[0],
       heure: defaultHeure || '09:00',
       duree: 60,
+      nombrePersonnes: 1,
       employe: session?.userId || '',
       notes: '',
       source: 'salon',
@@ -296,6 +299,59 @@ export function RendezVousForm({ defaultDate, defaultHeure, defaultPrestationId,
               </span>
             </div>
           )}
+
+          {/* Nombre de personnes / Bénéficiaires */}
+          <FormField
+            control={form.control}
+            name="nombrePersonnes"
+            render={({ field }) => {
+              const currentPrestationId = form.watch('typePrestationId');
+              const selectedPrestation = typesPrestations.find(tp => tp.id === currentPrestationId);
+              const totalEstime = selectedPrestation ? selectedPrestation.prix * (field.value || 1) : 0;
+
+              return (
+                <FormItem className="p-3.5 rounded-2xl bg-muted/40 border border-border/80 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <FormLabel className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-foreground">
+                      <Users className="h-4 w-4 text-primary" />
+                      Nombre de personnes
+                    </FormLabel>
+                    <div className="flex items-center gap-1.5 bg-background p-1 rounded-xl border border-border/60">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-lg font-bold"
+                        onClick={() => field.onChange(Math.max(1, (field.value || 1) - 1))}
+                        disabled={(field.value || 1) <= 1}
+                      >
+                        -
+                      </Button>
+                      <span className="w-8 text-center font-bold text-xs font-mono">
+                        {field.value || 1}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-lg font-bold"
+                        onClick={() => field.onChange((field.value || 1) + 1)}
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+                  {field.value && field.value > 1 && totalEstime > 0 && (
+                    <div className="text-xs text-primary font-semibold flex items-center justify-between pt-1">
+                      <span>Total prestation estimé</span>
+                      <span className="font-mono font-bold">{formatCurrency(totalEstime)} ({field.value} personnes)</span>
+                    </div>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
 
           {/* Employé & Source */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

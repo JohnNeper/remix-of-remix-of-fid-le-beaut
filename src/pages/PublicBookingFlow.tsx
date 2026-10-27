@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { BrandedShell } from '@/components/booking/BrandedShell';
+import { cn } from '@/lib/utils';
 import { useClientAuth } from '@/contexts/ClientAuthContext';
 import {
   readPublicSalon, readServices, readRendezVous,
@@ -61,6 +62,7 @@ export default function PublicBookingFlow() {
   const [noPref, setNoPref] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string | null>(null);
+  const [nombrePersonnes, setNombrePersonnes] = useState<number>(1);
   const [form, setForm] = useState({ fullName: '', phone: '', email: '', notes: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -99,6 +101,7 @@ export default function PublicBookingFlow() {
     }
     if (!service || !date || !time) return;
     const reference = makeReference();
+    const totalEstime = (service.prix || 0) * nombrePersonnes;
     addPublicRendezVous(salon.id, {
       clientId: '',
       typePrestationId: service.id,
@@ -111,12 +114,22 @@ export default function PublicBookingFlow() {
       customerName: parsed.data.fullName,
       customerPhone: parsed.data.phone,
       customerEmail: parsed.data.email || undefined,
-      notes: parsed.data.notes,
+      nombrePersonnes,
+      montantTotal: totalEstime,
+      notes: `${nombrePersonnes > 1 ? `[Réservation pour ${nombrePersonnes} personnes] ` : ''}${parsed.data.notes || ''}`.trim(),
       reference,
       createdAt: new Date().toISOString(),
     });
     navigate(`/booking/${slug}/confirmation/${reference}`, {
-      state: { service: service.nom, date: dateStr, time, salon: salon.nom, staff: staff?.nom },
+      state: {
+        service: service.nom,
+        date: dateStr,
+        time,
+        salon: salon.nom,
+        staff: staff?.nom,
+        nombrePersonnes,
+        totalEstime,
+      },
     });
   };
 
@@ -448,13 +461,85 @@ export default function PublicBookingFlow() {
                 </div>
               </Card>
             )}
+
+            {/* Selector: Nombre de personnes / Bénéficiaires */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Users className="h-4 w-4 text-primary" />
+                    Nombre de personnes
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Sélectionnez le nombre de bénéficiaires pour ce créneau.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 self-start sm:self-auto bg-muted/60 p-1 rounded-xl border border-border/60">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg font-bold hover:bg-background"
+                    onClick={() => setNombrePersonnes(n => Math.max(1, n - 1))}
+                    disabled={nombrePersonnes <= 1}
+                  >
+                    -
+                  </Button>
+                  <span className="w-8 text-center font-bold text-sm text-foreground font-mono">
+                    {nombrePersonnes}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg font-bold hover:bg-background"
+                    onClick={() => setNombrePersonnes(n => Math.min(10, n + 1))}
+                    disabled={nombrePersonnes >= 10}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+
+              {/* Quick Pills */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setNombrePersonnes(num)}
+                    className={cn(
+                      'px-3 py-1 rounded-lg text-xs font-semibold transition-all border',
+                      nombrePersonnes === num
+                        ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                        : 'bg-muted/30 text-muted-foreground border-border hover:bg-muted/70'
+                    )}
+                  >
+                    {num === 1 ? '1 personne (Solo)' : num === 2 ? '2 personnes (Duo)' : `${num} personnes`}
+                  </button>
+                ))}
+              </div>
+
+              {nombrePersonnes > 1 && (
+                <div className="text-xs font-semibold text-primary bg-primary/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between border border-primary/20">
+                  <span className="flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5" />
+                    {nombrePersonnes} personnes × {service ? (service.prix || 0).toLocaleString('fr-FR') : 0} FCFA
+                  </span>
+                  <span className="font-mono font-bold text-sm">
+                    {service ? ((service.prix || 0) * nombrePersonnes).toLocaleString('fr-FR') : 0} FCFA
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div>
               <Label className="text-sm font-medium">Nom complet *</Label>
               <Input
                 value={form.fullName}
                 onChange={e => setForm({ ...form, fullName: e.target.value })}
                 className="h-12 mt-1.5 rounded-xl text-base"
-                placeholder="Marie Nguema"
+                placeholder="Votre nom complet"
               />
               {errors.fullName && <p className="text-xs text-destructive mt-1">{errors.fullName}</p>}
             </div>
@@ -489,7 +574,7 @@ export default function PublicBookingFlow() {
                 onChange={e => setForm({ ...form, notes: e.target.value })}
                 className="mt-1.5 rounded-xl"
                 rows={3}
-                placeholder="Demandes particulières..."
+                placeholder="Remarques particulières ou besoins spécifiques (optionnel)..."
               />
             </div>
             {!client && (
@@ -506,13 +591,20 @@ export default function PublicBookingFlow() {
             <Card className="p-5 space-y-3 rounded-2xl">
               <Row label="Salon" value={salon.nom} />
               <Row label="Prestation" value={service.nom} />
+              {nombrePersonnes > 1 && (
+                <Row label="Nombre de personnes" value={`${nombrePersonnes} personnes`} highlight />
+              )}
               {staffList.length > 0 && <Row label="Avec" value={staff?.nom || 'Sans préférence'} />}
               <Row label="Date" value={format(date, 'EEEE dd MMMM yyyy', { locale: fr })} />
               <Row label="Heure" value={time} />
-              <Row label="Durée" value={`${settings.slotDurationMin} min`} />
-              <Row label="Prix" value={`${service.prix.toLocaleString('fr-FR')} FCFA`} highlight />
+              <Row label="Durée estimée" value={`${settings.slotDurationMin} min`} />
+              <Row
+                label={nombrePersonnes > 1 ? `Prix total (${nombrePersonnes} pers.)` : 'Prix'}
+                value={`${((service.prix || 0) * nombrePersonnes).toLocaleString('fr-FR')} FCFA`}
+                highlight
+              />
               <div className="border-t pt-3">
-                <Row label="Client" value={form.fullName} />
+                <Row label="Nom du client" value={form.fullName} />
                 <Row label="Téléphone" value={form.phone} />
                 {form.email && <Row label="Email" value={form.email} />}
               </div>
@@ -532,9 +624,11 @@ export default function PublicBookingFlow() {
           <div className="max-w-xl mx-auto flex items-center gap-3">
             {service && (
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Total</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  Total {nombrePersonnes > 1 ? `(${nombrePersonnes} pers.)` : ''}
+                </div>
                 <div className="text-base font-bold text-primary leading-tight truncate">
-                  {service.prix.toLocaleString('fr-FR')} FCFA
+                  {((service.prix || 0) * nombrePersonnes).toLocaleString('fr-FR')} FCFA
                 </div>
               </div>
             )}

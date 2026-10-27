@@ -20,6 +20,7 @@ import { useTranslations } from '@/hooks/useTranslations';
 import { api } from '@/lib/api';
 import { Vente, VenteItem } from '@/types';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { InvoiceGenerator } from '@/components/finances/InvoiceGenerator';
 import { ClientSearchInput } from '@/components/clients/ClientSearchInput';
@@ -424,6 +425,7 @@ export default function Caisse() {
   const { session, currentSalon } = useAuth();
   const { t } = useLanguage();
   const { formatCurrency } = useTranslations();
+  const queryClient = useQueryClient();
 
   const salonId = session?.salonId || '';
   const today = todayStr();
@@ -461,11 +463,42 @@ export default function Caisse() {
   );
 
   const handleAddVente = async (vente: Omit<Vente, 'id'>) => {
-    const newVente = await api.createVente(salonId, vente);
-    toast.success(t('finances.saleSuccess'));
-    setShowForm(false);
-    await fetchVentes();
-    if (newVente) setInvoiceVente(newVente as Vente);
+    try {
+      const newVente = await api.createVente(salonId, vente);
+
+      // Si la vente comporte des prestations et un client identifié, enregistrer aussi dans l'historique client
+      if (vente.clientId && vente.clientId !== 'none' && Array.isArray(vente.items)) {
+        const prestationItems = vente.items.filter(i => i.type === 'prestation');
+        for (const item of prestationItems) {
+          try {
+            await api.createPrestation(salonId, {
+              clientId: vente.clientId,
+              typePrestationId: item.referenceId,
+              montant: item.montant || item.prixUnitaire,
+              date: vente.date || todayStr(),
+              notes: vente.notes || '',
+            } as any);
+          } catch (err) {
+            console.warn('Erreur synchronisation historique prestation client:', err);
+          }
+        }
+      }
+
+      toast.success(t('finances.saleSuccess') || 'Vente enregistrée avec succès');
+      setShowForm(false);
+
+      // Synchroniser tous les caches React Query (Dashboard, Stock, Finances, Clientes)
+      queryClient.invalidateQueries({ queryKey: ['ventes', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['produits', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['prestations', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['clients', salonId] });
+
+      await fetchVentes();
+      if (newVente) setInvoiceVente(newVente as Vente);
+    } catch (e: any) {
+      console.error('Erreur enregistrement vente:', e);
+      toast.error(e?.message || 'Erreur lors de l\'enregistrement de la vente');
+    }
   };
 
   const handleDeleteVente = async (id: string) => {
@@ -473,6 +506,13 @@ export default function Caisse() {
     try {
       await api.deleteVente(salonId, id);
       toast.success('Vente supprimée avec succès');
+
+      // Synchroniser tous les caches React Query
+      queryClient.invalidateQueries({ queryKey: ['ventes', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['produits', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['prestations', salonId] });
+      queryClient.invalidateQueries({ queryKey: ['clients', salonId] });
+
       fetchVentes();
     } catch (e) {
       toast.error('Erreur lors de la suppression de la vente');

@@ -12,9 +12,19 @@ import {
   NotificationPermissionState,
 } from '@/lib/webNotifications';
 
+export type NotificationType =
+  | 'stock'
+  | 'rdv'
+  | 'booking'
+  | 'inactive'
+  | 'info'
+  | 'paiement'
+  | 'vente'
+  | (string & {});
+
 export interface AppNotification {
   id: string;
-  type: 'stock' | 'rdv' | 'inactive' | 'info';
+  type: NotificationType;
   title: string;
   description: string;
   read: boolean;
@@ -170,8 +180,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         notifs.push({
           id,
           type: 'stock',
-          title: `Alerte Stock: ${p.nom}`,
-          description: `Quantité restante: ${p.quantite} (Seuil d'alerte: ${p.seuilAlerte})`,
+          title: p.quantite <= 0 ? `Rupture de Stock : ${p.nom}` : `Alerte Stock : ${p.nom}`,
+          description: p.quantite <= 0 
+            ? `Produit épuisé ! Pensez à réapprovisionner votre salon.` 
+            : `Plus que ${p.quantite} unité${p.quantite > 1 ? 's' : ''} restante${p.quantite > 1 ? 's' : ''} (seuil : ${p.seuilAlerte}).`,
           read: false,
           timestamp: Date.now(),
         });
@@ -185,8 +197,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         notifs.push({
           id,
           type: 'rdv',
-          title: `${rdvToday.length} Rendez-vous aujourd'hui`,
-          description: 'Consultez votre agenda pour les détails de la journée.',
+          title: `${rdvToday.length} Rendez-vous prévu${rdvToday.length > 1 ? 's' : ''} aujourd'hui`,
+          description: 'Consultez votre planning pour organiser la journée de votre équipe.',
           read: false,
           timestamp: Date.now(),
         });
@@ -197,11 +209,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     if (inactiveClients.length > 0) {
       const id = `inactive-clients`;
       if (!dismissedIds.has(id) && !readIds.has(id)) {
+        const days = salon?.joursRappelInactivite || 30;
         notifs.push({
           id,
           type: 'inactive',
-          title: `${inactiveClients.length} Clientes inactives`,
-          description: `Aucune visite depuis plus de ${salon?.joursRappelInactivite || 30} jours.`,
+          title: `${inactiveClients.length} Cliente${inactiveClients.length > 1 ? 's' : ''} à relancer`,
+          description: `Aucune visite depuis plus de ${days} jours. Envoyez-leur un petit message de fidélité !`,
           read: false,
           timestamp: Date.now(),
         });
@@ -218,9 +231,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     notifications.forEach(n => {
       if (!n.read && !notifiedIdsRef.current.has(n.id)) {
         notifiedIdsRef.current.add(n.id);
+        const targetUrl = n.type === 'stock'
+          ? '/stock'
+          : (n.type === 'rdv' || n.type === 'booking')
+          ? '/rendez-vous'
+          : n.type === 'inactive'
+          ? '/rappels'
+          : '/rendez-vous';
+
         sendNativeNotification(n.title, {
           body: n.description,
           tag: n.id,
+          url: targetUrl,
+          data: { url: targetUrl, id: n.id },
         });
       }
     });
